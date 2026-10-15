@@ -1,0 +1,35 @@
+<RCC>
+    <!-- ZmdUI 组件库 + 演示程序的全部 QML 源码。
+         资源路径与磁盘结构保持一致：:/qml/...，
+         这样 main.cpp 只需 engine.addImportPath("qrc:/qml") 就能找到 ZmdUI 模块。 -->
+    <qresource prefix="/">
+        <file alias="qml/main.qml">../qml/main.qml</file>
+        <file alias="qml/DemoContent.qml">../qml/DemoContent.qml</file>
+        <file alias="qml/ZmdUI/qmldir">../qml/ZmdUI/qmldir</file>
+        <file alias="qml/ZmdUI/Theme.qml">../qml/ZmdUI/Theme.qml</file>
+        <file alias="qml/ZmdUI/ZButton.qml">../qml/ZmdUI/ZButton.qml</file>
+        <file alias="qml/ZmdUI/ZCheckBox.qml">../qml/ZmdUI/ZCheckBox.qml</file>
+        <file alias="qml/ZmdUI/ZCutRect.qml">../qml/ZmdUI/ZCutRect.qml</file>
+        <file alias="qml/ZmdUI/ZDialog.qml">../qml/ZmdUI/ZDialog.qml</file>
+        <file alias="qml/ZmdUI/ZGridBackground.qml">../qml/ZmdUI/ZGridBackground.qml</file>
+        <file alias="qml/ZmdUI/ZHatchPattern.qml">../qml/ZmdUI/ZHatchPattern.qml</file>
+        <file alias="qml/ZmdUI/ZIconButton.qml">../qml/ZmdUI/ZIconButton.qml</file>
+        <file alias="qml/ZmdUI/ZLineChart.qml">../qml/ZmdUI/ZLineChart.qml</file>
+        <file alias="qml/ZmdUI/ZListItem.qml">../qml/ZmdUI/ZListItem.qml</file>
+        <file alias="qml/ZmdUI/ZListView.qml">../qml/ZmdUI/ZListView.qml</file>
+        <file alias="qml/ZmdUI/ZPanel.qml">../qml/ZmdUI/ZPanel.qml</file>
+        <file alias="qml/ZmdUI/ZProgressBar.qml">../qml/ZmdUI/ZProgressBar.qml</file>
+        <file alias="qml/ZmdUI/ZRadioButton.qml">../qml/ZmdUI/ZRadioButton.qml</file>
+        <file alias="qml/ZmdUI/ZScrollBar.qml">../qml/ZmdUI/ZScrollBar.qml</file>
+        <file alias="qml/ZmdUI/ZSectionTitle.qml">../qml/ZmdUI/ZSectionTitle.qml</file>
+        <file alias="qml/ZmdUI/ZSideBar.qml">../qml/ZmdUI/ZSideBar.qml</file>
+        <file alias="qml/ZmdUI/ZSkewRect.qml">../qml/ZmdUI/ZSkewRect.qml</file>
+        <file alias="qml/ZmdUI/ZSlider.qml">../qml/ZmdUI/ZSlider.qml</file>
+        <file alias="qml/ZmdUI/ZStatusDot.qml">../qml/ZmdUI/ZStatusDot.qml</file>
+        <file alias="qml/ZmdUI/ZSwitch.qml">../qml/ZmdUI/ZSwitch.qml</file>
+        <file alias="qml/ZmdUI/ZTable.qml">../qml/ZmdUI/ZTable.qml</file>
+        <file alias="qml/ZmdUI/ZTag.qml">../qml/ZmdUI/ZTag.qml</file>
+        <file alias="qml/ZmdUI/ZTextField.qml">../qml/ZmdUI/ZTextField.qml</file>
+        <file alias="qml/ZmdUI/ZToolTip.qml">../qml/ZmdUI/ZToolTip.qml</file>
+    </qresource>
+</RCC>

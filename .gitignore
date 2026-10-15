@@ -1,0 +1,52 @@
+# ── 构建产物 ──────────────────────────────────────────────────────────────
+# 跨平台工程建议一个编译器一个构建目录，这里全部忽略
+build/
+build-*/
+out/
+cmake-build-*/
+
+# install / 部署产物（由 cmake --install + windeployqt / macdeployqt 生成）
+dist/
+dist-*/
+install/
+
+# ── CMake ────────────────────────────────────────────────────────────────
+CMakeCache.txt
+CMakeFiles/
+CMakeUserPresets.json
+cmake_install.cmake
+install_manifest.txt
+*.cmake.stamp
+
+# ── Qt / QML 工具产物 ────────────────────────────────────────────────────
+*.qmlc
+*.jsc
+qmlls.ini
+.qmlformat.ini
+
+# ── 验证脚本产物（截图 / 中间图）────────────────────────────────────────
+tools/*.png
+tools/anim_*.png
+tools/hittest.txt
+
+# ── 编辑器 / 系统 ────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.user
+*.user.*
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~
+
+# ── 编译中间产物（保险起见，正常情况下都在 build/ 里）──────────────────
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.dylib
+*.a
+*.lib
+*.pdb
