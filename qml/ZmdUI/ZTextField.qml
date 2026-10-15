@@ -4,7 +4,7 @@ import QtQuick.Controls.Basic
 /*!
     \qmltype ZTextField
     \inqmlmodule ZmdUI
-    \brief 输入框：黑色硬边 + 右上 / 右下斜切角，聚焦时亮黄底线。
+    \brief 输入框：黑色硬边 + 右上 / 右下斜切角，聚焦时亮黄底线；光标只在编辑时出现并闪烁。
 
     标签（\l label）以等宽小字嵌在框内左上角，\l unit 显示在右侧，
     这是工业面板上常见的"字段铭牌"排布，不需要额外的外部标签占位。
@@ -21,7 +21,7 @@ import QtQuick.Controls.Basic
 TextField {
     id: control
 
-    /*! 左上角等宽铭牌文字，空则隐藏 */
+    /*! 左侧 / 上方的字段铭牌，空则隐藏 */
     property string label: ""
     /*! 右侧单位 / 后缀 */
     property string unit: ""
@@ -42,10 +42,39 @@ TextField {
     verticalAlignment: TextInput.AlignVCenter
     selectByMouse: true
 
-    // 光标交给系统默认色会偏灰，这里强制用主文字色
+    // 光标（caret）交给系统默认实现会偏灰，这里自定义。
+    //
+    // ⚠️ 注意：自定义 cursorDelegate 之后，**Qt 不再帮你管可见性和闪烁** ——
+    //    这两件事必须由 delegate 自己实现（Qt 自己的 Material 风格也是这么写的）。
+    //    之前只给了宽高和颜色，结果光标一旦出现就永远亮着、而且从不闪烁。
     cursorDelegate: Rectangle {
+        id: caret
         width: 2
         color: Theme.ink
+        // 只在"真的在编辑"时出现：有焦点、非只读、且没有选区
+        // （有选区时该显示选区高亮，不该显示插入符）
+        visible: control.activeFocus && !control.readOnly
+                 && control.selectionStart === control.selectionEnd
+
+        // 光标位置一动就重新亮起并重置计时：打字时不该正好撞上"熄灭"那一拍
+        Connections {
+            target: control
+            function onCursorPositionChanged() {
+                caret.opacity = 1
+                caretBlink.restart()
+            }
+        }
+
+        // 闪烁节奏跟随系统设置（见 Theme.caretFlashHalf）
+        Timer {
+            id: caretBlink
+            running: caret.visible
+            repeat: true
+            interval: Theme.caretFlashHalf
+            onTriggered: caret.opacity = caret.opacity > 0.5 ? 0 : 1
+            // 一拿到焦点先亮起来，不要从"暗"那一拍开始
+            onRunningChanged: caret.opacity = 1
+        }
     }
 
     background: Item {

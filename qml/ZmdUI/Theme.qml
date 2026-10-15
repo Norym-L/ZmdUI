@@ -1,6 +1,7 @@
 pragma Singleton
 
 import QtQuick
+import QtQuick.Controls
 
 /*!
     \qmltype Theme
@@ -233,6 +234,16 @@ QtObject {
     // ════════════════════════════════════════════════════════════════
     //  6. 动画
     // ════════════════════════════════════════════════════════════════
+
+    /*!
+        光标闪烁的半周期（ms）。
+
+        故意**跟随系统设置**而不是写死设计值（Windows 默认全周期 1060ms）——
+        光标的节奏应该和系统里其它输入框一致，不然会显得"这个 App 的光标很奇怪"。
+        系统把 cursorFlashTime 设为 0 表示"不闪烁"，这里兜一个下限，
+        免得定时器退化成 0 间隔的忙等。
+    */
+    readonly property int caretFlashHalf: Math.max(200, Math.round(Application.styleHints.cursorFlashTime / 2))
 
     /*! 悬停 / 按下等即时反馈 */
     readonly property int durFast: 90

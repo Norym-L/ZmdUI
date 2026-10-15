@@ -629,3 +629,157 @@ Windows 上默认开启 `ZMDUI_DEPLOY_TO_BUILD_DIR`（`-D...=OFF` 可关）：
 | 对照：exe 单独拷到空目录运行 | 立刻失败：`libwinpthread-1.dll: cannot open shared object file` |
 
 判据用的是**程序自己的 stderr 输出**（`FT_New_Face failed …`），不是"进程还在不在"。
+
+
+## 5k. 第十一轮：输入框的输入线改成"编辑时出现并闪烁，完成输入即隐藏"
+
+**要求**：输入线只在输入时显示并闪烁，完成输入就隐藏。
+
+**原实现**：`ZTextField` 的底线是**常显**的 —— 空闲时 2px 灰线、悬停 3px、
+聚焦 4px 亮黄、出错品红。等于一直占着一条没有信息量的线。
+
+**新规则**（抽成纯函数，便于单测）：
+
+```qml
+function inputLineVisibleFor(isEditing, isInvalid) { return isEditing || isInvalid }
+function inputLineBlinkingFor(isEditing, isInvalid) { return isEditing && !isInvalid }
+```
+
+| 状态 | 输入线 |
+| --- | --- |
+| 编辑中（有焦点） | 亮黄，4px，**呼吸式闪烁**（1.0 ↔ 0.28，各 460ms） |
+| 完成输入（失焦） | **隐藏** |
+| 出错 | 品红**常亮**（错误必须稳定可见，不能一闪一闪） |
+
+### 实现里两个坑
+
+1. **`SequentialAnimation` 那一层不接受 `target` / `property`**：
+   `Cannot assign to non-existent property "property"`。文档里那个"动画组上设 target
+   会被子动画继承"的写法在 Qt 6.11 上不成立，必须写到每个子动画上。
+2. **别用 `SequentialAnimation on opacity` 这种属性绑定式写法**：`running` 变 false 时
+   动画会**停在中间值**（可能停在 0.28），线就永远半透明了。
+   改用 `target`/`property` 形式 + `alwaysRunToEnd: true`，停止时正好停在全亮那一帧。
+
+### 测试与"另一个 Infinite"
+
+`tests/tst_hover.qml` 新增 2 个用例（共 14 项全绿）：
+
+* `test_inputLineRules`：8 组纯函数断言（含"出错时不闪"）；
+* `test_inputLineLiveState`：断言**没有焦点时输入线必须隐藏**（守住"完成输入就隐藏"）、
+  出错时显示但不闪，以及闪烁动画的形状（负值 loops = 无限、两段、460ms、0.28 呼吸）。
+
+> 写断言时又踩了一个 Qt 的坑：**QtQuick 里有两个 `Infinite`** ——
+> `Animation.Loops.Infinite`（-1，给 `loops` 用）和
+> `Animation.LoopParameters.Infinite`（-2，给 `loopCount` 用）。
+> 在 JS 表达式里写 `Animation.Infinite` 会因为缺少类型上下文解析到后者，
+> 和 `loops` 对不上（实测 Actual=-1 / Expected=-2）。
+> 断言改成「负值 = 无限循环」更稳，不依赖具体枚举成员。
+>
+> 另外：动画组**没有 `data` 属性**（那是 QQuickItem 的），子动画要走 `blink.animations`。
+
+### 视觉核对
+
+`tools/crop.qml` 放大 `scroll_1.png` 的文本框面板：
+
+* 空闲的「账号 / ACCOUNT」「令牌 / TOKEN」：**底部完全没有输入线**（旧版是常显灰线）；
+* 出错的「端口 / PORT」：品红边框 + 品红输入线常亮。
+
+**未能验证**：编辑中的闪烁动画本身（离屏环境拿不到真实焦点，`activeFocus` 恒 false）。
+这一条靠"规则纯函数单测 + 动画形状断言 + 机制探针（`tools/probe_anim.qml` 已证明
+绑定属性上的动画真的会插值）"三者组合覆盖，真机手感需人工确认。
+
+
+## 5l. 第十二轮：澄清与修正 —— 要改的是"光标"，不是"底线"
+
+**用户澄清**：上一轮说的"输入线"指的是**光标竖线（caret）**，不是输入框底部的线。
+
+也就是说上一轮我把需求理解偏了：改的是底线，而真正有问题的是光标。
+本轮做两件事：**修真正的问题** + **把上一轮基于误解的改动回滚**。
+
+### 真正的问题：自定义 cursorDelegate 让 Qt 不再管可见性和闪烁
+
+原来 ZTextField 里的光标是：
+
+```qml
+cursorDelegate: Rectangle { width: 2; color: Theme.ink }   // 只有宽高和颜色
+```
+
+于是光标一旦出现就**永远亮着**（失焦也不消失）、而且**从不闪烁**。
+
+根因看 Qt 自己的实现就清楚了 —— 读 `QtQuick/Controls/Material/impl/CursorDelegate.qml`：
+
+```qml
+Rectangle {
+    id: cursor
+    visible: parent.activeFocus && !parent.readOnly
+             && parent.selectionStart === parent.selectionEnd
+    Timer {
+        running: parent.activeFocus && !parent.readOnly && interval != 0
+        interval: Application.styleHints.cursorFlashTime / 2
+        onTriggered: cursor.opacity = !cursor.opacity ? 1 : 0
+        onRunningChanged: cursor.opacity = 1
+    }
+}
+```
+
+**结论：一旦提供自定义 cursorDelegate，可见性和闪烁都归你自己管。**
+Qt 只负责把光标项摆到正确位置，不会帮你 show/hide，也不会帮你闪。
+
+修法（照搬同一套模式，接上本项目的令牌）：
+
+```qml
+cursorDelegate: Rectangle {
+    visible: control.activeFocus && !control.readOnly
+             && control.selectionStart === control.selectionEnd
+    Connections {
+        target: control
+        function onCursorPositionChanged() { caret.opacity = 1; caretBlink.restart() }
+    }
+    Timer {
+        running: caret.visible
+        interval: Theme.caretFlashHalf          // 新增令牌，跟随系统光标节奏
+        onTriggered: caret.opacity = caret.opacity > 0.5 ? 0 : 1
+        onRunningChanged: caret.opacity = 1     // 拿到焦点先亮起来
+    }
+}
+```
+
+`Theme.caretFlashHalf` 是新增的令牌（半周期），取值 **跟随系统** 的
+`Application.styleHints.cursorFlashTime / 2`（本机实测 1000 / 2 = 500ms），
+而不是写死设计值 —— 光标的节奏应该和系统里其它输入框一致。
+系统把 `cursorFlashTime` 设成 0 表示"不闪烁"，令牌里兜了下限 200ms，避免定时器忙等。
+
+### 回滚上一轮的底线改动
+
+上一轮把底线改成"只在编辑时出现、编辑时呼吸式闪烁"，那是基于误解做的，
+本轮**全部撤回**：底线恢复为原来的「空闲 2px 灰线 → 悬停 3px → 聚焦 4px 亮黄 → 出错品红」，
+连同一并加的 `inputLineVisibleFor` / `inputLineBlinkingFor` 两个纯函数也删了（成为死代码）。
+演示脚注、README、组件文档一并改回，并补上光标的说明。
+
+放大截图复核：空闲字段恢复了灰色基线，出错字段仍是品红边框 + 品红底线。
+
+### 测试
+
+删掉上一轮针对底线的两个用例，换成 `test_caretOnlyWhileEditing`：
+把 `cursorDelegate` 用 `createObject()` 实例化出来直接断言 ——
+**没有焦点时它必须是隐藏的**（这正是当初漏掉的那条绑定）：
+
+```text
+compare(fieldPlain.activeFocus, false, "测试环境下输入框没有焦点")
+compare(caret.visible, false, "没有焦点时光标必须隐藏（之前漏的就是这条绑定）")
+compare(timer.running, false, "光标不可见时闪烁定时器不该运行")
+compare(timer.interval, Theme.caretFlashHalf, "闪烁间隔应取自 Theme.caretFlashHalf")
+```
+
+### 三个小坑
+
+1. **QML `Timer` 的 C++ 类型名是 `QQmlTimer`**，不是 `QQuickTimer`
+   （用 `toString()` 在对象树里找类型时写错了会找不到）。
+2. **`compare(a, b)` 可能"假通过"**：如果表达式求值失败，两边会同时是 `undefined`，
+   比较依然相等。所以关键数值要先单独断言值域，再断言相等 ——
+   本轮的 `verify(Theme.caretFlashHalf >= 200 && <= 5000)` 就是为此加的。
+3. **`Qt.styleHints` 与 `Application.styleHints` 的 qmllint 差异**：
+   前者 qmllint 认不出类型（报 `missing-property`），后者需要
+   `import QtQuick.Controls` 且会被报一条 Info 级 `unused-imports`
+   （运行时确实需要那个 import，是误报）。选了后者：把警告降成 Info，
+   与 Qt 官方 Material 风格写法一致。

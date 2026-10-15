@@ -488,7 +488,7 @@ Item {
                         title: "文本框"
                         tag: "INPUT-01"
                         eyebrow: "TEXT FIELD"
-                        footerText: "聚焦时亮黄底线 · 出错时品红底线"
+                        footerText: "聚焦时亮黄底线 · 出错时品红底线 · 光标仅编辑时出现并闪烁"
 
                         Column {
                             width: parent.width

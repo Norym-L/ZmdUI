@@ -287,7 +287,7 @@ Theme.density = 0.9
 | --- | --- | --- |
 | `ZButton` | 按钮 | `variant`(Primary/Secondary/Danger/Ghost) `mono` `skew` `tooltip` `stateDuration`；悬停有底色过渡 + 左竖条 0→5 长出的动画 |
 | `ZIconButton` | 方形图标按钮 | `glyph` `tone` `tooltip` `source` |
-| `ZTextField` | 输入框 | `label` `unit` `invalid`，聚焦亮黄底线 |
+| `ZTextField` | 输入框 | `label` `unit` `invalid`；聚焦亮黄底线，光标仅编辑时出现并闪烁 |
 | `ZCheckBox` | 复选框 | `note` `indeterminate` |
 | `ZRadioButton` | 单选 | 菱形指示器 |
 | `ZSwitch` | 开关 | `note` `trackWidth` |

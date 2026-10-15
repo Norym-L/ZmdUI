@@ -64,6 +64,22 @@ TestCase {
         }
         Row {
             spacing: 20
+            ZTextField {
+                id: fieldPlain
+                width: 240
+                label: "账号 / ACCOUNT"
+                placeholderText: "输入账号"
+            }
+            ZTextField {
+                id: fieldInvalid
+                width: 240
+                label: "端口 / PORT"
+                text: "99999"
+                invalid: true
+            }
+        }
+        Row {
+            spacing: 20
             ZSideBar {
                 id: sideProbe
                 width: 200
@@ -78,6 +94,23 @@ TestCase {
                 rows: [{ a: "1", b: "2" }, { a: "3", b: "4" }]
             }
         }
+    }
+
+    // 递归找第一个指定类型的对象。注意用 data 而不是 children：
+    // 动画这类非可视子对象只出现在 data 里。
+    function findByType(item, name) {
+        var kids = item.data
+        if (!kids)
+            return null
+        for (var i = 0; i < kids.length; i++) {
+            var t = kids[i].toString()
+            if (t.indexOf(name) === 0)
+                return kids[i]
+            var r = findByType(kids[i], name)
+            if (r)
+                return r
+        }
+        return null
     }
 
     // 递归找第一个 MouseArea（用来验证 preventStealing 这类内部实现）
@@ -252,6 +285,42 @@ TestCase {
         if (ma2)
             compare(ma2.preventStealing, false, "关掉后应恢复默认的拖拽滚动行为")
         tableProbe.rowClickRobust = true
+    }
+
+    // ── 光标：只在编辑时出现并闪烁 ──
+
+    /*
+      自定义 cursorDelegate 之后，Qt **不再**帮你管可见性和闪烁 ——
+      两件事都得 delegate 自己实现（Qt 自带的 Material 风格也是这么写的：
+      visible: parent.activeFocus && ...，再配一个闪烁 Timer）。
+      这里把 delegate 实例化出来，直接断言"没有焦点时必须隐藏"，
+      这就是当初漏掉的那个绑定。
+    */
+    function test_caretOnlyWhileEditing() {
+        var caret = fieldPlain.cursorDelegate.createObject(root, {})
+        verify(caret !== null, "cursorDelegate 应当可以实例化")
+        if (!caret)
+            return
+
+        compare(fieldPlain.activeFocus, false, "测试环境下输入框没有焦点")
+        compare(caret.visible, false, "没有焦点时光标必须隐藏（之前漏的就是这条绑定）")
+
+        // 闪烁定时器：不可见时不跑，节奏跟系统光标闪烁周期挂钩。
+        // 注意 QML Timer 的 C++ 类型名是 QQmlTimer，不是 QQuickTimer。
+        var timer = findByType(caret, "QQmlTimer")
+        verify(timer !== null, "光标应当自带闪烁定时器")
+        if (timer) {
+            compare(timer.running, false, "光标不可见时闪烁定时器不该运行")
+            // 注意：只断言"两边相等"是不够的 —— 如果表达式求值失败，
+            // 两边可能同时是 undefined，比较照样通过（假通过）。
+            // 所以先单独断言值本身是合理的。
+            verify(Theme.caretFlashHalf >= 200 && Theme.caretFlashHalf <= 5000,
+                   "光标闪烁半周期应是合理数值，实测 " + Theme.caretFlashHalf + "ms")
+            compare(timer.interval, Theme.caretFlashHalf,
+                    "闪烁间隔应取自 Theme.caretFlashHalf（跟随系统光标节奏）")
+        }
+
+        caret.destroy()
     }
 
     // ── 主题切换 ──

@@ -2,7 +2,7 @@
 
 > 本文由 `tools/gen_docs.py` 从仓库源码自动汇总生成，内容与磁盘上的文件逐字一致。
 
-> 生成时间：2026-10-15 20:23:31
+> 生成时间：2026-10-15 21:27:51
 
 | 项目 | 说明 |
 | --- | --- |
@@ -866,6 +866,11 @@ ZmdUI/
 ├── out/
 │   └── build/
 │       ├── debug/
+│       │   ├── ALL_BUILD.dir/
+│       │   │   ├── Debug/
+│       │   │   ├── MinSizeRel/
+│       │   │   ├── RelWithDebInfo/
+│       │   │   └── Release/
 │       │   ├── CMakeFiles/
 │       │   │   ├── 4.4.2/
 │       │   │   │   ├── CompilerIdCXX/
@@ -876,30 +881,294 @@ ZmdUI/
 │       │   │   │   ├── CMakeDetermineCompilerABI_CXX.bin
 │       │   │   │   ├── CMakeRCCompiler.cmake
 │       │   │   │   └── CMakeSystem.cmake
+│       │   │   ├── CMakeScratch/
+│       │   │   ├── ZmdUIDemo.dir/
+│       │   │   │   ├── ZmdUIDemo_autogen/
+│       │   │   │   │   ├── 3YJK5W5UP7/
+│       │   │   │   │   │   └── qrc_qml.cpp.obj
+│       │   │   │   │   └── mocs_compilation.cpp.obj
+│       │   │   │   └── src/
+│       │   │   │       └── main.cpp.obj
+│       │   │   ├── ZmdUIDemo_autogen.dir/
+│       │   │   │   ├── AutoRcc_qml_3YJK5W5UP7_Info.json
+│       │   │   │   ├── AutoRcc_qml_3YJK5W5UP7_Lock.lock
+│       │   │   │   ├── AutoRcc_qml_3YJK5W5UP7_Used.txt
+│       │   │   │   ├── AutogenInfo.json
+│       │   │   │   ├── AutogenUsed.txt
+│       │   │   │   └── ParseCache.txt
+│       │   │   ├── d/
 │       │   │   ├── pkgRedirects/
 │       │   │   ├── CMakeConfigureLog.yaml
-│       │   │   ├── clion-Debug-QT MinGW-log.txt
+│       │   │   ├── InstallScripts.json
+│       │   │   ├── TargetDirectories.txt
+│       │   │   ├── clean_additional.cmake
+│       │   │   ├── clion-Debug-MSYS2-log.txt
 │       │   │   ├── clion-environment.txt
-│       │   │   └── cmake.check_cache
+│       │   │   ├── cmake.check_cache
+│       │   │   └── rules.ninja
+│       │   ├── INSTALL.dir/
+│       │   │   ├── Debug/
+│       │   │   ├── MinSizeRel/
+│       │   │   ├── RelWithDebInfo/
+│       │   │   └── Release/
 │       │   ├── Testing/
 │       │   │   └── Temporary/
 │       │   │       └── LastTest.log
+│       │   ├── ZERO_CHECK.dir/
+│       │   │   ├── Debug/
+│       │   │   ├── MinSizeRel/
+│       │   │   ├── RelWithDebInfo/
+│       │   │   └── Release/
+│       │   ├── ZmdUIDemo.dir/
+│       │   │   ├── Debug/
+│       │   │   ├── MinSizeRel/
+│       │   │   ├── RelWithDebInfo/
+│       │   │   └── Release/
 │       │   ├── ZmdUIDemo_autogen/
 │       │   │   ├── 3YJK5W5UP7/
 │       │   │   │   └── qrc_qml.cpp
 │       │   │   ├── include/
 │       │   │   ├── deps
+│       │   │   ├── moc_predefs.h
 │       │   │   ├── mocs_compilation.cpp
 │       │   │   └── timestamp
+│       │   ├── ZmdUIDemo_qmlimportscan.dir/
+│       │   │   ├── Debug/
+│       │   │   ├── MinSizeRel/
+│       │   │   ├── RelWithDebInfo/
+│       │   │   └── Release/
+│       │   ├── generic/
+│       │   │   └── qtuiotouchplugin.dll
+│       │   ├── iconengines/
+│       │   │   └── qsvgicon.dll
+│       │   ├── imageformats/
+│       │   │   ├── qgif.dll
+│       │   │   ├── qico.dll
+│       │   │   ├── qjpeg.dll
+│       │   │   └── qsvg.dll
+│       │   ├── networkinformation/
+│       │   │   └── qnetworklistmanager.dll
+│       │   ├── platforms/
+│       │   │   └── qwindows.dll
+│       │   ├── qml/
+│       │   │   ├── QML/
+│       │   │   │   ├── plugins.qmltypes
+│       │   │   │   └── qmldir
+│       │   │   ├── QtQml/
+│       │   │   │   ├── Models/
+│       │   │   │   │   ├── modelsplugin.dll
+│       │   │   │   │   ├── plugins.qmltypes
+│       │   │   │   │   └── qmldir
+│       │   │   │   ├── WorkerScript/
+│       │   │   │   │   ├── plugins.qmltypes
+│       │   │   │   │   ├── qmldir
+│       │   │   │   │   └── workerscriptplugin.dll
+│       │   │   │   ├── XmlListModel/
+│       │   │   │   ├── plugins.qmltypes
+│       │   │   │   ├── qmldir
+│       │   │   │   └── qmlplugin.dll
+│       │   │   └── QtQuick/
+│       │   │       ├── Controls/
+│       │   │       │   ├── Basic/
+│       │   │       │   │   ├── impl/
+│       │   │       │   │   │   ├── TextEditingContextMenu.qml
+│       │   │       │   │   │   ├── plugins.qmltypes
+│       │   │       │   │   │   ├── qmldir
+│       │   │       │   │   │   └── qtquickcontrols2basicstyleimplplugin.dll
+│       │   │       │   │   ├── AbstractButton.qml
+│       │   │       │   │   ├── Action.qml
+│       │   │       │   │   ├── ActionGroup.qml
+│       │   │       │   │   ├── ApplicationWindow.qml
+│       │   │       │   │   ├── BusyIndicator.qml
+│       │   │       │   │   ├── Button.qml
+│       │   │       │   │   ├── ButtonGroup.qml
+│       │   │       │   │   ├── Calendar.qml
+│       │   │       │   │   ├── CalendarModel.qml
+│       │   │       │   │   ├── CheckBox.qml
+│       │   │       │   │   ├── CheckDelegate.qml
+│       │   │       │   │   ├── ComboBox.qml
+│       │   │       │   │   ├── Container.qml
+│       │   │       │   │   ├── Control.qml
+│       │   │       │   │   ├── DayOfWeekRow.qml
+│       │   │       │   │   ├── DelayButton.qml
+│       │   │       │   │   ├── Dial.qml
+│       │   │       │   │   ├── Dialog.qml
+│       │   │       │   │   ├── DialogButtonBox.qml
+│       │   │       │   │   ├── DoubleSpinBox.qml
+│       │   │       │   │   ├── Drawer.qml
+│       │   │       │   │   ├── Frame.qml
+│       │   │       │   │   ├── GroupBox.qml
+│       │   │       │   │   ├── HorizontalHeaderView.qml
+│       │   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│       │   │       │   │   ├── ItemDelegate.qml
+│       │   │       │   │   ├── Label.qml
+│       │   │       │   │   ├── Menu.qml
+│       │   │       │   │   ├── MenuBar.qml
+│       │   │       │   │   ├── MenuBarItem.qml
+│       │   │       │   │   ├── MenuItem.qml
+│       │   │       │   │   ├── MenuSeparator.qml
+│       │   │       │   │   ├── MonthGrid.qml
+│       │   │       │   │   ├── Page.qml
+│       │   │       │   │   ├── PageIndicator.qml
+│       │   │       │   │   ├── Pane.qml
+│       │   │       │   │   ├── Popup.qml
+│       │   │       │   │   ├── ProgressBar.qml
+│       │   │       │   │   ├── RadioButton.qml
+│       │   │       │   │   ├── RadioDelegate.qml
+│       │   │       │   │   ├── RangeSlider.qml
+│       │   │       │   │   ├── RoundButton.qml
+│       │   │       │   │   ├── ScrollBar.qml
+│       │   │       │   │   ├── ScrollIndicator.qml
+│       │   │       │   │   ├── ScrollView.qml
+│       │   │       │   │   ├── SearchField.qml
+│       │   │       │   │   ├── SelectionRectangle.qml
+│       │   │       │   │   ├── Slider.qml
+│       │   │       │   │   ├── SpinBox.qml
+│       │   │       │   │   ├── SplitView.qml
+│       │   │       │   │   ├── StackView.qml
+│       │   │       │   │   ├── SwipeDelegate.qml
+│       │   │       │   │   ├── SwipeView.qml
+│       │   │       │   │   ├── Switch.qml
+│       │   │       │   │   ├── SwitchDelegate.qml
+│       │   │       │   │   ├── TabBar.qml
+│       │   │       │   │   ├── TabButton.qml
+│       │   │       │   │   ├── TableViewDelegate.qml
+│       │   │       │   │   ├── TextArea.qml
+│       │   │       │   │   ├── TextField.qml
+│       │   │       │   │   ├── ToolBar.qml
+│       │   │       │   │   ├── ToolButton.qml
+│       │   │       │   │   ├── ToolSeparator.qml
+│       │   │       │   │   ├── ToolTip.qml
+│       │   │       │   │   ├── TreeViewDelegate.qml
+│       │   │       │   │   ├── Tumbler.qml
+│       │   │       │   │   ├── VerticalHeaderView.qml
+│       │   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│       │   │       │   │   ├── WeekNumberColumn.qml
+│       │   │       │   │   ├── plugins.qmltypes
+│       │   │       │   │   ├── qmldir
+│       │   │       │   │   └── qtquickcontrols2basicstyleplugin.dll
+│       │   │       │   ├── FluentWinUI3/
+│       │   │       │   │   ├── dark/
+│       │   │       │   │   │   └── images/
+│       │   │       │   │   ├── icons/
+│       │   │       │   │   ├── impl/
+│       │   │       │   │   └── light/
+│       │   │       │   │       └── images/
+│       │   │       │   ├── Fusion/
+│       │   │       │   │   └── impl/
+│       │   │       │   ├── Imagine/
+│       │   │       │   │   └── impl/
+│       │   │       │   ├── Material/
+│       │   │       │   │   └── impl/
+│       │   │       │   ├── Universal/
+│       │   │       │   │   └── impl/
+│       │   │       │   ├── Windows/
+│       │   │       │   │   ├── images/
+│       │   │       │   │   └── impl/
+│       │   │       │   └── impl/
+│       │   │       │       ├── CopyAction.qml
+│       │   │       │       ├── CutAction.qml
+│       │   │       │       ├── DeleteAction.qml
+│       │   │       │       ├── PasteAction.qml
+│       │   │       │       ├── RedoAction.qml
+│       │   │       │       ├── SelectAllAction.qml
+│       │   │       │       ├── UndoAction.qml
+│       │   │       │       ├── plugins.qmltypes
+│       │   │       │       ├── qmldir
+│       │   │       │       └── qtquickcontrols2implplugin.dll
+│       │   │       ├── Dialogs/
+│       │   │       │   └── quickimpl/
+│       │   │       │       └── qml/
+│       │   │       │           ├── +Fusion/
+│       │   │       │           ├── +Imagine/
+│       │   │       │           ├── +Material/
+│       │   │       │           └── +Universal/
+│       │   │       ├── Effects/
+│       │   │       ├── Layouts/
+│       │   │       ├── LocalStorage/
+│       │   │       ├── NativeStyle/
+│       │   │       │   ├── controls/
+│       │   │       │   └── util/
+│       │   │       ├── Particles/
+│       │   │       ├── Shapes/
+│       │   │       │   ├── DesignHelpers/
+│       │   │       │   ├── plugins.qmltypes
+│       │   │       │   ├── qmldir
+│       │   │       │   └── qmlshapesplugin.dll
+│       │   │       ├── Templates/
+│       │   │       │   ├── plugins.qmltypes
+│       │   │       │   ├── qmldir
+│       │   │       │   └── qtquicktemplates2plugin.dll
+│       │   │       ├── Timeline/
+│       │   │       │   └── BlendTrees/
+│       │   │       ├── VectorImage/
+│       │   │       │   └── Helpers/
+│       │   │       ├── Window/
+│       │   │       │   ├── qmldir
+│       │   │       │   ├── quickwindow.qmltypes
+│       │   │       │   └── quickwindowplugin.dll
+│       │   │       ├── tooling/
+│       │   │       ├── plugins.qmltypes
+│       │   │       ├── qmldir
+│       │   │       └── qtquick2plugin.dll
+│       │   ├── qmltooling/
+│       │   │   ├── qmldbg_debugger.dll
+│       │   │   ├── qmldbg_inspector.dll
+│       │   │   ├── qmldbg_local.dll
+│       │   │   ├── qmldbg_messages.dll
+│       │   │   ├── qmldbg_native.dll
+│       │   │   ├── qmldbg_nativedebugger.dll
+│       │   │   ├── qmldbg_preview.dll
+│       │   │   ├── qmldbg_profiler.dll
+│       │   │   ├── qmldbg_quick3dprofiler.dll
+│       │   │   ├── qmldbg_quickeventreplay.dll
+│       │   │   ├── qmldbg_quickprofiler.dll
+│       │   │   ├── qmldbg_server.dll
+│       │   │   └── qmldbg_tcp.dll
+│       │   ├── tls/
+│       │   │   ├── qcertonlybackend.dll
+│       │   │   └── qschannelbackend.dll
+│       │   ├── ALL_BUILD.vcxproj
+│       │   ├── ALL_BUILD.vcxproj.filters
 │       │   ├── CMakeCache.txt
+│       │   ├── D3Dcompiler_47.dll
+│       │   ├── INSTALL.vcxproj
+│       │   ├── INSTALL.vcxproj.filters
+│       │   ├── Qt6Core.dll
+│       │   ├── Qt6Gui.dll
+│       │   ├── Qt6Network.dll
+│       │   ├── Qt6OpenGL.dll
+│       │   ├── Qt6Qml.dll
+│       │   ├── Qt6QmlMeta.dll
+│       │   ├── Qt6QmlModels.dll
+│       │   ├── Qt6QmlWorkerScript.dll
+│       │   ├── Qt6Quick.dll
+│       │   ├── Qt6Quick3DUtils.dll
+│       │   ├── Qt6QuickControls2.dll
+│       │   ├── Qt6QuickControls2Basic.dll
+│       │   ├── Qt6QuickControls2BasicStyleImpl.dll
+│       │   ├── Qt6QuickControls2Impl.dll
+│       │   ├── Qt6QuickShapes.dll
+│       │   ├── Qt6QuickTemplates2.dll
+│       │   ├── Qt6Svg.dll
 │       │   ├── VSInheritEnvironments.txt
+│       │   ├── ZERO_CHECK.vcxproj
+│       │   ├── ZERO_CHECK.vcxproj.filters
+│       │   ├── ZmdUI.slnx
 │       │   ├── ZmdUIDemo.exe
 │       │   ├── ZmdUIDemo.exe.manifest
 │       │   ├── ZmdUIDemo.ilk
 │       │   ├── ZmdUIDemo.pdb
+│       │   ├── ZmdUIDemo.vcxproj
+│       │   ├── ZmdUIDemo.vcxproj.filters
+│       │   ├── ZmdUIDemo_qmlimportscan.vcxproj
+│       │   ├── ZmdUIDemo_qmlimportscan.vcxproj.filters
 │       │   ├── build.ninja
 │       │   ├── cmake_install.cmake
-│       │   └── compile_commands.json
+│       │   ├── compile_commands.json
+│       │   ├── libgcc_s_seh-1.dll
+│       │   ├── libstdc++-6.dll
+│       │   └── libwinpthread-1.dll
 │       └── release/
 │           ├── CMakeFiles/
 │           │   ├── 4.3.1/
@@ -1029,6 +1298,7 @@ ZmdUI/
 pragma Singleton
 
 import QtQuick
+import QtQuick.Controls
 
 /*!
     \qmltype Theme
@@ -1261,6 +1531,16 @@ QtObject {
     // ════════════════════════════════════════════════════════════════
     //  6. 动画
     // ════════════════════════════════════════════════════════════════
+
+    /*!
+        光标闪烁的半周期（ms）。
+
+        故意**跟随系统设置**而不是写死设计值（Windows 默认全周期 1060ms）——
+        光标的节奏应该和系统里其它输入框一致，不然会显得"这个 App 的光标很奇怪"。
+        系统把 cursorFlashTime 设为 0 表示"不闪烁"，这里兜一个下限，
+        免得定时器退化成 0 间隔的忙等。
+    */
+    readonly property int caretFlashHalf: Math.max(200, Math.round(Application.styleHints.cursorFlashTime / 2))
 
     /*! 悬停 / 按下等即时反馈 */
     readonly property int durFast: 90
@@ -2018,7 +2298,7 @@ import QtQuick.Controls.Basic
 /*!
     \qmltype ZTextField
     \inqmlmodule ZmdUI
-    \brief 输入框：黑色硬边 + 右上 / 右下斜切角，聚焦时亮黄底线。
+    \brief 输入框：黑色硬边 + 右上 / 右下斜切角，聚焦时亮黄底线；光标只在编辑时出现并闪烁。
 
     标签（\l label）以等宽小字嵌在框内左上角，\l unit 显示在右侧，
     这是工业面板上常见的"字段铭牌"排布，不需要额外的外部标签占位。
@@ -2035,7 +2315,7 @@ import QtQuick.Controls.Basic
 TextField {
     id: control
 
-    /*! 左上角等宽铭牌文字，空则隐藏 */
+    /*! 左侧 / 上方的字段铭牌，空则隐藏 */
     property string label: ""
     /*! 右侧单位 / 后缀 */
     property string unit: ""
@@ -2056,10 +2336,39 @@ TextField {
     verticalAlignment: TextInput.AlignVCenter
     selectByMouse: true
 
-    // 光标交给系统默认色会偏灰，这里强制用主文字色
+    // 光标（caret）交给系统默认实现会偏灰，这里自定义。
+    //
+    // ⚠️ 注意：自定义 cursorDelegate 之后，**Qt 不再帮你管可见性和闪烁** ——
+    //    这两件事必须由 delegate 自己实现（Qt 自己的 Material 风格也是这么写的）。
+    //    之前只给了宽高和颜色，结果光标一旦出现就永远亮着、而且从不闪烁。
     cursorDelegate: Rectangle {
+        id: caret
         width: 2
         color: Theme.ink
+        // 只在"真的在编辑"时出现：有焦点、非只读、且没有选区
+        // （有选区时该显示选区高亮，不该显示插入符）
+        visible: control.activeFocus && !control.readOnly
+                 && control.selectionStart === control.selectionEnd
+
+        // 光标位置一动就重新亮起并重置计时：打字时不该正好撞上"熄灭"那一拍
+        Connections {
+            target: control
+            function onCursorPositionChanged() {
+                caret.opacity = 1
+                caretBlink.restart()
+            }
+        }
+
+        // 闪烁节奏跟随系统设置（见 Theme.caretFlashHalf）
+        Timer {
+            id: caretBlink
+            running: caret.visible
+            repeat: true
+            interval: Theme.caretFlashHalf
+            onTriggered: caret.opacity = caret.opacity > 0.5 ? 0 : 1
+            // 一拿到焦点先亮起来，不要从"暗"那一拍开始
+            onRunningChanged: caret.opacity = 1
+        }
     }
 
     background: Item {
@@ -5591,7 +5900,7 @@ Item {
                         title: "文本框"
                         tag: "INPUT-01"
                         eyebrow: "TEXT FIELD"
-                        footerText: "聚焦时亮黄底线 · 出错时品红底线"
+                        footerText: "聚焦时亮黄底线 · 出错时品红底线 · 光标仅编辑时出现并闪烁"
 
                         Column {
                             width: parent.width
@@ -6644,6 +6953,22 @@ TestCase {
         }
         Row {
             spacing: 20
+            ZTextField {
+                id: fieldPlain
+                width: 240
+                label: "账号 / ACCOUNT"
+                placeholderText: "输入账号"
+            }
+            ZTextField {
+                id: fieldInvalid
+                width: 240
+                label: "端口 / PORT"
+                text: "99999"
+                invalid: true
+            }
+        }
+        Row {
+            spacing: 20
             ZSideBar {
                 id: sideProbe
                 width: 200
@@ -6658,6 +6983,23 @@ TestCase {
                 rows: [{ a: "1", b: "2" }, { a: "3", b: "4" }]
             }
         }
+    }
+
+    // 递归找第一个指定类型的对象。注意用 data 而不是 children：
+    // 动画这类非可视子对象只出现在 data 里。
+    function findByType(item, name) {
+        var kids = item.data
+        if (!kids)
+            return null
+        for (var i = 0; i < kids.length; i++) {
+            var t = kids[i].toString()
+            if (t.indexOf(name) === 0)
+                return kids[i]
+            var r = findByType(kids[i], name)
+            if (r)
+                return r
+        }
+        return null
     }
 
     // 递归找第一个 MouseArea（用来验证 preventStealing 这类内部实现）
@@ -6832,6 +7174,42 @@ TestCase {
         if (ma2)
             compare(ma2.preventStealing, false, "关掉后应恢复默认的拖拽滚动行为")
         tableProbe.rowClickRobust = true
+    }
+
+    // ── 光标：只在编辑时出现并闪烁 ──
+
+    /*
+      自定义 cursorDelegate 之后，Qt **不再**帮你管可见性和闪烁 ——
+      两件事都得 delegate 自己实现（Qt 自带的 Material 风格也是这么写的：
+      visible: parent.activeFocus && ...，再配一个闪烁 Timer）。
+      这里把 delegate 实例化出来，直接断言"没有焦点时必须隐藏"，
+      这就是当初漏掉的那个绑定。
+    */
+    function test_caretOnlyWhileEditing() {
+        var caret = fieldPlain.cursorDelegate.createObject(root, {})
+        verify(caret !== null, "cursorDelegate 应当可以实例化")
+        if (!caret)
+            return
+
+        compare(fieldPlain.activeFocus, false, "测试环境下输入框没有焦点")
+        compare(caret.visible, false, "没有焦点时光标必须隐藏（之前漏的就是这条绑定）")
+
+        // 闪烁定时器：不可见时不跑，节奏跟系统光标闪烁周期挂钩。
+        // 注意 QML Timer 的 C++ 类型名是 QQmlTimer，不是 QQuickTimer。
+        var timer = findByType(caret, "QQmlTimer")
+        verify(timer !== null, "光标应当自带闪烁定时器")
+        if (timer) {
+            compare(timer.running, false, "光标不可见时闪烁定时器不该运行")
+            // 注意：只断言"两边相等"是不够的 —— 如果表达式求值失败，
+            // 两边可能同时是 undefined，比较照样通过（假通过）。
+            // 所以先单独断言值本身是合理的。
+            verify(Theme.caretFlashHalf >= 200 && Theme.caretFlashHalf <= 5000,
+                   "光标闪烁半周期应是合理数值，实测 " + Theme.caretFlashHalf + "ms")
+            compare(timer.interval, Theme.caretFlashHalf,
+                    "闪烁间隔应取自 Theme.caretFlashHalf（跟随系统光标节奏）")
+        }
+
+        caret.destroy()
     }
 
     // ── 主题切换 ──
@@ -8642,3 +9020,157 @@ Windows 上默认开启 `ZMDUI_DEPLOY_TO_BUILD_DIR`（`-D...=OFF` 可关）：
 | 对照：exe 单独拷到空目录运行 | 立刻失败：`libwinpthread-1.dll: cannot open shared object file` |
 
 判据用的是**程序自己的 stderr 输出**（`FT_New_Face failed …`），不是"进程还在不在"。
+
+
+## 5k. 第十一轮：输入框的输入线改成"编辑时出现并闪烁，完成输入即隐藏"
+
+**要求**：输入线只在输入时显示并闪烁，完成输入就隐藏。
+
+**原实现**：`ZTextField` 的底线是**常显**的 —— 空闲时 2px 灰线、悬停 3px、
+聚焦 4px 亮黄、出错品红。等于一直占着一条没有信息量的线。
+
+**新规则**（抽成纯函数，便于单测）：
+
+```qml
+function inputLineVisibleFor(isEditing, isInvalid) { return isEditing || isInvalid }
+function inputLineBlinkingFor(isEditing, isInvalid) { return isEditing && !isInvalid }
+```
+
+| 状态 | 输入线 |
+| --- | --- |
+| 编辑中（有焦点） | 亮黄，4px，**呼吸式闪烁**（1.0 ↔ 0.28，各 460ms） |
+| 完成输入（失焦） | **隐藏** |
+| 出错 | 品红**常亮**（错误必须稳定可见，不能一闪一闪） |
+
+### 实现里两个坑
+
+1. **`SequentialAnimation` 那一层不接受 `target` / `property`**：
+   `Cannot assign to non-existent property "property"`。文档里那个"动画组上设 target
+   会被子动画继承"的写法在 Qt 6.11 上不成立，必须写到每个子动画上。
+2. **别用 `SequentialAnimation on opacity` 这种属性绑定式写法**：`running` 变 false 时
+   动画会**停在中间值**（可能停在 0.28），线就永远半透明了。
+   改用 `target`/`property` 形式 + `alwaysRunToEnd: true`，停止时正好停在全亮那一帧。
+
+### 测试与"另一个 Infinite"
+
+`tests/tst_hover.qml` 新增 2 个用例（共 14 项全绿）：
+
+* `test_inputLineRules`：8 组纯函数断言（含"出错时不闪"）；
+* `test_inputLineLiveState`：断言**没有焦点时输入线必须隐藏**（守住"完成输入就隐藏"）、
+  出错时显示但不闪，以及闪烁动画的形状（负值 loops = 无限、两段、460ms、0.28 呼吸）。
+
+> 写断言时又踩了一个 Qt 的坑：**QtQuick 里有两个 `Infinite`** ——
+> `Animation.Loops.Infinite`（-1，给 `loops` 用）和
+> `Animation.LoopParameters.Infinite`（-2，给 `loopCount` 用）。
+> 在 JS 表达式里写 `Animation.Infinite` 会因为缺少类型上下文解析到后者，
+> 和 `loops` 对不上（实测 Actual=-1 / Expected=-2）。
+> 断言改成「负值 = 无限循环」更稳，不依赖具体枚举成员。
+>
+> 另外：动画组**没有 `data` 属性**（那是 QQuickItem 的），子动画要走 `blink.animations`。
+
+### 视觉核对
+
+`tools/crop.qml` 放大 `scroll_1.png` 的文本框面板：
+
+* 空闲的「账号 / ACCOUNT」「令牌 / TOKEN」：**底部完全没有输入线**（旧版是常显灰线）；
+* 出错的「端口 / PORT」：品红边框 + 品红输入线常亮。
+
+**未能验证**：编辑中的闪烁动画本身（离屏环境拿不到真实焦点，`activeFocus` 恒 false）。
+这一条靠"规则纯函数单测 + 动画形状断言 + 机制探针（`tools/probe_anim.qml` 已证明
+绑定属性上的动画真的会插值）"三者组合覆盖，真机手感需人工确认。
+
+
+## 5l. 第十二轮：澄清与修正 —— 要改的是"光标"，不是"底线"
+
+**用户澄清**：上一轮说的"输入线"指的是**光标竖线（caret）**，不是输入框底部的线。
+
+也就是说上一轮我把需求理解偏了：改的是底线，而真正有问题的是光标。
+本轮做两件事：**修真正的问题** + **把上一轮基于误解的改动回滚**。
+
+### 真正的问题：自定义 cursorDelegate 让 Qt 不再管可见性和闪烁
+
+原来 ZTextField 里的光标是：
+
+```qml
+cursorDelegate: Rectangle { width: 2; color: Theme.ink }   // 只有宽高和颜色
+```
+
+于是光标一旦出现就**永远亮着**（失焦也不消失）、而且**从不闪烁**。
+
+根因看 Qt 自己的实现就清楚了 —— 读 `QtQuick/Controls/Material/impl/CursorDelegate.qml`：
+
+```qml
+Rectangle {
+    id: cursor
+    visible: parent.activeFocus && !parent.readOnly
+             && parent.selectionStart === parent.selectionEnd
+    Timer {
+        running: parent.activeFocus && !parent.readOnly && interval != 0
+        interval: Application.styleHints.cursorFlashTime / 2
+        onTriggered: cursor.opacity = !cursor.opacity ? 1 : 0
+        onRunningChanged: cursor.opacity = 1
+    }
+}
+```
+
+**结论：一旦提供自定义 cursorDelegate，可见性和闪烁都归你自己管。**
+Qt 只负责把光标项摆到正确位置，不会帮你 show/hide，也不会帮你闪。
+
+修法（照搬同一套模式，接上本项目的令牌）：
+
+```qml
+cursorDelegate: Rectangle {
+    visible: control.activeFocus && !control.readOnly
+             && control.selectionStart === control.selectionEnd
+    Connections {
+        target: control
+        function onCursorPositionChanged() { caret.opacity = 1; caretBlink.restart() }
+    }
+    Timer {
+        running: caret.visible
+        interval: Theme.caretFlashHalf          // 新增令牌，跟随系统光标节奏
+        onTriggered: caret.opacity = caret.opacity > 0.5 ? 0 : 1
+        onRunningChanged: caret.opacity = 1     // 拿到焦点先亮起来
+    }
+}
+```
+
+`Theme.caretFlashHalf` 是新增的令牌（半周期），取值 **跟随系统** 的
+`Application.styleHints.cursorFlashTime / 2`（本机实测 1000 / 2 = 500ms），
+而不是写死设计值 —— 光标的节奏应该和系统里其它输入框一致。
+系统把 `cursorFlashTime` 设成 0 表示"不闪烁"，令牌里兜了下限 200ms，避免定时器忙等。
+
+### 回滚上一轮的底线改动
+
+上一轮把底线改成"只在编辑时出现、编辑时呼吸式闪烁"，那是基于误解做的，
+本轮**全部撤回**：底线恢复为原来的「空闲 2px 灰线 → 悬停 3px → 聚焦 4px 亮黄 → 出错品红」，
+连同一并加的 `inputLineVisibleFor` / `inputLineBlinkingFor` 两个纯函数也删了（成为死代码）。
+演示脚注、README、组件文档一并改回，并补上光标的说明。
+
+放大截图复核：空闲字段恢复了灰色基线，出错字段仍是品红边框 + 品红底线。
+
+### 测试
+
+删掉上一轮针对底线的两个用例，换成 `test_caretOnlyWhileEditing`：
+把 `cursorDelegate` 用 `createObject()` 实例化出来直接断言 ——
+**没有焦点时它必须是隐藏的**（这正是当初漏掉的那条绑定）：
+
+```text
+compare(fieldPlain.activeFocus, false, "测试环境下输入框没有焦点")
+compare(caret.visible, false, "没有焦点时光标必须隐藏（之前漏的就是这条绑定）")
+compare(timer.running, false, "光标不可见时闪烁定时器不该运行")
+compare(timer.interval, Theme.caretFlashHalf, "闪烁间隔应取自 Theme.caretFlashHalf")
+```
+
+### 三个小坑
+
+1. **QML `Timer` 的 C++ 类型名是 `QQmlTimer`**，不是 `QQuickTimer`
+   （用 `toString()` 在对象树里找类型时写错了会找不到）。
+2. **`compare(a, b)` 可能"假通过"**：如果表达式求值失败，两边会同时是 `undefined`，
+   比较依然相等。所以关键数值要先单独断言值域，再断言相等 ——
+   本轮的 `verify(Theme.caretFlashHalf >= 200 && <= 5000)` 就是为此加的。
+3. **`Qt.styleHints` 与 `Application.styleHints` 的 qmllint 差异**：
+   前者 qmllint 认不出类型（报 `missing-property`），后者需要
+   `import QtQuick.Controls` 且会被报一条 Info 级 `unused-imports`
+   （运行时确实需要那个 import，是误报）。选了后者：把警告降成 Info，
+   与 Qt 官方 Material 风格写法一致。
