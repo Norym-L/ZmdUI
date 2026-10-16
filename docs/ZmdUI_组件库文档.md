@@ -2,7 +2,7 @@
 
 > 本文由 `tools/gen_docs.py` 从仓库源码自动汇总生成，内容与磁盘上的文件逐字一致。
 
-> 生成时间：2026-10-15 21:27:51
+> 生成时间：2026-10-16 12:08:19
 
 | 项目 | 说明 |
 | --- | --- |
@@ -385,6 +385,7 @@ ZmdUI/
 │   ├── networkinformation/
 │   │   └── qnetworklistmanager.dll
 │   ├── platforms/
+│   │   ├── qoffscreen.dll
 │   │   └── qwindows.dll
 │   ├── qml/
 │   │   ├── QML/
@@ -488,30 +489,426 @@ ZmdUI/
 │   │       │   │   │   └── images/
 │   │       │   │   ├── icons/
 │   │       │   │   ├── impl/
-│   │       │   │   └── light/
-│   │       │   │       └── images/
+│   │       │   │   │   ├── ButtonBackground.qml
+│   │       │   │   │   ├── CheckIndicator.qml
+│   │       │   │   │   ├── CopyAction.qml
+│   │       │   │   │   ├── CutAction.qml
+│   │       │   │   │   ├── DeleteAction.qml
+│   │       │   │   │   ├── FocusFrame.qml
+│   │       │   │   │   ├── PasteAction.qml
+│   │       │   │   │   ├── RadioIndicator.qml
+│   │       │   │   │   ├── RedoAction.qml
+│   │       │   │   │   ├── SelectAllAction.qml
+│   │       │   │   │   ├── StyleImage.qml
+│   │       │   │   │   ├── SwitchIndicator.qml
+│   │       │   │   │   ├── TextEditingContextMenu.qml
+│   │       │   │   │   ├── UndoAction.qml
+│   │       │   │   │   ├── plugins.qmltypes
+│   │       │   │   │   ├── qmldir
+│   │       │   │   │   └── qtquickcontrols2fluentwinui3styleimplplugin.dll
+│   │       │   │   ├── light/
+│   │       │   │   │   └── images/
+│   │       │   │   ├── ApplicationWindow.qml
+│   │       │   │   ├── BusyIndicator.qml
+│   │       │   │   ├── Button.qml
+│   │       │   │   ├── CheckBox.qml
+│   │       │   │   ├── CheckDelegate.qml
+│   │       │   │   ├── ComboBox.qml
+│   │       │   │   ├── Config.qml
+│   │       │   │   ├── DelayButton.qml
+│   │       │   │   ├── Dialog.qml
+│   │       │   │   ├── DialogButtonBox.qml
+│   │       │   │   ├── DoubleSpinBox.qml
+│   │       │   │   ├── FocusFrame.qml
+│   │       │   │   ├── Frame.qml
+│   │       │   │   ├── GroupBox.qml
+│   │       │   │   ├── ItemDelegate.qml
+│   │       │   │   ├── Menu.qml
+│   │       │   │   ├── MenuBar.qml
+│   │       │   │   ├── MenuBarItem.qml
+│   │       │   │   ├── MenuItem.qml
+│   │       │   │   ├── MenuSeparator.qml
+│   │       │   │   ├── PageIndicator.qml
+│   │       │   │   ├── Popup.qml
+│   │       │   │   ├── ProgressBar.qml
+│   │       │   │   ├── RadioButton.qml
+│   │       │   │   ├── RadioDelegate.qml
+│   │       │   │   ├── RangeSlider.qml
+│   │       │   │   ├── RoundButton.qml
+│   │       │   │   ├── SearchField.qml
+│   │       │   │   ├── Slider.qml
+│   │       │   │   ├── SpinBox.qml
+│   │       │   │   ├── StyleImage.qml
+│   │       │   │   ├── SwipeDelegate.qml
+│   │       │   │   ├── Switch.qml
+│   │       │   │   ├── SwitchDelegate.qml
+│   │       │   │   ├── TabBar.qml
+│   │       │   │   ├── TabButton.qml
+│   │       │   │   ├── TextArea.qml
+│   │       │   │   ├── TextField.qml
+│   │       │   │   ├── ToolBar.qml
+│   │       │   │   ├── ToolButton.qml
+│   │       │   │   ├── ToolSeparator.qml
+│   │       │   │   ├── ToolTip.qml
+│   │       │   │   ├── plugins.qmltypes
+│   │       │   │   ├── qmldir
+│   │       │   │   └── qtquickcontrols2fluentwinui3styleplugin.dll
 │   │       │   ├── Fusion/
-│   │       │   │   └── impl/
+│   │       │   │   ├── impl/
+│   │       │   │   │   ├── ButtonPanel.qml
+│   │       │   │   │   ├── CheckIndicator.qml
+│   │       │   │   │   ├── CopyAction.qml
+│   │       │   │   │   ├── CutAction.qml
+│   │       │   │   │   ├── DeleteAction.qml
+│   │       │   │   │   ├── PasteAction.qml
+│   │       │   │   │   ├── RadioIndicator.qml
+│   │       │   │   │   ├── RedoAction.qml
+│   │       │   │   │   ├── SelectAllAction.qml
+│   │       │   │   │   ├── SliderGroove.qml
+│   │       │   │   │   ├── SliderHandle.qml
+│   │       │   │   │   ├── SwitchIndicator.qml
+│   │       │   │   │   ├── TextEditingContextMenu.qml
+│   │       │   │   │   ├── TextFieldBackground.qml
+│   │       │   │   │   ├── UndoAction.qml
+│   │       │   │   │   ├── plugins.qmltypes
+│   │       │   │   │   ├── qmldir
+│   │       │   │   │   └── qtquickcontrols2fusionstyleimplplugin.dll
+│   │       │   │   ├── ApplicationWindow.qml
+│   │       │   │   ├── BusyIndicator.qml
+│   │       │   │   ├── Button.qml
+│   │       │   │   ├── CheckBox.qml
+│   │       │   │   ├── CheckDelegate.qml
+│   │       │   │   ├── ComboBox.qml
+│   │       │   │   ├── DelayButton.qml
+│   │       │   │   ├── Dial.qml
+│   │       │   │   ├── Dialog.qml
+│   │       │   │   ├── DialogButtonBox.qml
+│   │       │   │   ├── DoubleSpinBox.qml
+│   │       │   │   ├── Drawer.qml
+│   │       │   │   ├── Frame.qml
+│   │       │   │   ├── GroupBox.qml
+│   │       │   │   ├── HorizontalHeaderView.qml
+│   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│   │       │   │   ├── ItemDelegate.qml
+│   │       │   │   ├── Label.qml
+│   │       │   │   ├── Menu.qml
+│   │       │   │   ├── MenuBar.qml
+│   │       │   │   ├── MenuBarItem.qml
+│   │       │   │   ├── MenuItem.qml
+│   │       │   │   ├── MenuSeparator.qml
+│   │       │   │   ├── Page.qml
+│   │       │   │   ├── PageIndicator.qml
+│   │       │   │   ├── Pane.qml
+│   │       │   │   ├── Popup.qml
+│   │       │   │   ├── ProgressBar.qml
+│   │       │   │   ├── RadioButton.qml
+│   │       │   │   ├── RadioDelegate.qml
+│   │       │   │   ├── RangeSlider.qml
+│   │       │   │   ├── RoundButton.qml
+│   │       │   │   ├── ScrollBar.qml
+│   │       │   │   ├── ScrollIndicator.qml
+│   │       │   │   ├── ScrollView.qml
+│   │       │   │   ├── SearchField.qml
+│   │       │   │   ├── SelectionRectangle.qml
+│   │       │   │   ├── Slider.qml
+│   │       │   │   ├── SpinBox.qml
+│   │       │   │   ├── SplitView.qml
+│   │       │   │   ├── SwipeDelegate.qml
+│   │       │   │   ├── Switch.qml
+│   │       │   │   ├── SwitchDelegate.qml
+│   │       │   │   ├── TabBar.qml
+│   │       │   │   ├── TabButton.qml
+│   │       │   │   ├── TextArea.qml
+│   │       │   │   ├── TextField.qml
+│   │       │   │   ├── ToolBar.qml
+│   │       │   │   ├── ToolButton.qml
+│   │       │   │   ├── ToolSeparator.qml
+│   │       │   │   ├── ToolTip.qml
+│   │       │   │   ├── TreeViewDelegate.qml
+│   │       │   │   ├── Tumbler.qml
+│   │       │   │   ├── VerticalHeaderView.qml
+│   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│   │       │   │   ├── plugins.qmltypes
+│   │       │   │   ├── qmldir
+│   │       │   │   └── qtquickcontrols2fusionstyleplugin.dll
 │   │       │   ├── Imagine/
-│   │       │   │   └── impl/
+│   │       │   │   ├── impl/
+│   │       │   │   │   ├── OpacityMask.qml
+│   │       │   │   │   ├── QuickControls2ImagineStyleImpl.qmltypes
+│   │       │   │   │   ├── TextEditingContextMenu.qml
+│   │       │   │   │   ├── qmldir
+│   │       │   │   │   └── qtquickcontrols2imaginestyleimplplugin.dll
+│   │       │   │   ├── ApplicationWindow.qml
+│   │       │   │   ├── BusyIndicator.qml
+│   │       │   │   ├── Button.qml
+│   │       │   │   ├── CheckBox.qml
+│   │       │   │   ├── CheckDelegate.qml
+│   │       │   │   ├── ComboBox.qml
+│   │       │   │   ├── DelayButton.qml
+│   │       │   │   ├── Dial.qml
+│   │       │   │   ├── Dialog.qml
+│   │       │   │   ├── DialogButtonBox.qml
+│   │       │   │   ├── DoubleSpinBox.qml
+│   │       │   │   ├── Drawer.qml
+│   │       │   │   ├── Frame.qml
+│   │       │   │   ├── GroupBox.qml
+│   │       │   │   ├── HorizontalHeaderView.qml
+│   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│   │       │   │   ├── ItemDelegate.qml
+│   │       │   │   ├── Label.qml
+│   │       │   │   ├── Menu.qml
+│   │       │   │   ├── MenuBar.qml
+│   │       │   │   ├── MenuBarItem.qml
+│   │       │   │   ├── MenuItem.qml
+│   │       │   │   ├── MenuSeparator.qml
+│   │       │   │   ├── Page.qml
+│   │       │   │   ├── PageIndicator.qml
+│   │       │   │   ├── Pane.qml
+│   │       │   │   ├── Popup.qml
+│   │       │   │   ├── ProgressBar.qml
+│   │       │   │   ├── RadioButton.qml
+│   │       │   │   ├── RadioDelegate.qml
+│   │       │   │   ├── RangeSlider.qml
+│   │       │   │   ├── RoundButton.qml
+│   │       │   │   ├── ScrollBar.qml
+│   │       │   │   ├── ScrollIndicator.qml
+│   │       │   │   ├── ScrollView.qml
+│   │       │   │   ├── SearchField.qml
+│   │       │   │   ├── SelectionRectangle.qml
+│   │       │   │   ├── Slider.qml
+│   │       │   │   ├── SpinBox.qml
+│   │       │   │   ├── SplitView.qml
+│   │       │   │   ├── StackView.qml
+│   │       │   │   ├── SwipeDelegate.qml
+│   │       │   │   ├── SwipeView.qml
+│   │       │   │   ├── Switch.qml
+│   │       │   │   ├── SwitchDelegate.qml
+│   │       │   │   ├── TabBar.qml
+│   │       │   │   ├── TabButton.qml
+│   │       │   │   ├── TextArea.qml
+│   │       │   │   ├── TextField.qml
+│   │       │   │   ├── ToolBar.qml
+│   │       │   │   ├── ToolButton.qml
+│   │       │   │   ├── ToolSeparator.qml
+│   │       │   │   ├── ToolTip.qml
+│   │       │   │   ├── Tumbler.qml
+│   │       │   │   ├── VerticalHeaderView.qml
+│   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│   │       │   │   ├── plugins.qmltypes
+│   │       │   │   ├── qmldir
+│   │       │   │   └── qtquickcontrols2imaginestyleplugin.dll
 │   │       │   ├── Material/
-│   │       │   │   └── impl/
+│   │       │   │   ├── impl/
+│   │       │   │   │   ├── BoxShadow.qml
+│   │       │   │   │   ├── CheckIndicator.qml
+│   │       │   │   │   ├── CursorDelegate.qml
+│   │       │   │   │   ├── ElevationEffect.qml
+│   │       │   │   │   ├── RadioIndicator.qml
+│   │       │   │   │   ├── RectangularGlow.qml
+│   │       │   │   │   ├── RoundedElevationEffect.qml
+│   │       │   │   │   ├── SliderHandle.qml
+│   │       │   │   │   ├── SwitchIndicator.qml
+│   │       │   │   │   ├── TextEditingContextMenu.qml
+│   │       │   │   │   ├── plugins.qmltypes
+│   │       │   │   │   ├── qmldir
+│   │       │   │   │   └── qtquickcontrols2materialstyleimplplugin.dll
+│   │       │   │   ├── ApplicationWindow.qml
+│   │       │   │   ├── BusyIndicator.qml
+│   │       │   │   ├── Button.qml
+│   │       │   │   ├── CheckBox.qml
+│   │       │   │   ├── CheckDelegate.qml
+│   │       │   │   ├── ComboBox.qml
+│   │       │   │   ├── DelayButton.qml
+│   │       │   │   ├── Dial.qml
+│   │       │   │   ├── Dialog.qml
+│   │       │   │   ├── DialogButtonBox.qml
+│   │       │   │   ├── DoubleSpinBox.qml
+│   │       │   │   ├── Drawer.qml
+│   │       │   │   ├── Frame.qml
+│   │       │   │   ├── GroupBox.qml
+│   │       │   │   ├── HorizontalHeaderView.qml
+│   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│   │       │   │   ├── ItemDelegate.qml
+│   │       │   │   ├── Label.qml
+│   │       │   │   ├── Menu.qml
+│   │       │   │   ├── MenuBar.qml
+│   │       │   │   ├── MenuBarItem.qml
+│   │       │   │   ├── MenuItem.qml
+│   │       │   │   ├── MenuSeparator.qml
+│   │       │   │   ├── Page.qml
+│   │       │   │   ├── PageIndicator.qml
+│   │       │   │   ├── Pane.qml
+│   │       │   │   ├── Popup.qml
+│   │       │   │   ├── ProgressBar.qml
+│   │       │   │   ├── RadioButton.qml
+│   │       │   │   ├── RadioDelegate.qml
+│   │       │   │   ├── RangeSlider.qml
+│   │       │   │   ├── RoundButton.qml
+│   │       │   │   ├── ScrollBar.qml
+│   │       │   │   ├── ScrollIndicator.qml
+│   │       │   │   ├── ScrollView.qml
+│   │       │   │   ├── SearchField.qml
+│   │       │   │   ├── SelectionRectangle.qml
+│   │       │   │   ├── Slider.qml
+│   │       │   │   ├── SpinBox.qml
+│   │       │   │   ├── SplitView.qml
+│   │       │   │   ├── StackView.qml
+│   │       │   │   ├── SwipeDelegate.qml
+│   │       │   │   ├── SwipeView.qml
+│   │       │   │   ├── Switch.qml
+│   │       │   │   ├── SwitchDelegate.qml
+│   │       │   │   ├── TabBar.qml
+│   │       │   │   ├── TabButton.qml
+│   │       │   │   ├── TextArea.qml
+│   │       │   │   ├── TextField.qml
+│   │       │   │   ├── ToolBar.qml
+│   │       │   │   ├── ToolButton.qml
+│   │       │   │   ├── ToolSeparator.qml
+│   │       │   │   ├── ToolTip.qml
+│   │       │   │   ├── TreeViewDelegate.qml
+│   │       │   │   ├── Tumbler.qml
+│   │       │   │   ├── VerticalHeaderView.qml
+│   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│   │       │   │   ├── plugins.qmltypes
+│   │       │   │   ├── qmldir
+│   │       │   │   └── qtquickcontrols2materialstyleplugin.dll
 │   │       │   ├── Universal/
-│   │       │   │   └── impl/
+│   │       │   │   ├── impl/
+│   │       │   │   │   ├── CheckIndicator.qml
+│   │       │   │   │   ├── CopyAction.qml
+│   │       │   │   │   ├── CutAction.qml
+│   │       │   │   │   ├── DeleteAction.qml
+│   │       │   │   │   ├── PasteAction.qml
+│   │       │   │   │   ├── RadioIndicator.qml
+│   │       │   │   │   ├── RedoAction.qml
+│   │       │   │   │   ├── SelectAllAction.qml
+│   │       │   │   │   ├── SwitchIndicator.qml
+│   │       │   │   │   ├── TextEditingContextMenu.qml
+│   │       │   │   │   ├── UndoAction.qml
+│   │       │   │   │   ├── plugins.qmltypes
+│   │       │   │   │   ├── qmldir
+│   │       │   │   │   └── qtquickcontrols2universalstyleimplplugin.dll
+│   │       │   │   ├── ApplicationWindow.qml
+│   │       │   │   ├── BusyIndicator.qml
+│   │       │   │   ├── Button.qml
+│   │       │   │   ├── CheckBox.qml
+│   │       │   │   ├── CheckDelegate.qml
+│   │       │   │   ├── ComboBox.qml
+│   │       │   │   ├── DelayButton.qml
+│   │       │   │   ├── Dial.qml
+│   │       │   │   ├── Dialog.qml
+│   │       │   │   ├── DialogButtonBox.qml
+│   │       │   │   ├── DoubleSpinBox.qml
+│   │       │   │   ├── Drawer.qml
+│   │       │   │   ├── Frame.qml
+│   │       │   │   ├── GroupBox.qml
+│   │       │   │   ├── HorizontalHeaderView.qml
+│   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│   │       │   │   ├── ItemDelegate.qml
+│   │       │   │   ├── Label.qml
+│   │       │   │   ├── Menu.qml
+│   │       │   │   ├── MenuBar.qml
+│   │       │   │   ├── MenuBarItem.qml
+│   │       │   │   ├── MenuItem.qml
+│   │       │   │   ├── MenuSeparator.qml
+│   │       │   │   ├── Page.qml
+│   │       │   │   ├── PageIndicator.qml
+│   │       │   │   ├── Pane.qml
+│   │       │   │   ├── Popup.qml
+│   │       │   │   ├── ProgressBar.qml
+│   │       │   │   ├── RadioButton.qml
+│   │       │   │   ├── RadioDelegate.qml
+│   │       │   │   ├── RangeSlider.qml
+│   │       │   │   ├── RoundButton.qml
+│   │       │   │   ├── ScrollBar.qml
+│   │       │   │   ├── ScrollIndicator.qml
+│   │       │   │   ├── ScrollView.qml
+│   │       │   │   ├── SearchField.qml
+│   │       │   │   ├── SelectionRectangle.qml
+│   │       │   │   ├── Slider.qml
+│   │       │   │   ├── SpinBox.qml
+│   │       │   │   ├── SplitView.qml
+│   │       │   │   ├── StackView.qml
+│   │       │   │   ├── SwipeDelegate.qml
+│   │       │   │   ├── Switch.qml
+│   │       │   │   ├── SwitchDelegate.qml
+│   │       │   │   ├── TabBar.qml
+│   │       │   │   ├── TabButton.qml
+│   │       │   │   ├── TextArea.qml
+│   │       │   │   ├── TextField.qml
+│   │       │   │   ├── ToolBar.qml
+│   │       │   │   ├── ToolButton.qml
+│   │       │   │   ├── ToolSeparator.qml
+│   │       │   │   ├── ToolTip.qml
+│   │       │   │   ├── Tumbler.qml
+│   │       │   │   ├── VerticalHeaderView.qml
+│   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│   │       │   │   ├── plugins.qmltypes
+│   │       │   │   ├── qmldir
+│   │       │   │   └── qtquickcontrols2universalstyleplugin.dll
 │   │       │   ├── Windows/
 │   │       │   │   ├── images/
-│   │       │   │   └── impl/
-│   │       │   └── impl/
-│   │       │       ├── CopyAction.qml
-│   │       │       ├── CutAction.qml
-│   │       │       ├── DeleteAction.qml
-│   │       │       ├── PasteAction.qml
-│   │       │       ├── RedoAction.qml
-│   │       │       ├── SelectAllAction.qml
-│   │       │       ├── UndoAction.qml
-│   │       │       ├── plugins.qmltypes
-│   │       │       ├── qmldir
-│   │       │       └── qtquickcontrols2implplugin.dll
+│   │       │   │   ├── impl/
+│   │       │   │   │   ├── CheckIndicator.qml
+│   │       │   │   │   ├── CopyAction.qml
+│   │       │   │   │   ├── CutAction.qml
+│   │       │   │   │   ├── DeleteAction.qml
+│   │       │   │   │   ├── PasteAction.qml
+│   │       │   │   │   ├── QuickControls2WindowsStyleImpl.qmltypes
+│   │       │   │   │   ├── RedoAction.qml
+│   │       │   │   │   ├── SelectAllAction.qml
+│   │       │   │   │   ├── SwitchIndicator.qml
+│   │       │   │   │   ├── TextEditingContextMenu.qml
+│   │       │   │   │   ├── UndoAction.qml
+│   │       │   │   │   ├── qmldir
+│   │       │   │   │   └── qtquickcontrols2windowsstyleimplplugin.dll
+│   │       │   │   ├── ApplicationWindow.qml
+│   │       │   │   ├── Button.qml
+│   │       │   │   ├── CheckBox.qml
+│   │       │   │   ├── CheckDelegate.qml
+│   │       │   │   ├── ComboBox.qml
+│   │       │   │   ├── DelayButton.qml
+│   │       │   │   ├── DoubleSpinBox.qml
+│   │       │   │   ├── Frame.qml
+│   │       │   │   ├── GroupBox.qml
+│   │       │   │   ├── ItemDelegate.qml
+│   │       │   │   ├── Menu.qml
+│   │       │   │   ├── MenuBar.qml
+│   │       │   │   ├── MenuBarItem.qml
+│   │       │   │   ├── MenuItem.qml
+│   │       │   │   ├── MenuSeparator.qml
+│   │       │   │   ├── ProgressBar.qml
+│   │       │   │   ├── RadioButton.qml
+│   │       │   │   ├── RadioDelegate.qml
+│   │       │   │   ├── RangeSlider.qml
+│   │       │   │   ├── ScrollBar.qml
+│   │       │   │   ├── ScrollIndicator.qml
+│   │       │   │   ├── ScrollView.qml
+│   │       │   │   ├── SearchField.qml
+│   │       │   │   ├── SelectionRectangle.qml
+│   │       │   │   ├── Slider.qml
+│   │       │   │   ├── SpinBox.qml
+│   │       │   │   ├── Switch.qml
+│   │       │   │   ├── SwitchDelegate.qml
+│   │       │   │   ├── TextArea.qml
+│   │       │   │   ├── TextField.qml
+│   │       │   │   ├── plugins.qmltypes
+│   │       │   │   ├── qmldir
+│   │       │   │   └── qtquickcontrols2windowsstyleplugin.dll
+│   │       │   ├── impl/
+│   │       │   │   ├── CopyAction.qml
+│   │       │   │   ├── CutAction.qml
+│   │       │   │   ├── DeleteAction.qml
+│   │       │   │   ├── PasteAction.qml
+│   │       │   │   ├── RedoAction.qml
+│   │       │   │   ├── SelectAllAction.qml
+│   │       │   │   ├── UndoAction.qml
+│   │       │   │   ├── plugins.qmltypes
+│   │       │   │   ├── qmldir
+│   │       │   │   └── qtquickcontrols2implplugin.dll
+│   │       │   ├── plugins.qmltypes
+│   │       │   ├── qmldir
+│   │       │   └── qtquickcontrols2plugin.dll
 │   │       ├── Dialogs/
 │   │       │   └── quickimpl/
 │   │       │       └── qml/
@@ -520,11 +917,20 @@ ZmdUI/
 │   │       │           ├── +Material/
 │   │       │           └── +Universal/
 │   │       ├── Effects/
+│   │       │   ├── effectsplugin.dll
+│   │       │   ├── plugins.qmltypes
+│   │       │   └── qmldir
 │   │       ├── Layouts/
+│   │       │   ├── plugins.qmltypes
+│   │       │   ├── qmldir
+│   │       │   └── qquicklayoutsplugin.dll
 │   │       ├── LocalStorage/
 │   │       ├── NativeStyle/
 │   │       │   ├── controls/
-│   │       │   └── util/
+│   │       │   ├── util/
+│   │       │   ├── plugins.qmltypes
+│   │       │   ├── qmldir
+│   │       │   └── qtquickcontrols2nativestyleplugin.dll
 │   │       ├── Particles/
 │   │       ├── Shapes/
 │   │       │   ├── DesignHelpers/
@@ -579,7 +985,19 @@ ZmdUI/
 │   ├── Qt6QuickControls2.dll
 │   ├── Qt6QuickControls2Basic.dll
 │   ├── Qt6QuickControls2BasicStyleImpl.dll
+│   ├── Qt6QuickControls2FluentWinUI3StyleImpl.dll
+│   ├── Qt6QuickControls2Fusion.dll
+│   ├── Qt6QuickControls2FusionStyleImpl.dll
+│   ├── Qt6QuickControls2Imagine.dll
+│   ├── Qt6QuickControls2ImagineStyleImpl.dll
 │   ├── Qt6QuickControls2Impl.dll
+│   ├── Qt6QuickControls2Material.dll
+│   ├── Qt6QuickControls2MaterialStyleImpl.dll
+│   ├── Qt6QuickControls2Universal.dll
+│   ├── Qt6QuickControls2UniversalStyleImpl.dll
+│   ├── Qt6QuickControls2WindowsStyleImpl.dll
+│   ├── Qt6QuickEffects.dll
+│   ├── Qt6QuickLayouts.dll
 │   ├── Qt6QuickShapes.dll
 │   ├── Qt6QuickTemplates2.dll
 │   ├── Qt6Svg.dll
@@ -1052,30 +1470,426 @@ ZmdUI/
 │       │   │       │   │   │   └── images/
 │       │   │       │   │   ├── icons/
 │       │   │       │   │   ├── impl/
-│       │   │       │   │   └── light/
-│       │   │       │   │       └── images/
+│       │   │       │   │   │   ├── ButtonBackground.qml
+│       │   │       │   │   │   ├── CheckIndicator.qml
+│       │   │       │   │   │   ├── CopyAction.qml
+│       │   │       │   │   │   ├── CutAction.qml
+│       │   │       │   │   │   ├── DeleteAction.qml
+│       │   │       │   │   │   ├── FocusFrame.qml
+│       │   │       │   │   │   ├── PasteAction.qml
+│       │   │       │   │   │   ├── RadioIndicator.qml
+│       │   │       │   │   │   ├── RedoAction.qml
+│       │   │       │   │   │   ├── SelectAllAction.qml
+│       │   │       │   │   │   ├── StyleImage.qml
+│       │   │       │   │   │   ├── SwitchIndicator.qml
+│       │   │       │   │   │   ├── TextEditingContextMenu.qml
+│       │   │       │   │   │   ├── UndoAction.qml
+│       │   │       │   │   │   ├── plugins.qmltypes
+│       │   │       │   │   │   ├── qmldir
+│       │   │       │   │   │   └── qtquickcontrols2fluentwinui3styleimplplugin.dll
+│       │   │       │   │   ├── light/
+│       │   │       │   │   │   └── images/
+│       │   │       │   │   ├── ApplicationWindow.qml
+│       │   │       │   │   ├── BusyIndicator.qml
+│       │   │       │   │   ├── Button.qml
+│       │   │       │   │   ├── CheckBox.qml
+│       │   │       │   │   ├── CheckDelegate.qml
+│       │   │       │   │   ├── ComboBox.qml
+│       │   │       │   │   ├── Config.qml
+│       │   │       │   │   ├── DelayButton.qml
+│       │   │       │   │   ├── Dialog.qml
+│       │   │       │   │   ├── DialogButtonBox.qml
+│       │   │       │   │   ├── DoubleSpinBox.qml
+│       │   │       │   │   ├── FocusFrame.qml
+│       │   │       │   │   ├── Frame.qml
+│       │   │       │   │   ├── GroupBox.qml
+│       │   │       │   │   ├── ItemDelegate.qml
+│       │   │       │   │   ├── Menu.qml
+│       │   │       │   │   ├── MenuBar.qml
+│       │   │       │   │   ├── MenuBarItem.qml
+│       │   │       │   │   ├── MenuItem.qml
+│       │   │       │   │   ├── MenuSeparator.qml
+│       │   │       │   │   ├── PageIndicator.qml
+│       │   │       │   │   ├── Popup.qml
+│       │   │       │   │   ├── ProgressBar.qml
+│       │   │       │   │   ├── RadioButton.qml
+│       │   │       │   │   ├── RadioDelegate.qml
+│       │   │       │   │   ├── RangeSlider.qml
+│       │   │       │   │   ├── RoundButton.qml
+│       │   │       │   │   ├── SearchField.qml
+│       │   │       │   │   ├── Slider.qml
+│       │   │       │   │   ├── SpinBox.qml
+│       │   │       │   │   ├── StyleImage.qml
+│       │   │       │   │   ├── SwipeDelegate.qml
+│       │   │       │   │   ├── Switch.qml
+│       │   │       │   │   ├── SwitchDelegate.qml
+│       │   │       │   │   ├── TabBar.qml
+│       │   │       │   │   ├── TabButton.qml
+│       │   │       │   │   ├── TextArea.qml
+│       │   │       │   │   ├── TextField.qml
+│       │   │       │   │   ├── ToolBar.qml
+│       │   │       │   │   ├── ToolButton.qml
+│       │   │       │   │   ├── ToolSeparator.qml
+│       │   │       │   │   ├── ToolTip.qml
+│       │   │       │   │   ├── plugins.qmltypes
+│       │   │       │   │   ├── qmldir
+│       │   │       │   │   └── qtquickcontrols2fluentwinui3styleplugin.dll
 │       │   │       │   ├── Fusion/
-│       │   │       │   │   └── impl/
+│       │   │       │   │   ├── impl/
+│       │   │       │   │   │   ├── ButtonPanel.qml
+│       │   │       │   │   │   ├── CheckIndicator.qml
+│       │   │       │   │   │   ├── CopyAction.qml
+│       │   │       │   │   │   ├── CutAction.qml
+│       │   │       │   │   │   ├── DeleteAction.qml
+│       │   │       │   │   │   ├── PasteAction.qml
+│       │   │       │   │   │   ├── RadioIndicator.qml
+│       │   │       │   │   │   ├── RedoAction.qml
+│       │   │       │   │   │   ├── SelectAllAction.qml
+│       │   │       │   │   │   ├── SliderGroove.qml
+│       │   │       │   │   │   ├── SliderHandle.qml
+│       │   │       │   │   │   ├── SwitchIndicator.qml
+│       │   │       │   │   │   ├── TextEditingContextMenu.qml
+│       │   │       │   │   │   ├── TextFieldBackground.qml
+│       │   │       │   │   │   ├── UndoAction.qml
+│       │   │       │   │   │   ├── plugins.qmltypes
+│       │   │       │   │   │   ├── qmldir
+│       │   │       │   │   │   └── qtquickcontrols2fusionstyleimplplugin.dll
+│       │   │       │   │   ├── ApplicationWindow.qml
+│       │   │       │   │   ├── BusyIndicator.qml
+│       │   │       │   │   ├── Button.qml
+│       │   │       │   │   ├── CheckBox.qml
+│       │   │       │   │   ├── CheckDelegate.qml
+│       │   │       │   │   ├── ComboBox.qml
+│       │   │       │   │   ├── DelayButton.qml
+│       │   │       │   │   ├── Dial.qml
+│       │   │       │   │   ├── Dialog.qml
+│       │   │       │   │   ├── DialogButtonBox.qml
+│       │   │       │   │   ├── DoubleSpinBox.qml
+│       │   │       │   │   ├── Drawer.qml
+│       │   │       │   │   ├── Frame.qml
+│       │   │       │   │   ├── GroupBox.qml
+│       │   │       │   │   ├── HorizontalHeaderView.qml
+│       │   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│       │   │       │   │   ├── ItemDelegate.qml
+│       │   │       │   │   ├── Label.qml
+│       │   │       │   │   ├── Menu.qml
+│       │   │       │   │   ├── MenuBar.qml
+│       │   │       │   │   ├── MenuBarItem.qml
+│       │   │       │   │   ├── MenuItem.qml
+│       │   │       │   │   ├── MenuSeparator.qml
+│       │   │       │   │   ├── Page.qml
+│       │   │       │   │   ├── PageIndicator.qml
+│       │   │       │   │   ├── Pane.qml
+│       │   │       │   │   ├── Popup.qml
+│       │   │       │   │   ├── ProgressBar.qml
+│       │   │       │   │   ├── RadioButton.qml
+│       │   │       │   │   ├── RadioDelegate.qml
+│       │   │       │   │   ├── RangeSlider.qml
+│       │   │       │   │   ├── RoundButton.qml
+│       │   │       │   │   ├── ScrollBar.qml
+│       │   │       │   │   ├── ScrollIndicator.qml
+│       │   │       │   │   ├── ScrollView.qml
+│       │   │       │   │   ├── SearchField.qml
+│       │   │       │   │   ├── SelectionRectangle.qml
+│       │   │       │   │   ├── Slider.qml
+│       │   │       │   │   ├── SpinBox.qml
+│       │   │       │   │   ├── SplitView.qml
+│       │   │       │   │   ├── SwipeDelegate.qml
+│       │   │       │   │   ├── Switch.qml
+│       │   │       │   │   ├── SwitchDelegate.qml
+│       │   │       │   │   ├── TabBar.qml
+│       │   │       │   │   ├── TabButton.qml
+│       │   │       │   │   ├── TextArea.qml
+│       │   │       │   │   ├── TextField.qml
+│       │   │       │   │   ├── ToolBar.qml
+│       │   │       │   │   ├── ToolButton.qml
+│       │   │       │   │   ├── ToolSeparator.qml
+│       │   │       │   │   ├── ToolTip.qml
+│       │   │       │   │   ├── TreeViewDelegate.qml
+│       │   │       │   │   ├── Tumbler.qml
+│       │   │       │   │   ├── VerticalHeaderView.qml
+│       │   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│       │   │       │   │   ├── plugins.qmltypes
+│       │   │       │   │   ├── qmldir
+│       │   │       │   │   └── qtquickcontrols2fusionstyleplugin.dll
 │       │   │       │   ├── Imagine/
-│       │   │       │   │   └── impl/
+│       │   │       │   │   ├── impl/
+│       │   │       │   │   │   ├── OpacityMask.qml
+│       │   │       │   │   │   ├── QuickControls2ImagineStyleImpl.qmltypes
+│       │   │       │   │   │   ├── TextEditingContextMenu.qml
+│       │   │       │   │   │   ├── qmldir
+│       │   │       │   │   │   └── qtquickcontrols2imaginestyleimplplugin.dll
+│       │   │       │   │   ├── ApplicationWindow.qml
+│       │   │       │   │   ├── BusyIndicator.qml
+│       │   │       │   │   ├── Button.qml
+│       │   │       │   │   ├── CheckBox.qml
+│       │   │       │   │   ├── CheckDelegate.qml
+│       │   │       │   │   ├── ComboBox.qml
+│       │   │       │   │   ├── DelayButton.qml
+│       │   │       │   │   ├── Dial.qml
+│       │   │       │   │   ├── Dialog.qml
+│       │   │       │   │   ├── DialogButtonBox.qml
+│       │   │       │   │   ├── DoubleSpinBox.qml
+│       │   │       │   │   ├── Drawer.qml
+│       │   │       │   │   ├── Frame.qml
+│       │   │       │   │   ├── GroupBox.qml
+│       │   │       │   │   ├── HorizontalHeaderView.qml
+│       │   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│       │   │       │   │   ├── ItemDelegate.qml
+│       │   │       │   │   ├── Label.qml
+│       │   │       │   │   ├── Menu.qml
+│       │   │       │   │   ├── MenuBar.qml
+│       │   │       │   │   ├── MenuBarItem.qml
+│       │   │       │   │   ├── MenuItem.qml
+│       │   │       │   │   ├── MenuSeparator.qml
+│       │   │       │   │   ├── Page.qml
+│       │   │       │   │   ├── PageIndicator.qml
+│       │   │       │   │   ├── Pane.qml
+│       │   │       │   │   ├── Popup.qml
+│       │   │       │   │   ├── ProgressBar.qml
+│       │   │       │   │   ├── RadioButton.qml
+│       │   │       │   │   ├── RadioDelegate.qml
+│       │   │       │   │   ├── RangeSlider.qml
+│       │   │       │   │   ├── RoundButton.qml
+│       │   │       │   │   ├── ScrollBar.qml
+│       │   │       │   │   ├── ScrollIndicator.qml
+│       │   │       │   │   ├── ScrollView.qml
+│       │   │       │   │   ├── SearchField.qml
+│       │   │       │   │   ├── SelectionRectangle.qml
+│       │   │       │   │   ├── Slider.qml
+│       │   │       │   │   ├── SpinBox.qml
+│       │   │       │   │   ├── SplitView.qml
+│       │   │       │   │   ├── StackView.qml
+│       │   │       │   │   ├── SwipeDelegate.qml
+│       │   │       │   │   ├── SwipeView.qml
+│       │   │       │   │   ├── Switch.qml
+│       │   │       │   │   ├── SwitchDelegate.qml
+│       │   │       │   │   ├── TabBar.qml
+│       │   │       │   │   ├── TabButton.qml
+│       │   │       │   │   ├── TextArea.qml
+│       │   │       │   │   ├── TextField.qml
+│       │   │       │   │   ├── ToolBar.qml
+│       │   │       │   │   ├── ToolButton.qml
+│       │   │       │   │   ├── ToolSeparator.qml
+│       │   │       │   │   ├── ToolTip.qml
+│       │   │       │   │   ├── Tumbler.qml
+│       │   │       │   │   ├── VerticalHeaderView.qml
+│       │   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│       │   │       │   │   ├── plugins.qmltypes
+│       │   │       │   │   ├── qmldir
+│       │   │       │   │   └── qtquickcontrols2imaginestyleplugin.dll
 │       │   │       │   ├── Material/
-│       │   │       │   │   └── impl/
+│       │   │       │   │   ├── impl/
+│       │   │       │   │   │   ├── BoxShadow.qml
+│       │   │       │   │   │   ├── CheckIndicator.qml
+│       │   │       │   │   │   ├── CursorDelegate.qml
+│       │   │       │   │   │   ├── ElevationEffect.qml
+│       │   │       │   │   │   ├── RadioIndicator.qml
+│       │   │       │   │   │   ├── RectangularGlow.qml
+│       │   │       │   │   │   ├── RoundedElevationEffect.qml
+│       │   │       │   │   │   ├── SliderHandle.qml
+│       │   │       │   │   │   ├── SwitchIndicator.qml
+│       │   │       │   │   │   ├── TextEditingContextMenu.qml
+│       │   │       │   │   │   ├── plugins.qmltypes
+│       │   │       │   │   │   ├── qmldir
+│       │   │       │   │   │   └── qtquickcontrols2materialstyleimplplugin.dll
+│       │   │       │   │   ├── ApplicationWindow.qml
+│       │   │       │   │   ├── BusyIndicator.qml
+│       │   │       │   │   ├── Button.qml
+│       │   │       │   │   ├── CheckBox.qml
+│       │   │       │   │   ├── CheckDelegate.qml
+│       │   │       │   │   ├── ComboBox.qml
+│       │   │       │   │   ├── DelayButton.qml
+│       │   │       │   │   ├── Dial.qml
+│       │   │       │   │   ├── Dialog.qml
+│       │   │       │   │   ├── DialogButtonBox.qml
+│       │   │       │   │   ├── DoubleSpinBox.qml
+│       │   │       │   │   ├── Drawer.qml
+│       │   │       │   │   ├── Frame.qml
+│       │   │       │   │   ├── GroupBox.qml
+│       │   │       │   │   ├── HorizontalHeaderView.qml
+│       │   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│       │   │       │   │   ├── ItemDelegate.qml
+│       │   │       │   │   ├── Label.qml
+│       │   │       │   │   ├── Menu.qml
+│       │   │       │   │   ├── MenuBar.qml
+│       │   │       │   │   ├── MenuBarItem.qml
+│       │   │       │   │   ├── MenuItem.qml
+│       │   │       │   │   ├── MenuSeparator.qml
+│       │   │       │   │   ├── Page.qml
+│       │   │       │   │   ├── PageIndicator.qml
+│       │   │       │   │   ├── Pane.qml
+│       │   │       │   │   ├── Popup.qml
+│       │   │       │   │   ├── ProgressBar.qml
+│       │   │       │   │   ├── RadioButton.qml
+│       │   │       │   │   ├── RadioDelegate.qml
+│       │   │       │   │   ├── RangeSlider.qml
+│       │   │       │   │   ├── RoundButton.qml
+│       │   │       │   │   ├── ScrollBar.qml
+│       │   │       │   │   ├── ScrollIndicator.qml
+│       │   │       │   │   ├── ScrollView.qml
+│       │   │       │   │   ├── SearchField.qml
+│       │   │       │   │   ├── SelectionRectangle.qml
+│       │   │       │   │   ├── Slider.qml
+│       │   │       │   │   ├── SpinBox.qml
+│       │   │       │   │   ├── SplitView.qml
+│       │   │       │   │   ├── StackView.qml
+│       │   │       │   │   ├── SwipeDelegate.qml
+│       │   │       │   │   ├── SwipeView.qml
+│       │   │       │   │   ├── Switch.qml
+│       │   │       │   │   ├── SwitchDelegate.qml
+│       │   │       │   │   ├── TabBar.qml
+│       │   │       │   │   ├── TabButton.qml
+│       │   │       │   │   ├── TextArea.qml
+│       │   │       │   │   ├── TextField.qml
+│       │   │       │   │   ├── ToolBar.qml
+│       │   │       │   │   ├── ToolButton.qml
+│       │   │       │   │   ├── ToolSeparator.qml
+│       │   │       │   │   ├── ToolTip.qml
+│       │   │       │   │   ├── TreeViewDelegate.qml
+│       │   │       │   │   ├── Tumbler.qml
+│       │   │       │   │   ├── VerticalHeaderView.qml
+│       │   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│       │   │       │   │   ├── plugins.qmltypes
+│       │   │       │   │   ├── qmldir
+│       │   │       │   │   └── qtquickcontrols2materialstyleplugin.dll
 │       │   │       │   ├── Universal/
-│       │   │       │   │   └── impl/
+│       │   │       │   │   ├── impl/
+│       │   │       │   │   │   ├── CheckIndicator.qml
+│       │   │       │   │   │   ├── CopyAction.qml
+│       │   │       │   │   │   ├── CutAction.qml
+│       │   │       │   │   │   ├── DeleteAction.qml
+│       │   │       │   │   │   ├── PasteAction.qml
+│       │   │       │   │   │   ├── RadioIndicator.qml
+│       │   │       │   │   │   ├── RedoAction.qml
+│       │   │       │   │   │   ├── SelectAllAction.qml
+│       │   │       │   │   │   ├── SwitchIndicator.qml
+│       │   │       │   │   │   ├── TextEditingContextMenu.qml
+│       │   │       │   │   │   ├── UndoAction.qml
+│       │   │       │   │   │   ├── plugins.qmltypes
+│       │   │       │   │   │   ├── qmldir
+│       │   │       │   │   │   └── qtquickcontrols2universalstyleimplplugin.dll
+│       │   │       │   │   ├── ApplicationWindow.qml
+│       │   │       │   │   ├── BusyIndicator.qml
+│       │   │       │   │   ├── Button.qml
+│       │   │       │   │   ├── CheckBox.qml
+│       │   │       │   │   ├── CheckDelegate.qml
+│       │   │       │   │   ├── ComboBox.qml
+│       │   │       │   │   ├── DelayButton.qml
+│       │   │       │   │   ├── Dial.qml
+│       │   │       │   │   ├── Dialog.qml
+│       │   │       │   │   ├── DialogButtonBox.qml
+│       │   │       │   │   ├── DoubleSpinBox.qml
+│       │   │       │   │   ├── Drawer.qml
+│       │   │       │   │   ├── Frame.qml
+│       │   │       │   │   ├── GroupBox.qml
+│       │   │       │   │   ├── HorizontalHeaderView.qml
+│       │   │       │   │   ├── HorizontalHeaderViewDelegate.qml
+│       │   │       │   │   ├── ItemDelegate.qml
+│       │   │       │   │   ├── Label.qml
+│       │   │       │   │   ├── Menu.qml
+│       │   │       │   │   ├── MenuBar.qml
+│       │   │       │   │   ├── MenuBarItem.qml
+│       │   │       │   │   ├── MenuItem.qml
+│       │   │       │   │   ├── MenuSeparator.qml
+│       │   │       │   │   ├── Page.qml
+│       │   │       │   │   ├── PageIndicator.qml
+│       │   │       │   │   ├── Pane.qml
+│       │   │       │   │   ├── Popup.qml
+│       │   │       │   │   ├── ProgressBar.qml
+│       │   │       │   │   ├── RadioButton.qml
+│       │   │       │   │   ├── RadioDelegate.qml
+│       │   │       │   │   ├── RangeSlider.qml
+│       │   │       │   │   ├── RoundButton.qml
+│       │   │       │   │   ├── ScrollBar.qml
+│       │   │       │   │   ├── ScrollIndicator.qml
+│       │   │       │   │   ├── ScrollView.qml
+│       │   │       │   │   ├── SearchField.qml
+│       │   │       │   │   ├── SelectionRectangle.qml
+│       │   │       │   │   ├── Slider.qml
+│       │   │       │   │   ├── SpinBox.qml
+│       │   │       │   │   ├── SplitView.qml
+│       │   │       │   │   ├── StackView.qml
+│       │   │       │   │   ├── SwipeDelegate.qml
+│       │   │       │   │   ├── Switch.qml
+│       │   │       │   │   ├── SwitchDelegate.qml
+│       │   │       │   │   ├── TabBar.qml
+│       │   │       │   │   ├── TabButton.qml
+│       │   │       │   │   ├── TextArea.qml
+│       │   │       │   │   ├── TextField.qml
+│       │   │       │   │   ├── ToolBar.qml
+│       │   │       │   │   ├── ToolButton.qml
+│       │   │       │   │   ├── ToolSeparator.qml
+│       │   │       │   │   ├── ToolTip.qml
+│       │   │       │   │   ├── Tumbler.qml
+│       │   │       │   │   ├── VerticalHeaderView.qml
+│       │   │       │   │   ├── VerticalHeaderViewDelegate.qml
+│       │   │       │   │   ├── plugins.qmltypes
+│       │   │       │   │   ├── qmldir
+│       │   │       │   │   └── qtquickcontrols2universalstyleplugin.dll
 │       │   │       │   ├── Windows/
 │       │   │       │   │   ├── images/
-│       │   │       │   │   └── impl/
-│       │   │       │   └── impl/
-│       │   │       │       ├── CopyAction.qml
-│       │   │       │       ├── CutAction.qml
-│       │   │       │       ├── DeleteAction.qml
-│       │   │       │       ├── PasteAction.qml
-│       │   │       │       ├── RedoAction.qml
-│       │   │       │       ├── SelectAllAction.qml
-│       │   │       │       ├── UndoAction.qml
-│       │   │       │       ├── plugins.qmltypes
-│       │   │       │       ├── qmldir
-│       │   │       │       └── qtquickcontrols2implplugin.dll
+│       │   │       │   │   ├── impl/
+│       │   │       │   │   │   ├── CheckIndicator.qml
+│       │   │       │   │   │   ├── CopyAction.qml
+│       │   │       │   │   │   ├── CutAction.qml
+│       │   │       │   │   │   ├── DeleteAction.qml
+│       │   │       │   │   │   ├── PasteAction.qml
+│       │   │       │   │   │   ├── QuickControls2WindowsStyleImpl.qmltypes
+│       │   │       │   │   │   ├── RedoAction.qml
+│       │   │       │   │   │   ├── SelectAllAction.qml
+│       │   │       │   │   │   ├── SwitchIndicator.qml
+│       │   │       │   │   │   ├── TextEditingContextMenu.qml
+│       │   │       │   │   │   ├── UndoAction.qml
+│       │   │       │   │   │   ├── qmldir
+│       │   │       │   │   │   └── qtquickcontrols2windowsstyleimplplugin.dll
+│       │   │       │   │   ├── ApplicationWindow.qml
+│       │   │       │   │   ├── Button.qml
+│       │   │       │   │   ├── CheckBox.qml
+│       │   │       │   │   ├── CheckDelegate.qml
+│       │   │       │   │   ├── ComboBox.qml
+│       │   │       │   │   ├── DelayButton.qml
+│       │   │       │   │   ├── DoubleSpinBox.qml
+│       │   │       │   │   ├── Frame.qml
+│       │   │       │   │   ├── GroupBox.qml
+│       │   │       │   │   ├── ItemDelegate.qml
+│       │   │       │   │   ├── Menu.qml
+│       │   │       │   │   ├── MenuBar.qml
+│       │   │       │   │   ├── MenuBarItem.qml
+│       │   │       │   │   ├── MenuItem.qml
+│       │   │       │   │   ├── MenuSeparator.qml
+│       │   │       │   │   ├── ProgressBar.qml
+│       │   │       │   │   ├── RadioButton.qml
+│       │   │       │   │   ├── RadioDelegate.qml
+│       │   │       │   │   ├── RangeSlider.qml
+│       │   │       │   │   ├── ScrollBar.qml
+│       │   │       │   │   ├── ScrollIndicator.qml
+│       │   │       │   │   ├── ScrollView.qml
+│       │   │       │   │   ├── SearchField.qml
+│       │   │       │   │   ├── SelectionRectangle.qml
+│       │   │       │   │   ├── Slider.qml
+│       │   │       │   │   ├── SpinBox.qml
+│       │   │       │   │   ├── Switch.qml
+│       │   │       │   │   ├── SwitchDelegate.qml
+│       │   │       │   │   ├── TextArea.qml
+│       │   │       │   │   ├── TextField.qml
+│       │   │       │   │   ├── plugins.qmltypes
+│       │   │       │   │   ├── qmldir
+│       │   │       │   │   └── qtquickcontrols2windowsstyleplugin.dll
+│       │   │       │   ├── impl/
+│       │   │       │   │   ├── CopyAction.qml
+│       │   │       │   │   ├── CutAction.qml
+│       │   │       │   │   ├── DeleteAction.qml
+│       │   │       │   │   ├── PasteAction.qml
+│       │   │       │   │   ├── RedoAction.qml
+│       │   │       │   │   ├── SelectAllAction.qml
+│       │   │       │   │   ├── UndoAction.qml
+│       │   │       │   │   ├── plugins.qmltypes
+│       │   │       │   │   ├── qmldir
+│       │   │       │   │   └── qtquickcontrols2implplugin.dll
+│       │   │       │   ├── plugins.qmltypes
+│       │   │       │   ├── qmldir
+│       │   │       │   └── qtquickcontrols2plugin.dll
 │       │   │       ├── Dialogs/
 │       │   │       │   └── quickimpl/
 │       │   │       │       └── qml/
@@ -1084,11 +1898,20 @@ ZmdUI/
 │       │   │       │           ├── +Material/
 │       │   │       │           └── +Universal/
 │       │   │       ├── Effects/
+│       │   │       │   ├── effectsplugin.dll
+│       │   │       │   ├── plugins.qmltypes
+│       │   │       │   └── qmldir
 │       │   │       ├── Layouts/
+│       │   │       │   ├── plugins.qmltypes
+│       │   │       │   ├── qmldir
+│       │   │       │   └── qquicklayoutsplugin.dll
 │       │   │       ├── LocalStorage/
 │       │   │       ├── NativeStyle/
 │       │   │       │   ├── controls/
-│       │   │       │   └── util/
+│       │   │       │   ├── util/
+│       │   │       │   ├── plugins.qmltypes
+│       │   │       │   ├── qmldir
+│       │   │       │   └── qtquickcontrols2nativestyleplugin.dll
 │       │   │       ├── Particles/
 │       │   │       ├── Shapes/
 │       │   │       │   ├── DesignHelpers/
@@ -1147,7 +1970,19 @@ ZmdUI/
 │       │   ├── Qt6QuickControls2.dll
 │       │   ├── Qt6QuickControls2Basic.dll
 │       │   ├── Qt6QuickControls2BasicStyleImpl.dll
+│       │   ├── Qt6QuickControls2FluentWinUI3StyleImpl.dll
+│       │   ├── Qt6QuickControls2Fusion.dll
+│       │   ├── Qt6QuickControls2FusionStyleImpl.dll
+│       │   ├── Qt6QuickControls2Imagine.dll
+│       │   ├── Qt6QuickControls2ImagineStyleImpl.dll
 │       │   ├── Qt6QuickControls2Impl.dll
+│       │   ├── Qt6QuickControls2Material.dll
+│       │   ├── Qt6QuickControls2MaterialStyleImpl.dll
+│       │   ├── Qt6QuickControls2Universal.dll
+│       │   ├── Qt6QuickControls2UniversalStyleImpl.dll
+│       │   ├── Qt6QuickControls2WindowsStyleImpl.dll
+│       │   ├── Qt6QuickEffects.dll
+│       │   ├── Qt6QuickLayouts.dll
 │       │   ├── Qt6QuickShapes.dll
 │       │   ├── Qt6QuickTemplates2.dll
 │       │   ├── Qt6Svg.dll
@@ -1272,6 +2107,7 @@ ZmdUI/
 │   ├── probe_anim_button.qml
 │   ├── probe_buttons.qml
 │   ├── probe_dark.qml
+│   ├── probe_fade.qml
 │   ├── probe_hittest.qml
 │   ├── probe_popup.qml
 │   ├── probe_sidebar.qml
@@ -2036,6 +2872,17 @@ Button {
     readonly property bool showEdge: edgeVisibleFor(variant, skew, _isOn, enabled)
     readonly property color edgeColor: edgeColorFor(variant, _isOn)
 
+    /*!
+        底板的切角。**底板、Ghost 悬浮叠加层、焦点环共用这一份取值**。
+
+        抽出来是因为这三块画的是"同一个形状"，各写各的迟早会漂移 —— Ghost 的悬浮底
+        当初就是漏抄了这两个值，于是它退化成一块直角矩形、悬浮时直接戳出底板轮廓，
+        表现成"别的按钮是六边形、只有『了解更多』悬浮时是方块"。改一处、三处同步，
+        这个 bug 就不可能再出现。
+    */
+    readonly property real cutTopRightSize: enabled ? cutSize : 0
+    readonly property real cutBottomLeftSize: enabled ? Theme.cutSm : 0
+
     /*! 悬停 / 聚焦的过渡时长。所有状态动画共用它，保证节奏一致。 */
     readonly property int stateDuration: Theme.durBase
 
@@ -2052,7 +2899,8 @@ Button {
         case Theme.Variant.Danger:
             return Theme.subBg
         default:
-            return _isOn ? Theme.surfaceHover : "transparent"
+            // Ghost：底板恒为透明，"有没有底"交给下面那块独立叠加层
+            return "transparent"
         }
     }
 
@@ -2087,8 +2935,8 @@ Button {
             color: control._fill
             strokeColor: control._stroke
             strokeWidth: control._stroke.a > 0 ? Theme.border : 0
-            cutTopRight: control.enabled ? control.cutSize : 0
-            cutBottomLeft: control.enabled ? Theme.cutSm : 0
+            cutTopRight: control.cutTopRightSize
+            cutBottomLeft: control.cutBottomLeftSize
 
             // 悬停/聚焦时底色平滑过渡（黄底黑字 ↔ 黑底黄字这类反色不再是硬切）
             Behavior on color {
@@ -2106,6 +2954,33 @@ Button {
 
             Behavior on color {
                 ColorAnimation { duration: control.stateDuration; easing.type: Theme.easingStd }
+            }
+        }
+
+        // ── Ghost 的悬浮底：独立叠加层，用 opacity 过渡 ──
+        //
+        // 为什么不让底板自己做 "transparent ↔ surfaceHover" 的颜色过渡：
+        //   · 底板的 color 是四个形态共用的，而 Ghost 是唯一一个"底色靠 alpha=0
+        //     表示不存在"的形态 —— "有没有底"和"底是什么颜色"被混在同一条通道上；
+        //   · 这条颜色过渡和左竖条的宽度过渡挤在同一次状态变化里，状态一抖动
+        //     动画就被反复重启，最先出问题的是它；
+        //   · 挪到独立的不透明度通道后，悬浮底的显隐与底板颜色彻底解耦，
+        //     任何形态的底色动画都影响不到它。
+        ZCutRect {
+            id: ghostHoverFill
+            anchors.fill: parent
+            visible: control.variant === Theme.Variant.Ghost
+            color: Theme.surfaceHover
+            opacity: control._isOn ? 1 : 0
+
+            // 切角必须和底板一模一样：叠加层是"铺在底板上"的替身，
+            // 少了这两个切角它就退化成一块直角矩形，悬浮时右上 / 左下会戳出底板轮廓外 ——
+            // 用户看到的"了解更多悬浮是方角、别的按钮是六边形"就是这个。
+            cutTopRight: control.cutTopRightSize
+            cutBottomLeft: control.cutBottomLeftSize
+
+            Behavior on opacity {
+                NumberAnimation { duration: control.stateDuration; easing.type: Theme.easingStd }
             }
         }
 
@@ -2141,8 +3016,8 @@ Button {
             color: "transparent"
             strokeColor: Theme.accent
             strokeWidth: 2
-            cutTopRight: control.cutSize
-            cutBottomLeft: Theme.cutSm
+            cutTopRight: control.cutTopRightSize
+            cutBottomLeft: control.cutBottomLeftSize
         }
     }
 
@@ -2176,11 +3051,15 @@ Button {
         }
     }
 
-    // 悬停提示：文案非空时自动显示。宿主类型明确（control 是 ZButton），
-    // 所以不需要在调用处写 parent.hovered，静态检查也不会有 missing-property 噪音。
+    // 悬停提示：文案非空时自动挂一个 ZToolTip（调用处不必再写 parent.hovered）。
+    //
+    // ⚠️ 这里**不能自己绑 visible**。ToolTip 的显隐状态机在 C++ 的 T.ToolTip 里
+    //    （它管 hovered + delay + timeout 三件事），一旦在外面把 visible 绑上，
+    //    等于把整套逻辑覆盖掉：提示框会"一碰就弹"（delay: 300 形同虚设），
+    //    而且弹层出现时抓走鼠标、可能反过来扰动宿主按钮的 hovered，
+    //    表现就是"背景闪一下又变回白色"。
     ZToolTip {
         text: control.tooltip
-        visible: control.tooltip.length > 0 && control.hovered
     }
 }
 ```
@@ -6942,6 +7821,11 @@ TestCase {
             ZButton { id: priB; text: "一键配置并启动"; variant: Theme.Variant.Primary }
         }
         Row {
+            spacing: 40
+            ZButton { id: ghostA; text: "了解更多"; variant: Theme.Variant.Ghost }
+            ZButton { id: ghostB; text: "了解更多"; variant: Theme.Variant.Ghost }
+        }
+        Row {
             spacing: 20
             ZSlider { id: sliderA; width: 260; label: "负载上限"; from: 0; to: 100; value: 62; valueSuffix: "%" }
             ZSlider { id: sliderB; width: 260; label: "刷新间隔"; from: 1; to: 60; value: 1; valueSuffix: " s" }
@@ -6996,6 +7880,22 @@ TestCase {
             if (t.indexOf(name) === 0)
                 return kids[i]
             var r = findByType(kids[i], name)
+            if (r)
+                return r
+        }
+        return null
+    }
+
+    // 递归找第一个 color 等于给定值的 item
+    function findByColor(item, color) {
+        var kids = item.children
+        if (!kids)
+            return null
+        for (var i = 0; i < kids.length; i++) {
+            var c = kids[i]
+            if (c.color !== undefined && c.color.toString() === color.toString())
+                return c
+            var r = findByColor(c, color)
             if (r)
                 return r
         }
@@ -7210,6 +8110,73 @@ TestCase {
         }
 
         caret.destroy()
+    }
+
+    // ── Ghost 的悬浮底：独立的叠加层，不靠底板颜色过渡 ──
+
+    function test_ghostHoverFillIsSeparateOverlay() {
+        // 底板恒为透明："有没有底"和"底是什么颜色"必须分成两条通道
+        compare(ghostA._fill.toString(), "#00000000", "Ghost 底板应恒为透明（不受状态影响）")
+        compare(ghostB._fill.toString(), "#00000000", "Ghost 底板应恒为透明（不受状态影响）")
+
+        // 悬浮底是那块颜色为 surfaceHover 的独立矩形，空闲时完全不显示
+        var overlay = findByColor(ghostA, Theme.surfaceHover)
+        verify(overlay !== null, "Ghost 应当有一块 surfaceHover 的悬浮底叠加层")
+        if (overlay)
+            compare(overlay.opacity, 0, "没有悬停时悬浮底必须完全不显示")
+
+        // ⚠️ 这里**不能**断言 overlay.visible：QQuickItem 的 visible 是「继承生效值」，
+        // qmltestrunner + 离屏平台下测试窗口并没有真正 visible，整棵子树读出来都是 false
+        //（实测底板 / 竖条 / 叠加层全是 false）。断言它等于假通过。
+
+        // 叠加层是每个按钮里都有的（靠 visible 门控只给 Ghost 用），
+        // 所以不能断言"其它形态里不存在" —— 只能断言它在 Ghost 之外同样不显示。
+        var secOverlay = findByColor(secA, Theme.surfaceHover)
+        verify(secOverlay !== null, "叠加层是共用的实现，各形态都有")
+        if (secOverlay)
+            compare(secOverlay.opacity, 0, "非 Ghost 形态下它同样应该是透明的")
+    }
+
+    // ── Ghost 悬浮底的切角必须和底板一致（六边形，不是直角矩形）──
+    //
+    // 用户报的 bug：别的按钮悬浮时是六边形（右上 + 左下各切一刀），
+    // 只有 Ghost（"了解更多"）的悬浮底是一块直角矩形，两个角戳在底板轮廓外面。
+    // 根因是那块叠加层当初漏抄了切角绑定。
+    //
+    // 断言写成"叠加层 == 底板共用的那份取值"，而不是写死 12 / 6：
+    // 以后调 Theme.cutMd 不会把测试改坏，但只要有人再少抄一次绑定就会立刻红。
+
+    function test_ghostHoverFillHasSameChamferAsBoard() {
+        var overlay = findByColor(ghostA, Theme.surfaceHover)
+        verify(overlay !== null, "Ghost 应当有一块 surfaceHover 的悬浮底叠加层")
+        if (!overlay)
+            return
+
+        // 先单独确认取值本身有效。只写 compare(两边相等) 是不够的 ——
+        // 表达式求值失败时两边会同时是 undefined，比较照样"通过"。
+        verify(ghostA.cutTopRightSize > 0,
+               "底板右上切角应是有效正值，实测 " + ghostA.cutTopRightSize)
+        verify(ghostA.cutBottomLeftSize > 0,
+               "底板左下切角应是有效正值，实测 " + ghostA.cutBottomLeftSize)
+
+        compare(overlay.cutTopRight, ghostA.cutTopRightSize,
+                "悬浮底右上切角必须和底板同源，否则悬浮时退化成直角矩形")
+        compare(overlay.cutBottomLeft, ghostA.cutBottomLeftSize,
+                "悬浮底左下切角必须和底板同源")
+
+        // 直角矩形的特征就是两个切角都为 0：把"退化成矩形"这个回归直接钉死
+        verify(overlay.cutTopRight !== 0 && overlay.cutBottomLeft !== 0,
+               "悬浮底不能是直角矩形：右上 / 左下切角都不该为 0")
+
+        // 同源证明：改 cutSize 必须同时改到两边，说明确实只有一份取值
+        var original = ghostA.cutSize
+        ghostA.cutSize = original + 4
+        wait(30)
+        compare(overlay.cutTopRight, ghostA.cutSize,
+                "cutSize 变化应同时作用于底板与悬浮底（只有一份取值）")
+        compare(overlay.cutTopRight, ghostA.cutTopRightSize, "两者必须始终相等")
+        ghostA.cutSize = original
+        wait(30)
     }
 
     // ── 主题切换 ──
@@ -9174,3 +10141,184 @@ compare(timer.interval, Theme.caretFlashHalf, "闪烁间隔应取自 Theme.caret
    `import QtQuick.Controls` 且会被报一条 Info 级 `unused-imports`
    （运行时确实需要那个 import，是误报）。选了后者：把警告降成 Info，
    与 Qt 官方 Material 风格写法一致。
+
+
+## 5m. 第十三轮：「了解更多」悬浮时背景闪一下（白→灰→白）
+
+**现象**：Ghost 变体（无底无框、只有文字的那个）鼠标悬浮时，背景颜色闪一下：
+白 → 灰 → 白。用户要求"改成悬浮变灰色"。
+
+**先看用户截的图**：那张截图只有 100×38 px，放大后能看清它是**悬浮态**——
+左侧亮黄竖条在、背景是浅灰（`#E9E9E9` = `Theme.surfaceHover`）✓
+**也就是说"悬浮变灰"本身是对的，闪的是状态本身**。
+
+### 先量一遍：颜色过渡有没有问题
+
+怀疑是"从 `transparent` 淡入到不透明灰"的插值问题，于是写 `tools/probe_fade.qml`
+把两种做法并排取样（颜色过渡 vs 不透明度过渡）。
+
+> 第一版探针的结论是**错的**：合成公式忘了乘 255 —— QML 里 `color.r/g/b` 是 **0..1 归一化**的，
+> 我按 0..255 用，`#E9E9E9` 被打印成 "1"，差点得出"过渡会经过近黑"的错误结论。
+> 修正后重测：
+
+```text
+起始 未悬浮   | A(color 过渡): rgb=0,0,0     a=0.00 看到=255 | B(opacity): rgb=233 a=0.00
+悬浮后 120ms  | A: rgb=231,231,231 a=0.99 看到=231 | B: rgb=233 a=0.99
+悬浮后 240ms  | A: rgb=233,233,233 a=1.00 看到=233 | B: rgb=233 a=1.00
+```
+
+**结论：颜色过渡本身是干净的，中间帧没有变深**（231 → 233）。
+所以"闪一下"不是插值问题，而是**状态在抖**（hovered 一阵真一阵假）。
+
+### 两个确定的问题
+
+**① 提示框把 Qt 的显隐状态机整个覆盖了（真 bug）**
+
+```qml
+// 改之前
+ZToolTip { text: control.tooltip; visible: control.tooltip.length > 0 && control.hovered }
+```
+
+`ToolTip` 的显隐状态机在 **C++ 的 `T.ToolTip`** 里（它管 `hovered` + `delay` + `timeout` 三件事，
+Basic 样式自己都不碰 `visible`）。在外面把 `visible` 绑上等于把整套逻辑作废：
+
+* `delay: 300` 形同虚设 → 提示框一碰就弹；
+* 弹层出现时会抓走鼠标，**可能反过来扰动宿主按钮的 `hovered`** ——
+  于是"灰 → 弹层 → hovered 丢失 → 白 → 弹层关闭 → 又灰"，正是用户看到的节奏。
+
+改法：只给 `text`，把显隐交还给 `T.ToolTip`。
+
+**② Ghost 的"有没有底"和"底是什么颜色"混在同一条通道上**
+
+Ghost 是四个形态里唯一用 `color: transparent` 表示"没有底"的，却和另外三个形态共用
+底板的 `color` + `Behavior on color`。改成：
+
+* 底板对 Ghost **恒为透明**；
+* 悬浮底单独一块 `ZCutRect`（`color: Theme.surfaceHover`，`opacity: 随 _isOn` + `Behavior`）。
+
+这样悬浮底的显隐走独立的不透明度通道，不再和底板颜色动画、左竖条的宽度动画挤在
+同一次状态变化里；状态抖动的表现也会退化成"淡入淡出"而不是"闪变"。
+
+### 测试环境里踩到的两个坑（都会导致假通过）
+
+1. **`QQuickItem.visible` 是"继承生效值"**：`qmltestrunner` + 离屏平台下测试窗口并没有真正
+   `visible`，整棵子树读出来都是 `false`（实测底板 / 竖条 / 叠加层全部 `false`）。
+   **不能拿它做断言**，否则恒真。改用不受继承影响的量（`opacity`、颜色、Qt 自己的
+   `cursorVisible` / `activeFocus`）。
+2. **"其它形态里不该有这块叠加层"是错的**：叠加层写在 `background` 里，每个按钮都有一份，
+   只是靠 `visible` 门控只给 Ghost 用。断言应落在"空闲时 opacity 为 0"上。
+
+新增 `test_ghostHoverFillIsSeparateOverlay`（底板恒透明 + 悬浮底存在且空闲时透明）。
+
+### 还没定性的部分（需要真机确认）
+
+离屏环境投递不了鼠标事件（已实测），**闪的状态抖没能在本地复现**。
+已排除的：颜色过渡有中间色坑、按钮几何随悬浮变化（有测试守着宽度不变量）、示例工程里
+没有别的 MouseArea/HoverHandler 覆盖。
+
+需要你在按钮上加一行日志来定性（30 秒）：
+
+```qml
+ZButton {
+    id: dbg
+    text: "了解更多"; variant: Theme.Variant.Ghost
+    onHoveredChanged: console.log("[hover]", hovered)   // 快速 true/false/true 就是状态在抖
+}
+```
+
+* 若日志抖成 `true → false → true`：**状态被弹层或布局抢走了**，
+  请顺带确认这个按钮有没有设 `tooltip:`（有的话第①条就是直接原因）；
+* 若日志只有一次 `true`：状态是稳的，那"闪"来自渲染层，把上面第②条的改动留着即可。
+
+
+## 5n. 第十四轮：Ghost 悬浮底是方块（上一轮重构带出来的回归）
+
+**现象**：用户报「把这个『了解更多』按钮鼠标悬浮显示的背景形状改成和别的按钮一样的六边形」——
+即其它形态悬浮时是六边形（右上 + 左下各切一刀），只有 Ghost 的悬浮底是**直角矩形**。
+
+**根因是上一轮（5m）自己带出来的**：5m 为了让"有没有底"和"底是什么颜色"走两条通道，
+把 Ghost 的悬浮底从底板里拆出来，另开了一块独立叠加层 `ghostHoverFill`。
+拆的时候只搬了 `color` / `opacity`，**漏搬了底板上的两个切角绑定**，
+于是那块叠加层退化成 `anchors.fill` 的直角矩形。
+
+板子本身没变，所以这是个"纯叠加层形状"的问题：`ZCutRect` 的切角默认值是 0，
+少写一行绑定就静默变成矩形，不会有任何报错或警告 —— 这也是它当初能溜过去的原因。
+
+### 改法：把切角收成一份取值，三处共用
+
+不在叠加层上再抄一遍 `cutSize` / `cutSm`，而是抽成两个只读属性，
+让**底板、Ghost 悬浮底、焦点环**绑定同一份：
+
+```qml
+readonly property real cutTopRightSize: enabled ? cutSize : 0
+readonly property real cutBottomLeftSize: enabled ? Theme.cutSm : 0
+```
+
+原来焦点环是第三处硬抄（`cutTopRight: control.cutSize` / `cutBottomLeft: Theme.cutSm`），
+一并收编。这样"同一个形状画在三处"这件事在代码里只剩一个事实来源，
+以后再拆叠加层也不会漏抄 —— 因为已经没有第二份可抄。
+
+### 验证
+
+**① 静态检查 0 新增警告**
+
+```text
+qmllint -I qml qml/ZmdUI/ZButton.qml qml/main.qml qml/DemoContent.qml
+→ exit 0，ZButton.qml 无任何输出
+（剩下的 79 条 [unqualified] 与 caret 的 missing-property 是已记录的固有提示）
+```
+
+**② 行为测试 15 项全绿**，其中新增 `test_ghostHoverFillHasSameChamferAsBoard`
+
+```text
+qmltestrunner -input tests/tst_hover.qml -import qml
+Totals: 15 passed, 0 failed, 0 skipped, 0 blacklisted, 1798ms
+```
+
+**③ 新测试确实能抓到回归（不是恒真的假通过）**
+
+把叠加层的切角改回 `0`（复现上一轮的代码）再跑：
+
+```text
+FAIL!  : ZmdUIBehaviors::test_ghostHoverFillHasSameChamferAsBoard()
+         悬浮底右上切角必须和底板同源，否则悬浮时退化成直角矩形
+Totals: 14 passed, 1 failed, 0 skipped, 0 blacklisted, 1755ms
+```
+
+改回来后 15 passed。**先证明它红、再证明它绿**，避免写出永远通过的断言。
+
+> 新用例特意**不写死 12 / 6**，而是断言「叠加层 == 底板共用的那份取值」，
+> 并额外跑一次 `ghostA.cutSize = original + 4` 检查两边同步变化：
+> 这样以后调 `Theme.cutMd` 不会把测试改坏，但少抄一次绑定就会立刻红。
+> 同时保留了「两边都不能是 0」的独立断言 —— 只写 `compare(a, b)` 的话，
+> 表达式求值失败时两边会同时是 `undefined`，比较照样通过。
+
+**④ 像素级前后对照（离屏渲染，3 倍放大）**
+
+离屏平台投递不了鼠标事件，`hovered` 永远是 false，悬浮底（`opacity` 绑在 `_isOn` 上）
+根本不会出现。所以探针里**直接给 `opacity` / `visible` 赋值** —— QML 里对已绑定属性赋值
+会替换掉那条绑定，只影响探针里的临时实例，组件库本身不动，
+渲染出来的仍是**真实叠加层的真实几何**（`tools/` 目录当前写不进去，探针落在仓库根目录）：
+
+```text
+改之前  PROBE board(tr,bl)=(12,6) overlay(tr,bl)=(0,0)    ← 叠加层是直角矩形
+改之后  PROBE board(tr,bl)=(12,6) overlay(tr,bl)=(12,6)   ← 和底板完全一致
+```
+
+四个形态（Ghost / Secondary / Danger / Primary）逐一亮起叠加层抓图对照：
+改之前灰色底是**方块**、四角戳在底板斜边之外；改之后是**六边形**、和底板边缘严丝合缝。
+
+**⑤ 整个演示程序仍然零 QML 警告**
+
+```text
+qml.exe -I qml tools/smoke.qml
+qml: SMOKE: window 1500 x 940 | contentItem 1500 x 940 | loaded true
+```
+
+### 本轮的一个环境问题（非代码）
+
+`docs/`、`tools/`、`qml/` 三个子目录缺少当前用户的显式权限项，
+导致 **shell 子进程写不进这些目录**（`tools/smoke.qml` 因此报 `SMOKE SAVE_FAIL`、
+`gen_docs.py` 无法重新生成文档）。工作区根目录已修好，子目录待修。
+上面的文档同步是用编辑器改完后跑 `_check_doc_sync.py` 核对**逐字节一致**的
+（46 个章节 + `verification.md` 全部 IN SYNC），不是靠人眼比对。

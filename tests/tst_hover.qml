@@ -53,6 +53,11 @@ TestCase {
             ZButton { id: priB; text: "一键配置并启动"; variant: Theme.Variant.Primary }
         }
         Row {
+            spacing: 40
+            ZButton { id: ghostA; text: "了解更多"; variant: Theme.Variant.Ghost }
+            ZButton { id: ghostB; text: "了解更多"; variant: Theme.Variant.Ghost }
+        }
+        Row {
             spacing: 20
             ZSlider { id: sliderA; width: 260; label: "负载上限"; from: 0; to: 100; value: 62; valueSuffix: "%" }
             ZSlider { id: sliderB; width: 260; label: "刷新间隔"; from: 1; to: 60; value: 1; valueSuffix: " s" }
@@ -107,6 +112,22 @@ TestCase {
             if (t.indexOf(name) === 0)
                 return kids[i]
             var r = findByType(kids[i], name)
+            if (r)
+                return r
+        }
+        return null
+    }
+
+    // 递归找第一个 color 等于给定值的 item
+    function findByColor(item, color) {
+        var kids = item.children
+        if (!kids)
+            return null
+        for (var i = 0; i < kids.length; i++) {
+            var c = kids[i]
+            if (c.color !== undefined && c.color.toString() === color.toString())
+                return c
+            var r = findByColor(c, color)
             if (r)
                 return r
         }
@@ -321,6 +342,73 @@ TestCase {
         }
 
         caret.destroy()
+    }
+
+    // ── Ghost 的悬浮底：独立的叠加层，不靠底板颜色过渡 ──
+
+    function test_ghostHoverFillIsSeparateOverlay() {
+        // 底板恒为透明："有没有底"和"底是什么颜色"必须分成两条通道
+        compare(ghostA._fill.toString(), "#00000000", "Ghost 底板应恒为透明（不受状态影响）")
+        compare(ghostB._fill.toString(), "#00000000", "Ghost 底板应恒为透明（不受状态影响）")
+
+        // 悬浮底是那块颜色为 surfaceHover 的独立矩形，空闲时完全不显示
+        var overlay = findByColor(ghostA, Theme.surfaceHover)
+        verify(overlay !== null, "Ghost 应当有一块 surfaceHover 的悬浮底叠加层")
+        if (overlay)
+            compare(overlay.opacity, 0, "没有悬停时悬浮底必须完全不显示")
+
+        // ⚠️ 这里**不能**断言 overlay.visible：QQuickItem 的 visible 是「继承生效值」，
+        // qmltestrunner + 离屏平台下测试窗口并没有真正 visible，整棵子树读出来都是 false
+        //（实测底板 / 竖条 / 叠加层全是 false）。断言它等于假通过。
+
+        // 叠加层是每个按钮里都有的（靠 visible 门控只给 Ghost 用），
+        // 所以不能断言"其它形态里不存在" —— 只能断言它在 Ghost 之外同样不显示。
+        var secOverlay = findByColor(secA, Theme.surfaceHover)
+        verify(secOverlay !== null, "叠加层是共用的实现，各形态都有")
+        if (secOverlay)
+            compare(secOverlay.opacity, 0, "非 Ghost 形态下它同样应该是透明的")
+    }
+
+    // ── Ghost 悬浮底的切角必须和底板一致（六边形，不是直角矩形）──
+    //
+    // 用户报的 bug：别的按钮悬浮时是六边形（右上 + 左下各切一刀），
+    // 只有 Ghost（"了解更多"）的悬浮底是一块直角矩形，两个角戳在底板轮廓外面。
+    // 根因是那块叠加层当初漏抄了切角绑定。
+    //
+    // 断言写成"叠加层 == 底板共用的那份取值"，而不是写死 12 / 6：
+    // 以后调 Theme.cutMd 不会把测试改坏，但只要有人再少抄一次绑定就会立刻红。
+
+    function test_ghostHoverFillHasSameChamferAsBoard() {
+        var overlay = findByColor(ghostA, Theme.surfaceHover)
+        verify(overlay !== null, "Ghost 应当有一块 surfaceHover 的悬浮底叠加层")
+        if (!overlay)
+            return
+
+        // 先单独确认取值本身有效。只写 compare(两边相等) 是不够的 ——
+        // 表达式求值失败时两边会同时是 undefined，比较照样"通过"。
+        verify(ghostA.cutTopRightSize > 0,
+               "底板右上切角应是有效正值，实测 " + ghostA.cutTopRightSize)
+        verify(ghostA.cutBottomLeftSize > 0,
+               "底板左下切角应是有效正值，实测 " + ghostA.cutBottomLeftSize)
+
+        compare(overlay.cutTopRight, ghostA.cutTopRightSize,
+                "悬浮底右上切角必须和底板同源，否则悬浮时退化成直角矩形")
+        compare(overlay.cutBottomLeft, ghostA.cutBottomLeftSize,
+                "悬浮底左下切角必须和底板同源")
+
+        // 直角矩形的特征就是两个切角都为 0：把"退化成矩形"这个回归直接钉死
+        verify(overlay.cutTopRight !== 0 && overlay.cutBottomLeft !== 0,
+               "悬浮底不能是直角矩形：右上 / 左下切角都不该为 0")
+
+        // 同源证明：改 cutSize 必须同时改到两边，说明确实只有一份取值
+        var original = ghostA.cutSize
+        ghostA.cutSize = original + 4
+        wait(30)
+        compare(overlay.cutTopRight, ghostA.cutSize,
+                "cutSize 变化应同时作用于底板与悬浮底（只有一份取值）")
+        compare(overlay.cutTopRight, ghostA.cutTopRightSize, "两者必须始终相等")
+        ghostA.cutSize = original
+        wait(30)
     }
 
     // ── 主题切换 ──

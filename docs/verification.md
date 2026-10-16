@@ -783,3 +783,184 @@ compare(timer.interval, Theme.caretFlashHalf, "闪烁间隔应取自 Theme.caret
    `import QtQuick.Controls` 且会被报一条 Info 级 `unused-imports`
    （运行时确实需要那个 import，是误报）。选了后者：把警告降成 Info，
    与 Qt 官方 Material 风格写法一致。
+
+
+## 5m. 第十三轮：「了解更多」悬浮时背景闪一下（白→灰→白）
+
+**现象**：Ghost 变体（无底无框、只有文字的那个）鼠标悬浮时，背景颜色闪一下：
+白 → 灰 → 白。用户要求"改成悬浮变灰色"。
+
+**先看用户截的图**：那张截图只有 100×38 px，放大后能看清它是**悬浮态**——
+左侧亮黄竖条在、背景是浅灰（`#E9E9E9` = `Theme.surfaceHover`）✓
+**也就是说"悬浮变灰"本身是对的，闪的是状态本身**。
+
+### 先量一遍：颜色过渡有没有问题
+
+怀疑是"从 `transparent` 淡入到不透明灰"的插值问题，于是写 `tools/probe_fade.qml`
+把两种做法并排取样（颜色过渡 vs 不透明度过渡）。
+
+> 第一版探针的结论是**错的**：合成公式忘了乘 255 —— QML 里 `color.r/g/b` 是 **0..1 归一化**的，
+> 我按 0..255 用，`#E9E9E9` 被打印成 "1"，差点得出"过渡会经过近黑"的错误结论。
+> 修正后重测：
+
+```text
+起始 未悬浮   | A(color 过渡): rgb=0,0,0     a=0.00 看到=255 | B(opacity): rgb=233 a=0.00
+悬浮后 120ms  | A: rgb=231,231,231 a=0.99 看到=231 | B: rgb=233 a=0.99
+悬浮后 240ms  | A: rgb=233,233,233 a=1.00 看到=233 | B: rgb=233 a=1.00
+```
+
+**结论：颜色过渡本身是干净的，中间帧没有变深**（231 → 233）。
+所以"闪一下"不是插值问题，而是**状态在抖**（hovered 一阵真一阵假）。
+
+### 两个确定的问题
+
+**① 提示框把 Qt 的显隐状态机整个覆盖了（真 bug）**
+
+```qml
+// 改之前
+ZToolTip { text: control.tooltip; visible: control.tooltip.length > 0 && control.hovered }
+```
+
+`ToolTip` 的显隐状态机在 **C++ 的 `T.ToolTip`** 里（它管 `hovered` + `delay` + `timeout` 三件事，
+Basic 样式自己都不碰 `visible`）。在外面把 `visible` 绑上等于把整套逻辑作废：
+
+* `delay: 300` 形同虚设 → 提示框一碰就弹；
+* 弹层出现时会抓走鼠标，**可能反过来扰动宿主按钮的 `hovered`** ——
+  于是"灰 → 弹层 → hovered 丢失 → 白 → 弹层关闭 → 又灰"，正是用户看到的节奏。
+
+改法：只给 `text`，把显隐交还给 `T.ToolTip`。
+
+**② Ghost 的"有没有底"和"底是什么颜色"混在同一条通道上**
+
+Ghost 是四个形态里唯一用 `color: transparent` 表示"没有底"的，却和另外三个形态共用
+底板的 `color` + `Behavior on color`。改成：
+
+* 底板对 Ghost **恒为透明**；
+* 悬浮底单独一块 `ZCutRect`（`color: Theme.surfaceHover`，`opacity: 随 _isOn` + `Behavior`）。
+
+这样悬浮底的显隐走独立的不透明度通道，不再和底板颜色动画、左竖条的宽度动画挤在
+同一次状态变化里；状态抖动的表现也会退化成"淡入淡出"而不是"闪变"。
+
+### 测试环境里踩到的两个坑（都会导致假通过）
+
+1. **`QQuickItem.visible` 是"继承生效值"**：`qmltestrunner` + 离屏平台下测试窗口并没有真正
+   `visible`，整棵子树读出来都是 `false`（实测底板 / 竖条 / 叠加层全部 `false`）。
+   **不能拿它做断言**，否则恒真。改用不受继承影响的量（`opacity`、颜色、Qt 自己的
+   `cursorVisible` / `activeFocus`）。
+2. **"其它形态里不该有这块叠加层"是错的**：叠加层写在 `background` 里，每个按钮都有一份，
+   只是靠 `visible` 门控只给 Ghost 用。断言应落在"空闲时 opacity 为 0"上。
+
+新增 `test_ghostHoverFillIsSeparateOverlay`（底板恒透明 + 悬浮底存在且空闲时透明）。
+
+### 还没定性的部分（需要真机确认）
+
+离屏环境投递不了鼠标事件（已实测），**闪的状态抖没能在本地复现**。
+已排除的：颜色过渡有中间色坑、按钮几何随悬浮变化（有测试守着宽度不变量）、示例工程里
+没有别的 MouseArea/HoverHandler 覆盖。
+
+需要你在按钮上加一行日志来定性（30 秒）：
+
+```qml
+ZButton {
+    id: dbg
+    text: "了解更多"; variant: Theme.Variant.Ghost
+    onHoveredChanged: console.log("[hover]", hovered)   // 快速 true/false/true 就是状态在抖
+}
+```
+
+* 若日志抖成 `true → false → true`：**状态被弹层或布局抢走了**，
+  请顺带确认这个按钮有没有设 `tooltip:`（有的话第①条就是直接原因）；
+* 若日志只有一次 `true`：状态是稳的，那"闪"来自渲染层，把上面第②条的改动留着即可。
+
+
+## 5n. 第十四轮：Ghost 悬浮底是方块（上一轮重构带出来的回归）
+
+**现象**：用户报「把这个『了解更多』按钮鼠标悬浮显示的背景形状改成和别的按钮一样的六边形」——
+即其它形态悬浮时是六边形（右上 + 左下各切一刀），只有 Ghost 的悬浮底是**直角矩形**。
+
+**根因是上一轮（5m）自己带出来的**：5m 为了让"有没有底"和"底是什么颜色"走两条通道，
+把 Ghost 的悬浮底从底板里拆出来，另开了一块独立叠加层 `ghostHoverFill`。
+拆的时候只搬了 `color` / `opacity`，**漏搬了底板上的两个切角绑定**，
+于是那块叠加层退化成 `anchors.fill` 的直角矩形。
+
+板子本身没变，所以这是个"纯叠加层形状"的问题：`ZCutRect` 的切角默认值是 0，
+少写一行绑定就静默变成矩形，不会有任何报错或警告 —— 这也是它当初能溜过去的原因。
+
+### 改法：把切角收成一份取值，三处共用
+
+不在叠加层上再抄一遍 `cutSize` / `cutSm`，而是抽成两个只读属性，
+让**底板、Ghost 悬浮底、焦点环**绑定同一份：
+
+```qml
+readonly property real cutTopRightSize: enabled ? cutSize : 0
+readonly property real cutBottomLeftSize: enabled ? Theme.cutSm : 0
+```
+
+原来焦点环是第三处硬抄（`cutTopRight: control.cutSize` / `cutBottomLeft: Theme.cutSm`），
+一并收编。这样"同一个形状画在三处"这件事在代码里只剩一个事实来源，
+以后再拆叠加层也不会漏抄 —— 因为已经没有第二份可抄。
+
+### 验证
+
+**① 静态检查 0 新增警告**
+
+```text
+qmllint -I qml qml/ZmdUI/ZButton.qml qml/main.qml qml/DemoContent.qml
+→ exit 0，ZButton.qml 无任何输出
+（剩下的 79 条 [unqualified] 与 caret 的 missing-property 是已记录的固有提示）
+```
+
+**② 行为测试 15 项全绿**，其中新增 `test_ghostHoverFillHasSameChamferAsBoard`
+
+```text
+qmltestrunner -input tests/tst_hover.qml -import qml
+Totals: 15 passed, 0 failed, 0 skipped, 0 blacklisted, 1798ms
+```
+
+**③ 新测试确实能抓到回归（不是恒真的假通过）**
+
+把叠加层的切角改回 `0`（复现上一轮的代码）再跑：
+
+```text
+FAIL!  : ZmdUIBehaviors::test_ghostHoverFillHasSameChamferAsBoard()
+         悬浮底右上切角必须和底板同源，否则悬浮时退化成直角矩形
+Totals: 14 passed, 1 failed, 0 skipped, 0 blacklisted, 1755ms
+```
+
+改回来后 15 passed。**先证明它红、再证明它绿**，避免写出永远通过的断言。
+
+> 新用例特意**不写死 12 / 6**，而是断言「叠加层 == 底板共用的那份取值」，
+> 并额外跑一次 `ghostA.cutSize = original + 4` 检查两边同步变化：
+> 这样以后调 `Theme.cutMd` 不会把测试改坏，但少抄一次绑定就会立刻红。
+> 同时保留了「两边都不能是 0」的独立断言 —— 只写 `compare(a, b)` 的话，
+> 表达式求值失败时两边会同时是 `undefined`，比较照样通过。
+
+**④ 像素级前后对照（离屏渲染，3 倍放大）**
+
+离屏平台投递不了鼠标事件，`hovered` 永远是 false，悬浮底（`opacity` 绑在 `_isOn` 上）
+根本不会出现。所以探针里**直接给 `opacity` / `visible` 赋值** —— QML 里对已绑定属性赋值
+会替换掉那条绑定，只影响探针里的临时实例，组件库本身不动，
+渲染出来的仍是**真实叠加层的真实几何**（`tools/` 目录当前写不进去，探针落在仓库根目录）：
+
+```text
+改之前  PROBE board(tr,bl)=(12,6) overlay(tr,bl)=(0,0)    ← 叠加层是直角矩形
+改之后  PROBE board(tr,bl)=(12,6) overlay(tr,bl)=(12,6)   ← 和底板完全一致
+```
+
+四个形态（Ghost / Secondary / Danger / Primary）逐一亮起叠加层抓图对照：
+改之前灰色底是**方块**、四角戳在底板斜边之外；改之后是**六边形**、和底板边缘严丝合缝。
+
+**⑤ 整个演示程序仍然零 QML 警告**
+
+```text
+qml.exe -I qml tools/smoke.qml
+qml: SMOKE: window 1500 x 940 | contentItem 1500 x 940 | loaded true
+```
+
+### 本轮的一个环境问题（非代码）
+
+`docs/`、`tools/`、`qml/` 三个子目录缺少当前用户的显式权限项，
+导致 **shell 子进程写不进这些目录**（`tools/smoke.qml` 因此报 `SMOKE SAVE_FAIL`、
+`gen_docs.py` 无法重新生成文档）。工作区根目录已修好，子目录待修。
+上面的文档同步是用编辑器改完后跑 `_check_doc_sync.py` 核对**逐字节一致**的
+（46 个章节 + `verification.md` 全部 IN SYNC），不是靠人眼比对。
