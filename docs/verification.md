@@ -964,3 +964,397 @@ qml: SMOKE: window 1500 x 940 | contentItem 1500 x 940 | loaded true
 `gen_docs.py` 无法重新生成文档）。工作区根目录已修好，子目录待修。
 上面的文档同步是用编辑器改完后跑 `_check_doc_sync.py` 核对**逐字节一致**的
 （46 个章节 + `verification.md` 全部 IN SYNC），不是靠人眼比对。
+
+## 5o. 第十五轮：新增 `ZRichTextEditor`（块级富文本）
+
+**需求**：用户问「这个组件库里有富文本框吗？没有的话做一个，支持图片、文字、文件等」。
+
+**结论**：库里只有单行 `ZTextField`，没有任何多行 / 富文本能力，于是新写一个
+`qml/ZmdUI/ZRichTextEditor.qml`（约 1310 行），并注册进 `qmldir` 与 `qml.qrc`
+（类型数 25 → 26）。
+
+### 为什么"富"做在块一级，而不是字符一级
+
+这是本轮唯一一个必须解释的设计取舍，因为它决定了整个 API 的形状：
+
+* Qt Quick 的 `TextEdit` 只暴露**整段** `font`；`textDocument` 是 `QObject`，
+  QML 侧拿不到 `QTextCursor` / `QTextCharFormat`。
+* 想做到"选中几个字加粗"，就得自己算文字的排版位置再叠一层富文本绘制 ——
+  那不是组件，那是重写一个有布局引擎的编辑器。
+* 本库的承诺是**纯 QML + 零第三方依赖**（连图标都是 `Shape` / `Canvas` 画的），
+  所以富文本的"富"落在块上：每个文字块各自带字体 / 字号 / 粗斜体下划线删除线 / 对齐，
+  块与块之间可以混排 **文字 / 图片 / 文件**。
+
+于是 `blocks` 是三种纯 JS 对象的数组：
+
+| 类型 | 字段 |
+| --- | --- |
+| `text` | `text` `style`(body/heading/quote/code) `bold` `italic` `underline` `strike` `align` |
+| `image` | `url` `name` `caption` |
+| `file` | `url` `name` `size` |
+
+### 两个刻意的边界
+
+**① 编辑器不做内部滚动**（不内置 `Flickable`）。原因有二：嵌套滚动本来就难用；
+更关键的是父级 `Flickable` 会把文字拖选当成滚动手势抢走。
+现在的约定是"内容多高就多高，由外层容器负责滚"，放进 `ScrollView` / `Flickable` / 列表都行。
+
+**② 块对象是原地改字段的**，改 `block.text` 不会发信号（`blocks` 里装的是普通 JS 对象，
+没有 `Q_PROPERTY`）。所以引入 `revision` 版本号作为**唯一依赖点**：
+任何一次原地修改都会 `revision++`，绑定在 `revision` 上的派生属性（字数统计、空态、
+块计数）随之刷新；只有整体替换 `blocks` 才重建 `Repeater`。
+这条约定避免了"每次敲一个字符就重建整个委托树"。
+
+### 验证
+
+**① 静态检查：0 条新增实质警告**
+
+```text
+qmllint -I qml qml/ZmdUI/ZRichTextEditor.qml   → exit 0，非 [unqualified] 诊断 0 条
+qmllint -I qml qml/DemoContent.qml             → exit 0，无输出
+```
+
+剩下 29～30 条 `[unqualified]` 全部出现在委托 / `Component` 作用域里访问 `editor.xxx`，
+是库内既有模式（同命令实测基线：`ZButton.qml` 0 条、`ZPanel.qml` 2 条、
+`ZTextField.qml` 5 条、`ZTable.qml` 38 条），属 qmllint 的已知误报。
+
+**② 行为测试 38 项全绿**
+
+```text
+qmltestrunner -input tests/tst_richtext.qml -import qml
+Totals: 38 passed, 0 failed, 0 skipped, 0 blacklisted
+```
+
+八组用例：块工厂 / 归一化 / 名字与单位换算 / 序列化 / 派生状态 / 结构操作 / 信号与 `revision` / 装配。
+测试里用假 url（`"u"`、`file:///nope.png`）会打出 `QML QQuickImage: Cannot open` 的 QWARN ——
+那是故意的破图占位路径，不是失败。
+
+**③ 离屏渲染探针抓出 4 个"测试抓不到"的真缺陷**
+
+单元测试只喂数据、不看像素，所以下面这些只有真渲染才暴露：
+
+| 现象 | 根因 | 修法 |
+| --- | --- | --- |
+| 所有文字块显示为空（图片块、文件块却正常） | `Loader.onLoaded` 里才把 `blockData` 注入被加载项，而 `onLoaded` **晚于**该项的 `Component.onCompleted`，所以初始化时读到的 `blockData.text` 永远是空串 | 加 `_syncFromBlock()`，`onBlockDataChanged` 时再同步一次（信号只能挂在委托根上，`TextArea` 没有这个信号） |
+| `readOnly` + 空文档什么都不显示 | 底部"继续输入"行把最后一点高度也吃了，`implicitHeight` 只剩 42 | 空态单独分支：网格 + `空文档 / NO CONTENT`，`implicitHeight` = 76 |
+| 工具栏被挤成两行 | 12 颗格式芯片 + 3 颗块操作挤不下 | 块操作抽成右侧固定的 `moveBar`，`Flow` 宽度 = 总宽 − moveBar，芯片内边距收到 `spacingSm` |
+| 工具栏高亮落在最后一块 | `currentIndex` 默认 `-1`，`_targetIndex()` 回落到末块 | 默认改 `0`（`-1` 只表示"没有当前块"） |
+
+**④ 一个藏得很深的焦点 bug（靠探针才发现）**
+
+现象：窗口显示后 `currentIndex` 自己从 0 跳到末块，工具栏高亮跟着跑到「代码」。
+
+根因：`_focusRequest` 的"无请求"哨兵是 `-1`，而 `tRoot.blockIndex` 在 `Loader.onLoaded`
+之前**也是 `-1`** —— 于是每个文字块在 `Component.onCompleted` 里都判定"就是我要抢焦点"，
+挨个 `forceActiveFocus()`，最后一个赢。`Error().stack` 里只有 `onActiveFocusChanged` 一帧，
+因为 `setFocus` 来自 C++，看栈完全看不出来。
+
+修法：抢焦点从 `Component.onCompleted` 挪到委托根的 `onBlockIndexChanged`，
+并显式要求 `tRoot.blockIndex >= 0`。**哨兵值和合法值撞车**这类问题，
+静态检查、单元测试都不会报，只有"渲染出来看一眼"才发现。
+
+**⑤ 演示页已接入（区块 07）**
+
+`qml/DemoContent.qml` 新增「区块 07 —— 富文本」，五个块（标题 / 正文 / 图片 / 文件 / 代码）全上。
+离屏探针滚到底抓图：演示页 `contentHeight = 3916`，主编辑器 `implicitHeight = 961`，
+只读空文档 `implicitHeight = 76`，零 QML 警告。
+
+### 本轮踩到的可复用坑
+
+* **`Loader.implicitHeight` 是只读的**（继承 `QQuickImplicitSizeItem`），
+  写 `implicitHeight: item.implicitHeight` 直接编译报
+  `Invalid property assignment: "implicitHeight" is a read-only property`，
+  整个类型变 unavailable。要写 `height:`。
+* **一个 `Text` 上同时写 `font:` 和 `font.bold:` 就是重复绑定**，
+  qmllint 报 `Duplicate binding on property 'font'`。改成单个
+  `Qt.font({ family: …, pixelSize: …, bold: …, italic: … })`。
+* **qmllint 把注释当指令**：注释里出现 `[duplicate-property-binding]` 这种方括号警告名，
+  或注释行以 `qmllint` 开头，都会报 `Invalid qmllint directive`。写注释要避开这两种形态。
+* **`TextArea.pressed` 不是可绑属性**：`onPressedChanged` 直接编译报
+  `Cannot assign to non-existent property "onPressedChanged"`，
+  `console.log(area.pressed)` 打出来是 `function() { [native code] }`（truthy，等于没有守卫）。
+* **`console.log` 的中文在 PowerShell 里会变乱码**：调试输出改用
+  `caption.charCodeAt(0)` / `length` 这类纯 ASCII 数字，别用中文当探针信标。
+
+### 文档同步（本轮）
+
+`README.md`（类型数 26、组件速查新增 `ZRichTextEditor` 行、已知限制补一条）、
+`tools/gen_docs.py` 的 `CHAPTERS`（二章加组件、七章加 `tests/tst_richtext.qml`）、
+以及本文 —— 然后跑 `python tools/gen_docs.py` 重新生成 `docs/ZmdUI_组件库文档.md`。
+
+顺带修了环境问题：`docs/` 的 Windows 文件权限（用 `diagnose-windows-sandbox-acl` 补上
+当前用户的完全控制），文档生成命令本身仍需在完全权限下执行才能写入 `docs/`。
+
+## 5p. 第十六轮：新增 `ZChatInput`（QQ 式消息输入框）
+
+需求原文：「再给我做一个qq聊天输入框那样的组件，可以输入文本、图片、文件」。
+
+### 设计取舍
+
+* **不弹系统文件对话框**。纯 QML 侧没有跨平台的 `FileDialog` 实现路径（那是
+  `QtQuick.Dialogs` 的职责，且各平台行为不一致）。点「图片 / 文件」只发
+  `imagePickRequested()` / `filePickRequested()`，宿主接自己的 `FileDialog`，选完再回填
+  `addImage(url, name)` / `addFile(url, name, size)`。组件对"文件从哪来"不做假设。
+* **不碰剪贴板位图**。`QClipboard` 的图片要 C++ 侧取，QML 只能拿到文本。所以"粘贴截图"
+  由宿主把图存成文件后走 `addImage`。拖放例外：`DropArea` 能直接拿到 `drop.urls`。
+* **`attachments` 整体替换 + `revision`**，和 `ZRichTextEditor.blocks` 同一套约定：
+  块/附件是纯 JS 对象，原地改字段不发信号，靠版本号做唯一依赖点。
+* **发送语义**：`Enter` 发送 / `Shift+Enter` 换行（`sendOnEnter: false` 时反过来，
+  `Ctrl+Enter` 恒发送），`Esc` 发 `cancelRequested()`。逻辑抽成纯函数 `isSendCombo(modifiers)` 便于单测。
+
+### 验证
+
+**① 静态检查：0 条新增实质警告**
+
+```text
+qmllint -I qml qml/ZmdUI/ZChatInput.qml qml/DemoContent.qml qml/main.qml
+→ exit 0，非 [unqualified] 诊断 0 条（合计 20 条 [unqualified]，全是委托访问 composer.xxx）
+```
+
+**② 行为测试 42 项全绿**
+
+```text
+qmltestrunner -input tests/tst_chatinput.qml -import qml
+Totals: 42 passed, 0 failed, 0 skipped, 0 blacklisted
+```
+
+八组：附件工厂 / 归一化（类型、空名兜底、扩展名）/ 文件名与 `formatBytes` /
+加附件与上限（含 `maxAttachments: 0` = 不限）/ 删附件 / 派生状态
+（`canSend` `overLimit` `draftSummary` `counterText`）/ 发送与快照拷贝 / 序列化往返 / 回车语义 / 装配。
+
+**③ 首跑虽然 42 项全过，但运行期有两处 `ReferenceError`** —— 测试断言不看日志，
+只有把 QWARN 翻出来才知道有代码在静默跑错：
+
+| 报错 | 根因 | 修法 |
+| --- | --- | --- |
+| `ZChatInput.qml:591: ReferenceError: fixTextLength is not defined` | 辅助函数写在 `Item { id: textWrap }` 的作用域里，却在 `TextArea.onTextChanged` 里裸调用 | 内联到处理函数里，并用 `_overLimitReported` 做边沿触发（只在刚越界时发一次 `limitReached("length")`，否则每敲一个字都发） |
+| `ZChatInput.qml:701 / :783: ReferenceError: attachLoader is not defined` | 委托用的是 `Loader { sourceComponent: imageThumb / fileCard }`，而两个 `Component` 声明在**文件级作用域**；id 是词法解析的，看不见 Repeater 委托里的那个 Loader | 改用 Repeater 委托的上下文属性 `modelData` / `index`（见下一节探针结论） |
+
+**④ 探针：`Repeater → Loader{sourceComponent} → Component` 里到底能拿到什么**
+
+专门写了个最小复现（两个 Repeater + 三组委托，各打一行日志），结论：
+
+* 委托根上写 `required property var modelData` / `required property int index`
+  **不会被注入**，运行期报 `Required property modelData was not initialized`
+  —— 因为 `sourceComponent` 造出来的项不是模型的直接委托，Qt 不给它初始化 required 属性。
+* 直接读上下文属性 `modelData` / `index` **可以**，`sourceComponent` 的项继承 Repeater 委托的上下文。
+* 模型是 **JS 对象数组**时 `modelData` 就是对象本身（本组件就是这种传法）；
+  换成 `ListModel` 命名角色则 `modelData` 是 `undefined`，只能用角色名。
+
+**⑤ 离屏渲染探针抓到的第 3 个缺陷**
+
+| 现象 | 根因 | 修法 |
+| --- | --- | --- |
+| 底部工具栏里快捷键提示和字数计数**叠字**（渲染成 `SHIFT+ENTER 换行30 / 2000`） | `hintLabel` 和 `counterLabel` 都锚在 `sendButton.left` 上，同一个锚点同一个边距 | 改成链式：字数锚按钮左侧，提示锚字数左侧，并把剩余宽度的算式一起扣掉字数宽度 |
+| `attachments: [ makeImageAttachment(...) ]` 报 `Binding loop detected for property "attachments"` | 工厂 `normalizeAttachment` 里 `id: "att-" + composer._nextAttachmentId++`，计数器是 **QML 属性**；绑定求值时读它、同时写它，等于自己依赖自己 | 计数器改成普通 JS 对象字段 `property var _idGen: ({ next: 1 })`，绑定只读到 `_idGen` 这个属性本身（值不变），写的是它内部字段，不触发失效 |
+| 缩略图的文件名压条盖住底板描边、把左下切角顶成直角；文件卡的扩展名徽标黑块盖过卡片边框 | 压条与徽标锚到父项边缘（`height: parent.height`），既没给描边让位，也没继承父项的切角 | 都按 `Theme.border` 内缩，并补 `cutBottomLeft: Theme.cutSm` 与父项对齐 |
+
+**⑥ 演示页已接入（区块 08）**
+
+`qml/DemoContent.qml` 新增「区块 08 —— 消息输入」，预填一段正文 + 一张图
+（url 留空，走 `IMG` 斜线占位）+ 一张文件卡，并接上 `sendRequested` /
+`imagePickRequested` / `filePickRequested` / `cancelRequested`。
+离屏探针滚到底抓图：演示页 `contentHeight = 4426`，零 QML 警告。
+
+### 本轮踩到的可复用坑
+
+* **`Theme` 的尺寸令牌真名**是 `Theme.border`(2) / `Theme.borderThick`(3) / `Theme.spacingXs`(4)，
+  写成 `border2` / `spacingXs4` 会报 `Member "border2" not found on type "Theme"`。
+* **`ZButton.mono` 是 `property string`**（按钮右侧的等宽小字，如 `F2` / `DEL`），不是布尔开关；
+  传 `true` 报 `Cannot assign literal of type bool to QString`。
+* **测试全绿 ≠ 代码没错**：`ReferenceError` 只进日志不进断言。跑完一定要把
+  `QWARN` 抓出来看一遍，本轮的 2 个 bug 都是这么发现的。
+* **工厂函数里不要动 QML 属性**：`makeImageAttachment(...)` 这类工厂很容易被用户写进
+  `attachments: [ … ]` 这种**绑定**里。只要工厂内部读写了一个 QML 属性（本轮的 id 计数器），
+  这个绑定就会依赖自己，Qt 直接报 `Binding loop`，而且**组件本身不报错**，只有用户那样写才炸。
+  状态要么放 JS 对象字段（`property var _gen: ({ next: 1 })`），要么让工厂保持无副作用。
+
+### 文档同步（本轮）
+
+`README.md`（类型数 27 = 1 单例 + 4 图元 + 22 控件、目录树、组件速查新增 `ZChatInput` 行、
+验证命令加 `tst_chatinput`、已知限制补"不弹系统对话框 / 不读剪贴板位图"）、
+`tools/gen_docs.py` 的 `CHAPTERS`（二章加组件、七章加 `tests/tst_chatinput.qml`、
+演示页描述改八大区块）、演示页底部装饰条改 `27 TYPES`，以及本文 ——
+然后跑 `python tools/gen_docs.py` 重新生成 `docs/ZmdUI_组件库文档.md`。
+
+## 5q. 第十七轮：拖放与 Ctrl+V 都不生效
+
+### 报障
+
+> 图片文件拖进去不生效，ctrl v 复制也不行
+
+### 根因一：`DropArea` 只发信号，没人落地
+
+组件这边 `DropArea.onDropped` 只做了 `composer.filesDropped(drop.urls)` 一件事，
+**自己不添加附件**；演示页那边又只接了 `onSendRequested`。
+两边一凑，拖进来的文件被完整地"观察"了一遍，然后什么也没发生。
+
+这类"信号发得没错，但没人接"的空转，本质是把职责推给了宿主却没写进文档。
+
+### 根因二：Ctrl+V 的三条路径能力完全不同
+
+先用一个隐藏 `Window` + `TextEdit` 的探针，配合 PowerShell 的
+`System.Windows.Forms.Clipboard` 造三种剪贴板内容实测（走真实 windows 平台，
+不是 offscreen —— offscreen 下剪贴板是空的）：
+
+| 复制的是什么 | `canPaste` | `paste()` 之后 `text` | 纯 QML 能做吗 |
+| --- | --- | --- | --- |
+| 一段文字 | `true` | 19 个字符 | 能，默认行为 |
+| 资源管理器里的文件 | `true` | 30 个字符 = `file:///C:/dev/ZmdUI/README.md` | **能**，按行拆开就是 url 列表 |
+| 一张位图 | `false` | 空 | **不能**，`QClipboard::image()` 在 QML 里不可达 |
+
+另外确认过：本机 Qt 的 QML 模块里**没有** Clipboard 类型
+（`C:\dev\Qt\6.11.2\mingw_64\qml` 下 `Qt.labs.platform` 只有 `labsplatformplugin.dll` +
+`plugins.qmltypes` + `qmldir`）。所以"粘截图"只能由宿主语言出手。
+
+### 修法
+
+1. **拖放自己落地**：`DropArea.onDropped` 在发信号之后调
+   `composer.addUrlsAsAttachments(drop.urls)`，按扩展名分流
+   （`isImageUrl(url)` 命中 `png/jpg/jpeg/gif/bmp/webp/svg/ico/tif/heic/avif` → 图片桶，
+   其余 → 文件桶），并照常遵守 `maxAttachments`。
+   `filesDropped(urls)` 保留，但语义改成"通知"，不再要求宿主自己加。
+2. **文件粘贴转附件**：在 `TextArea.onTextChanged` 里用 `insertedText(before, after)`
+   做共同前缀 / 共同后缀的 diff，把这次插入的净增量取出来；若它整体是由
+   `file:///…` 组成的行列表（`fileUrlsIn(block)`），就
+   `_suppressPasteScan = true` → 把正文还原成粘贴前 → `addUrlsAsAttachments(urls)`。
+   这样正文里不会多出一串路径，用户看到的是附件卡。
+   扫描前置 `area.activeFocus`：程序化地设 `text`（恢复草稿、演示页的初始文案）
+   不该被当成粘贴处理。
+3. **位图粘贴交给宿主**：新增 `signal pasteRequested()`。在 `Keys.onPressed` 里判
+   `Qt.Key_V + Ctrl`（不带 Shift）、非只读、且 `!area.canPaste`（= 剪贴板里没有文本，
+   典型就是位图）时发出。
+4. **演示程序加 C++ 桥**：`src/zclipboard.cpp/.h` 的 `ZClipboard` 提供
+   `hasImage()` / `hasUrls()` / `saveImage(ext = "png")`——把
+   `QGuiApplication::clipboard()->image()` 存进 `<temp>/zmdui-clipboard/clip-<毫秒>.<ext>`，
+   返回 `file:///…`。`main.cpp` 里用
+   `engine.rootContext()->setContextProperty("ZClipboard", &clipboardBridge)`
+   注入（不是 QML 单例，这样纯 `qml.exe` 跑测试时根本不需要它），
+   QML 侧 `typeof ZClipboard === "undefined"` 守卫。
+   演示页 `onPasteRequested` 调 `ZClipboard.saveImage()` 再 `chatDemo.addImage(url, "clipboard.png")`。
+
+另外两处顺手修的细节：
+
+* 拖进来 / 粘进来的文件拿不到字节数（QML 没有 `stat`），文件卡原来会显示 `0 B · ATTACHMENT`，
+  改成 `size > 0` 时才写大小，否则只写 `ATTACHMENT`。
+* `DropArea` 必须声明在 `TextArea` **之后**才能拿到 drop 事件：`TextEdit` 自己也会接拖放
+  并把文件路径当文本插进来。这一点在代码里补了注释。
+
+### 验证
+
+* `qmllint -I qml qml/ZmdUI/ZChatInput.qml qml/DemoContent.qml qml/main.qml`
+  → `exit 0`，非 `[unqualified]` 诊断 **0 条**（合计 22 条 unqualified，全是委托里访问
+  `composer.xxx` 与 `ZClipboard` 这种库内既有误报）。
+* `qmltestrunner -input tests/tst_chatinput.qml -import qml`
+  → **`Totals: 53 passed, 0 failed`**（原 42 项 + 本轮新增 11 项：`isImageUrl`、
+  `insertedText` 三种（追加 / 中间插入 / 删除）、`fileUrlsIn` 三种（单 url / 多行 / 混在正文里）、
+  `addUrlsAsAttachments` 四种（分流 / 跳过空项 / 遵守上限并只报一次 `limitReached` / 只读忽略））。
+  除故意的破图 `QWARN` 外无运行期警告，无 `Binding loop`。
+* 演示页离屏探针滚到底抓图：`contentHeight = 4426`，零 QML 警告，
+  证明 `onPasteRequested` 里的 `typeof ZClipboard` 守卫在纯 `qml.exe` 下不会炸。
+* C++ 构建：`cmake --build build-mingw` 通过，`ZClipboard` 编进 `ZmdUIDemo.exe`。
+
+上面这些只能证明"代码写对了"，证明不了"用户按下去有用"。所以另做了三组真机验证：
+
+| 验证 | 做法 | 结果 |
+| --- | --- | --- |
+| 文件粘贴真正落成附件 | 真窗口里 `focusInput()` 后把两行 `file:///…` 塞进 `text`（等价于粘贴完成后的状态） | `attachments=2 img=0 file=2`、`textlen=0`、`names=["README.md","CMakeLists.txt"]` |
+| 位图粘贴确实发出请求 | `System.Windows.Forms.Clipboard::SetImage` 放一张 80x60 位图 → 用 `SendKeys` 往探针窗口发真实 `Ctrl+V` 两次 | `PASTE_REQUESTED` 出现两次（`canPaste` 为 false 才走这条路） |
+| 桥在真实宿主里可见 | 在演示页临时打一行 `typeof ZClipboard` / `hasImage()`，重编译 `ZmdUIDemo.exe` 后启动 | `ZCLIP typeof= object hasImage= true` |
+
+`ZClipboard::saveImage()` 本身单独验过：`moc` + `g++` 把 `src/zclipboard.cpp` 编成独立小程序，
+剪贴板里放 64x48 纯色 `(20,200,60)`，输出 `hasImage=1`、`url=file:///…/clip-1792233352030.png`、
+`exists=1 size=64x48`、`pixel=20,200,60` —— 跨进程位图读到了、落盘对了、像素无损。
+
+验证完的临时插桩已全部撤掉并重新构建，`ZmdUIDemo.exe` 启动无任何 stderr 输出。
+
+### 本轮踩到的可复用坑
+
+* **信号 ≠ 功能**。"发一个 `filesDropped(urls)` 让宿主自己处理"听起来很干净，
+  但如果组件在默认情况下什么都不做，用户的第一反应就是"坏的"。默认行为要给足，
+  信号只用来**补充**通知。
+* **`DropArea` 要压住 `TextArea`**。`TextEdit` 自带拖放（把文件路径当文本插入），
+  声明顺序反了就会出现"拖进去正文里多一行 `file:///…`"。
+* **粘贴要在 diff 上做判断，不要在整个 `text` 上做**。直接对全文跑正则，
+  用户正在打的一段正常文字（比如引用了一个 share 链接）也会被误吃掉。
+* **资源的 id 生成器要放 JS 对象里**（见 5p），这次粘贴改写走的是同一个
+  `addAttachment`，所以 `_idGen` 的修法在这里第二次救了场。
+* **GUI 子系统的 exe 看不到 `console.log`**。`qml.exe` 是控制台程序，输出直接进 stderr；
+  但 `qt_add_executable` 产出的 `ZmdUIDemo.exe` 是 `WIN32` 子系统，`qDebug` 走
+  `OutputDebugString`，重定向 stderr 是空的。加 `QT_ASSUME_STDERR_HAS_CONSOLE=1`
+  才会照样写 stderr —— 排查"演示程序里到底有没有东西"时很关键。
+
+### 文档同步（本轮）
+
+`README.md`（目录树加 `src/zclipboard.cpp/.h`、组件速查 `ZChatInput` 行补
+`pasteRequested()` 与四个新函数、验证命令 42 → 53 项、已知限制把"拖放 / 粘贴"三条
+分开写清楚）、`docs/verification.md` 本文，然后重新生成 `docs/ZmdUI_组件库文档.md`。
+
+## 5r. 第十八轮：「图片」/「文件」按钮点了没反应
+
+### 报障
+
+> 下面的按钮是干什么的，点击没有反应
+
+### 根因：按钮只发信号，宿主没接
+
+工具栏那两颗芯片 `onClicked: composer.imagePickRequested()` —— 组件发一个信号就完事，
+演示页那边只 `console.log("imagePickRequested")`。于是点下去：有焦点变化、有 hover，
+就是什么都不发生。
+
+上一轮修拖放时已经反思过一遍「信号 ≠ 功能」（见 5q），结果隔着两个小节又栽在同一个
+坑里：**默认行为缺位**。区别是这回缺的是"选择文件"这一步，而它恰恰是用户按下按钮的
+全部预期。
+
+### 修法：把选择框做进组件，默认就开
+
+1. `ZChatInput.qml` 加 `import QtQuick.Dialogs`，内置两个 `FileDialog`
+   （`imageDialog` 过滤图片后缀、`fileDialog` 收所有文件，都是 `OpenFiles` 多选），
+   `onAccepted` 直接 `addUrlsAsAttachments(urlsOf(selectedFiles))`。
+2. 新增 `property bool useSystemDialogs: true`。芯片改成调
+   `openImagePicker()` / `openFilePicker()`：先发原来的信号（宿主可能想记账 / 打点），
+   再按 `useSystemDialogs` 决定弹不弹内置对话框。宿主想换成自己的选择器（带预览、
+   最近使用、远程目录）时置 `false` 接信号即可，行为完全不变。
+3. 顺手把两个"打开选择框"抽成公开函数 `openImagePicker()` / `openFilePicker()`：
+   宿主从菜单、快捷键、右键菜单触发同一个动作时不用再抄一遍逻辑。
+4. 新增 `urlsOf(files)`：把 `FileDialog.selectedFiles`（`list<url>` 的类数组）
+   转成普通字符串数组再交给 `addUrlsAsAttachments`，避免某些 Qt 版本拿到包装对象。
+
+### 验证
+
+* `qmllint -I qml qml/ZmdUI/ZChatInput.qml` → `exit 0`，非 `[unqualified]` 诊断 **0 条**
+  （15 条 unqualified，全是委托里访问 `composer.xxx` 的老误报）。
+* `qmltestrunner -input tests/tst_chatinput.qml -import qml` → **`Totals: 57 passed`**
+  （+4 项：`useSystemDialogs` 默认为真、`urlsOf` 剔空项、`openImagePicker` /
+  `openFilePicker` 在关掉内置对话框时仍发信号）。单测里一律
+  `useSystemDialogs = false`，否则测试进程会卡在模态对话框上。
+* **真机验证（关键）**：`qml.exe` 起一个只放 `ZChatInput` 的窗口，600ms 后调
+  `openImagePicker()`，从外部用 P/Invoke `EnumWindows` 枚举该进程的顶层窗口：
+
+  ```
+  hwnd=0x11102 visible=True class=#32770 title=[选择图片]
+  ```
+
+  `#32770` 就是 Win32 的对话框窗口类，标题正是我们设的「选择图片」。
+* 再把选择框**用到底**：`SendKeys` 往对话框里敲一条完整路径 + 回车，日志输出
+  `ATTACH_ADDED image chat-input-demo.png 0` —— 选完真的变成了附件，不是"弹出来好看"。
+* 演示程序重编译后 `区块 08` 正常加载、启动无 stderr 输出：`FileDialog` 是在组件实例化时
+  就创建的，插件缺失会立刻炸，所以这也是对部署的一次体检。
+
+### 本轮踩到的可复用坑
+
+* **模态对话框不要进单测**。`FileDialog.open()` 在 offscreen 下会退化到 Qt Quick 自绘实现
+  （能开、能关，但会打出 style customization 警告）；在 windows 平台下则是原生模态框，
+  测试进程会直接挂在那里。所以凡是会在测试里被点到的路径，都要有"别弹框"的开关，
+  本次的开关就是 `useSystemDialogs`。
+* **`FileDialog` 用 `fileMode: OpenFiles` 时结果在 `selectedFiles`，不是 `selectedFile`**。
+  单数形式只给了第一个，多选会静默丢文件。
+* **验证"按钮有没有反应"不能只看信号**。信号 `count` 涨了、`console.log` 也打了，
+  用户那边依然是死的。得一路验到"窗口出现了 / 文件进了列表"这种可观察的结果。
+
+### 文档同步（本轮）
+
+`README.md`（组件速查 `ZChatInput` 行补 `useSystemDialogs` /
+`openImagePicker` / `openFilePicker` / `urlsOf`，已知限制把"不弹对话框"改写成
+"默认弹、可换"，验证命令 53 → 57 项）、`tools/gen_docs.py`（本章描述与测试条目同步）、
+本文，然后重新生成 `docs/ZmdUI_组件库文档.md`。

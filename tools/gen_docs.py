@@ -34,6 +34,8 @@ CHAPTERS = [
         ("qml/ZmdUI/ZSwitch.qml", "开关：矩形滑轨 + 方形滑块 + 轨道刻度", "qml"),
         ("qml/ZmdUI/ZSlider.qml", "滑块：黑色导轨 + 亮黄填充 + 刻度 + 切角把手", "qml"),
         ("qml/ZmdUI/ZProgressBar.qml", "进度条：亮黄填充 + 刻度 + 循环扫描不确定态", "qml"),
+        ("qml/ZmdUI/ZRichTextEditor.qml", "块级富文本编辑器：文字 / 图片 / 文件块混排，块级格式 + 序列化", "qml"),
+        ("qml/ZmdUI/ZChatInput.qml", "QQ 式消息输入框：正文 + 图片 / 文件附件，内置系统文件选择框，拖放与粘贴自动转附件，回车发送", "qml"),
     ]),
     ("三、容器与展示", [
         ("qml/ZmdUI/ZPanel.qml", "面板 / 卡片：斜切角 + 角落斜线纹理 + 亮黄装饰底边", "qml"),
@@ -53,17 +55,20 @@ CHAPTERS = [
     ]),
     ("五、演示应用", [
         ("qml/main.qml", "演示程序入口（窗口壳）", "qml"),
-        ("qml/DemoContent.qml", "演示内容：网格背景 + 侧边栏 + 六大区块，覆盖全部组件", "qml"),
+        ("qml/DemoContent.qml", "演示内容：网格背景 + 侧边栏 + 八大区块，覆盖全部组件", "qml"),
     ]),
     ("六、工程集成", [
         ("qml/ZmdUI/qmldir", "QML 模块清单，声明模块 URI 与单例", "text"),
         ("resources/qml.qrc", "Qt 资源系统清单，资源路径与磁盘结构一致", "xml"),
-        ("src/main.cpp", "应用入口：Basic 样式 + 高 DPI + 资源导入路径", "cpp"),
+        ("src/main.cpp", "应用入口：Basic 样式 + 高 DPI + 资源导入路径 + 剪贴板桥注入", "cpp"),
+        ("src/zclipboard.cpp", "剪贴板桥：把剪贴板位图存成临时文件（QML 读不到位图）", "cpp"),
         ("CMakeLists.txt", "CMake 构建脚本：跨平台 + MSVC/MinGW 双编译器 + 一键部署", "cmake"),
         (".gitignore", "忽略各编译器的构建目录与部署产物", "text"),
     ]),
     ("七、自动化验证工具", [
         ("tests/tst_hover.qml", "qmltestrunner 行为测试：规则 / 属性 / 几何断言（9 项）", "qml"),
+        ("tests/tst_richtext.qml", "qmltestrunner 行为测试：富文本块模型 / 序列化 / 结构操作（38 项）", "qml"),
+        ("tests/tst_chatinput.qml", "qmltestrunner 行为测试：附件模型 / 上限 / canSend / 发送快照 / 回车语义 / 拖放粘贴 / 选择框（57 项）", "qml"),
         ("tools/smoke.qml", "无头冒烟：离屏渲染演示内容并抓图，零 QML 报错才算通过", "qml"),
         ("tools/smoke_scroll.qml", "分段滚动截图，逐屏核对各区块渲染结果", "qml"),
         ("tools/probe_popup.qml", "弹层探针：强制展开工具提示与对话框后抓图", "qml"),
@@ -116,7 +121,7 @@ def main():
     out.append("| --- | --- |")
     out.append("| Qt 版本 | 6.5+（开发验证于 6.11.2 / MSVC 2022 x64） |")
     out.append("| 模块 URI | `ZmdUI 1.0` |")
-    out.append("| 组件数量 | 25 个类型（1 主题单例 + 4 图元 + 20 控件） |")
+    out.append("| 组件数量 | 27 个类型（1 主题单例 + 4 图元 + 22 控件） |")
     out.append("| 依赖 | 仅 QtQuick / QtQuick.Controls.Basic / QtQuick.Shapes，无第三方库 |")
     out.append("| 图片资源 | 0 张（网格、斜线、斜切、图标全部走 Shape / Canvas 绘制） |")
     out.append("")
@@ -139,7 +144,7 @@ def main():
     out.append(tree())
     out.append("```\n")
     out.append("设计上分三层：**主题层**（`Theme.qml` 单例）→ **图元层**（4 个 Shape/Canvas 图元）"
-               "→ **组件层**（19 个控件）。组件只从主题取值、只用图元绘制，"
+               "→ **组件层**（22 个控件）。组件只从主题取值、只用图元绘制，"
                "因此换主题不用改组件，换视觉不用改业务。\n")
 
     # 各章节源码

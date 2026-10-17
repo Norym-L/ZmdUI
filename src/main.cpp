@@ -11,8 +11,11 @@
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QQuickStyle>
 #include <QQuickWindow>
+
+#include "zclipboard.h"
 
 int main(int argc, char *argv[])
 {
@@ -37,6 +40,13 @@ int main(int argc, char *argv[])
 
     // 让 "import ZmdUI 1.0" 能在 qrc 里解析到 :/qml/ZmdUI/qmldir
     engine.addImportPath(QStringLiteral("qrc:/qml"));
+
+    // 剪贴板桥：QML 读不到剪贴板位图，粘图片要借 C++ 的 QClipboard。
+    // 用 context property 注入（而不是 QML 单例），这样纯 qml.exe 跑测试时
+    // 根本不需要它，QML 侧用 typeof ZClipboard 守卫即可。
+    ZClipboard clipboardBridge;
+    engine.rootContext()->setContextProperty(
+        QStringLiteral("ZClipboard"), &clipboardBridge);
 
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,

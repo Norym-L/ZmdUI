@@ -188,6 +188,8 @@ option(ZMDUI_WARNINGS "打开编译警告" ON)
 # 也是它能"拷走 exe 就能跑"的前提。
 qt_add_executable(ZmdUIDemo
     src/main.cpp
+    src/zclipboard.cpp
+    src/zclipboard.h
     resources/qml.qrc
 )
 

@@ -14,7 +14,7 @@
 
 | | |
 | --- | --- |
-| **25 个类型** | 1 个主题单例 + 4 个绘制图元 + 20 个控件，每个组件一个独立 `.qml` 文件 |
+| **27 个类型** | 1 个主题单例 + 4 个绘制图元 + 22 个控件，每个组件一个独立 `.qml` 文件 |
 | **零图片** | 网格背景、斜线纹理、斜切角、平行四边形、对勾、三角箭头全部是 `Shape` 路径或 `Canvas` 绘制 |
 | **一键换肤** | `Theme.mode = Theme.Mode.Dark` 即整体切换亮 / 暗主题，组件零改动 |
 | **不用默认样式** | 全部继承 `QtQuick.Controls.Basic` 的抽象控件并**替换掉 `background` / `contentItem` / `indicator`**，不存在平台原生样式残留 |
@@ -37,7 +37,8 @@ ZmdUI/
 ├── CMakeLists.txt              # 构建脚本（Qt 6.5+）
 ├── README.md
 ├── src/
-│   └── main.cpp                # 应用入口：Basic 样式 + 高 DPI + qrc 导入路径
+│   ├── main.cpp                # 应用入口：Basic 样式 + 高 DPI + qrc 导入路径
+│   └── zclipboard.cpp/.h       # 剪贴板桥：把剪贴板位图存成文件（QML 自己做不到）
 ├── resources/
 │   └── qml.qrc                 # 资源清单，资源路径与磁盘结构一致（:/qml/...）
 ├── qml/
@@ -55,7 +56,9 @@ ZmdUI/
 │       ├── ZSlider.qml  ZProgressBar.qml
 │       ├── ZPanel.qml  ZSectionTitle.qml  ZTag.qml  ZStatusDot.qml
 │       ├── ZListItem.qml  ZListView.qml  ZScrollBar.qml  ZToolTip.qml
-│       └── ZDialog.qml  ZSideBar.qml  ZTable.qml  ZLineChart.qml
+│       ├── ZDialog.qml  ZSideBar.qml  ZTable.qml  ZLineChart.qml
+│       ├── ZRichTextEditor.qml # 块级富文本编辑器（文字 / 图片 / 文件块混排）
+│       └── ZChatInput.qml      # QQ 式消息输入框（正文 + 图片 / 文件附件）
 ├── docs/
 │   ├── ZmdUI_组件库文档.md      # 全部源码汇总（由 tools/gen_docs.py 生成）
 │   ├── verification.md         # 验证记录（真实命令与输出）
@@ -68,7 +71,7 @@ ZmdUI/
     └── crop.qml                # 局部放大核对
 ```
 
-分层规则：**主题层**（`Theme`）→ **图元层**（4 个 Shape/Canvas 图元）→ **组件层**（20 个控件）。
+分层规则：**主题层**（`Theme`）→ **图元层**（4 个 Shape/Canvas 图元）→ **组件层**（21 个控件）。
 组件只从 `Theme` 取值、只用图元绘制 —— 换主题不用改组件，换视觉不用改业务。
 
 ---
@@ -294,6 +297,8 @@ Theme.density = 0.9
 | `ZSlider` | 滑块 | `label` `valueSuffix` `showTicks` `decimals` |
 | `ZProgressBar` | 进度条 | `label` `showValue` `showTicks` `indeterminate` |
 | `ZToolTip` | 工具提示 | `text`（一般不用手写，给按钮设 `tooltip` 即可） |
+| `ZRichTextEditor` | 块级富文本编辑器 | `blocks` `revision` `currentIndex` `readOnly` `framed` `showToolbar` `showHeader` `headerText` `placeholderText` `maxImageHeight` `blockSpacing`；块分 `text` / `image` / `file` 三种，`signal contentsChanged()` `imageRequested()` `fileRequested()` `fileActivated(url, name)` `blockActivated(index)` |
+| `ZChatInput` | QQ 式消息输入框 | `text` `attachments` `revision`；外观 `framed` `showToolbar` `showHeader` `headerText` `placeholderText` `sendText` `attachHintText` `minTextHeight`(74) `maxTextHeight`(140) `thumbSize` `fileCardWidth/Height` `allowImage` `allowFile` `readOnly` `busy` `useSystemDialogs`；行为 `sendOnEnter` `clearOnSend` `maxLength` `maxAttachments`；派生 `attachmentCount` `imageCount` `fileCount` `hasContent` `overLimit` `canSend` `draftSummary` `counterText`；`signal sendRequested(text, files)` `attachmentAdded(a, i)` `attachmentRemoved(a, i)` `imagePickRequested()` `filePickRequested()` `cancelRequested()` `textEdited()` `filesDropped(urls)` `pasteRequested()` `limitReached(kind)`；`openImagePicker()` / `openFilePicker()` 自己开选择框；拖放 / 粘贴由组件自己转附件（`addUrlsAsAttachments(urls)`、`isImageUrl(url)`、`fileUrlsIn(block)`、`insertedText(before, after)`、`urlsOf(files)`） |
 
 ### 容器与展示
 
@@ -380,6 +385,8 @@ python tools/check_inverse_blocks.py
 
 # 行为测试：规则 / 属性 / 几何断言（CI 友好，退出码即结论）
 qmltestrunner -input tests/tst_hover.qml -import qml
+qmltestrunner -input tests/tst_richtext.qml -import qml   # 富文本块的模型 / 序列化 / 结构操作 38 项
+qmltestrunner -input tests/tst_chatinput.qml -import qml  # 聊天输入框的附件模型 / 上限 / 发送 / 回车 / 拖放粘贴 / 选择框 57 项
 
 # 静态检查（0 错误）
 qmllint -I qml qml/ZmdUI/*.qml qml/main.qml qml/DemoContent.qml
@@ -421,3 +428,18 @@ C++ 侧也已真编译真运行过（Qt 6.11.2 / MSVC 2022 x64 零警告，exe �
 * qmllint 的 79 条 `[unqualified]` 是委托访问 `index` / `modelData` 的固有提示，运行期无影响，
   详见 `docs/verification.md` 第 1 节。
 * `ZLineChart` 面向"少量点"（< 200）的仪表盘场景，不是通用图表库。
+* `ZRichTextEditor` 的"富"是**块级**的（每个文字块各自带字体 / 字号 / 粗斜体下划线删除线 / 对齐），
+  不是字符级的：纯 QML 拿不到 `QTextCursor` / `QTextCharFormat`，做选区级格式就得自己排文字。
+  编辑器自身不做内部滚动，内容多高就多高，由外层 `Flickable` 负责滚。
+* `ZChatInput` 的「图片 / 文件」按钮默认就弹系统文件选择框（`QtQuick.Dialogs`，Windows / macOS /
+  Linux 上是原生对话框），选完按扩展名分流成附件。想换成自己的选择器就把 `useSystemDialogs`
+  置 `false`，接 `imagePickRequested()` / `filePickRequested()` 自己处理；也可以直接从菜单或
+  快捷键调 `openImagePicker()` / `openFilePicker()` 走同一套流程。
+* `ZChatInput` 的拖放与粘贴：
+  * 拖文件进输入框（或拖到窗口里）**自动变成附件**——图片后缀进图片桶、其余进文件桶，
+    同时照发 `filesDropped(urls)` 供宿主记录；拖不进来的文件拿不到字节数，卡片只写 `ATTACHMENT`。
+  * 在资源管理器里 `Ctrl+C` 复制文件再 `Ctrl+V`，粘进来的是 `file:///…` 文本行，组件会把它
+    拦下来改成附件，正文里不会多出一串路径。
+  * 剪贴板里是**位图**时纯 QML 读不到（`TextEdit.canPaste` 直接是 `false`），组件改为发
+    `pasteRequested()`，由宿主用 C++ 取图存文件后回调 `addImage`。演示程序里就是
+    `src/zclipboard.cpp` 注入的 `ZClipboard.saveImage()`（见 `docs/verification.md` 5q 节）。

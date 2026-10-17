@@ -805,6 +805,91 @@ Item {
                         }
                     }
                 }
+
+                // ══════════════════════════════════════════
+                //  区块 07 —— 富文本
+                // ══════════════════════════════════════════
+                ZSectionTitle {
+                    index: "07"
+                    eyebrow: "RICH TEXT / BLOCK COMPOSER"
+                    title: "富文本"
+                    subtitle: "COMPOSER"
+                }
+
+                ZPanel {
+                    width: parent.width
+                    title: "块级富文本编辑器"
+                    tag: "RICH-01"
+                    eyebrow: "TEXT / IMAGE / FILE"
+                    footerText: "块级富文本 · 加粗斜体下划线删除线按块生效 · 图片与文件块可混排"
+
+                    ZRichTextEditor {
+                        id: richDemo
+
+                        width: parent.width
+                        headerText: "RICH TEXT / COMPOSER"
+
+                        blocks: [
+                            makeTextBlock("「富文本」块级编排", "heading"),
+                            makeTextBlock("这一段是正文。点工具栏上的 B / I / U / S 会给整个块加粗、"
+                                          + "倾斜、下划线、删除线 —— 富在这里是块级属性，不是选区级的字符格式。"),
+                            makeImageBlock("", "", "图注：图片块等宽铺满，说明文字压在下方的灰条里"),
+                            makeFileBlock("", "verification.md", 48321),
+                            makeTextBlock("代码块用等宽字体 + 灰底，左侧不画竖条。", "code")
+                        ]
+
+                        onImageRequested: console.log("imageRequested")
+                        onFileRequested: console.log("fileRequested")
+                        onFileActivated: (url, name) => console.log("fileActivated", name)
+                    }
+                }
+
+                // ══════════════════════════════════════════
+                //  区块 08 —— 消息输入
+                // ══════════════════════════════════════════
+                ZSectionTitle {
+                    index: "08"
+                    eyebrow: "MESSAGE / CHAT COMPOSER"
+                    title: "消息输入"
+                    subtitle: "COMPOSER"
+                }
+
+                ZPanel {
+                    width: parent.width
+                    title: "聊天输入框"
+                    tag: "CHAT-01"
+                    eyebrow: "TEXT / IMAGE / FILE"
+                    footerText: "QQ 式消息输入 · Enter 发送 / Shift+Enter 换行 · 图片与文件可拖入或选入"
+
+                    ZChatInput {
+                        id: chatDemo
+
+                        width: parent.width
+                        headerText: "MESSAGE / COMPOSER"
+                        text: "今晚 8 点同步配置，附件是新的 bot_007.json。"
+
+                        attachments: [
+                            makeImageAttachment("", "screenshot.png"),
+                            makeFileAttachment("", "bot_007.json", 28416)
+                        ]
+
+                        onSendRequested: (text, files) => console.log("send", text.length, files.length)
+                        onImagePickRequested: console.log("imagePickRequested")
+                        onFilePickRequested: console.log("filePickRequested")
+                        onCancelRequested: console.log("cancelRequested")
+                        onFilesDropped: urls => console.log("filesDropped", urls.length)
+
+                        // 剪贴板里是图片时，QML 自己拿不到，借 C++ 桥存成临时文件再加进来。
+                        // qml.exe 跑测试时没有 ZClipboard，所以要守卫一下。
+                        onPasteRequested: {
+                            if (typeof ZClipboard === "undefined")
+                                return
+                            var url = ZClipboard.saveImage()
+                            if (url.length > 0)
+                                chatDemo.addImage(url, "clipboard.png")
+                        }
+                    }
+                }
             }
         }
     }
@@ -834,7 +919,7 @@ Item {
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "ZMDUI COMPONENT LIBRARY / 24 TYPES / QT 6 QML"
+                text: "ZMDUI COMPONENT LIBRARY / 27 TYPES / QT 6 QML"
                 font: Theme.fontMonoSm
                 color: Theme.textOnAccent
                 opacity: 0.75

@@ -2,13 +2,13 @@
 
 > 本文由 `tools/gen_docs.py` 从仓库源码自动汇总生成，内容与磁盘上的文件逐字一致。
 
-> 生成时间：2026-10-16 12:08:19
+> 生成时间：2026-10-17 19:04:08
 
 | 项目 | 说明 |
 | --- | --- |
 | Qt 版本 | 6.5+（开发验证于 6.11.2 / MSVC 2022 x64） |
 | 模块 URI | `ZmdUI 1.0` |
-| 组件数量 | 25 个类型（1 主题单例 + 4 图元 + 20 控件） |
+| 组件数量 | 27 个类型（1 主题单例 + 4 图元 + 22 控件） |
 | 依赖 | 仅 QtQuick / QtQuick.Controls.Basic / QtQuick.Shapes，无第三方库 |
 | 图片资源 | 0 张（网格、斜线、斜切、图标全部走 Shape / Canvas 绘制） |
 
@@ -30,6 +30,8 @@
   - [`qml/ZmdUI/ZSwitch.qml`](#qmlzmduizswitchqml) — 开关：矩形滑轨 + 方形滑块 + 轨道刻度
   - [`qml/ZmdUI/ZSlider.qml`](#qmlzmduizsliderqml) — 滑块：黑色导轨 + 亮黄填充 + 刻度 + 切角把手
   - [`qml/ZmdUI/ZProgressBar.qml`](#qmlzmduizprogressbarqml) — 进度条：亮黄填充 + 刻度 + 循环扫描不确定态
+  - [`qml/ZmdUI/ZRichTextEditor.qml`](#qmlzmduizrichtexteditorqml) — 块级富文本编辑器：文字 / 图片 / 文件块混排，块级格式 + 序列化
+  - [`qml/ZmdUI/ZChatInput.qml`](#qmlzmduizchatinputqml) — QQ 式消息输入框：正文 + 图片 / 文件附件，内置系统文件选择框，拖放与粘贴自动转附件，回车发送
 - [三、容器与展示](#三容器与展示)
   - [`qml/ZmdUI/ZPanel.qml`](#qmlzmduizpanelqml) — 面板 / 卡片：斜切角 + 角落斜线纹理 + 亮黄装饰底边
   - [`qml/ZmdUI/ZSectionTitle.qml`](#qmlzmduizsectiontitleqml) — 区块大标题：编号 + 「超粗标题」 + 黑底斜切副标题
@@ -46,15 +48,18 @@
   - [`qml/ZmdUI/ZLineChart.qml`](#qmlzmduizlinechartqml) — 折线图：网格 + 亮黄数据线 + 黑色方形数据点
 - [五、演示应用](#五演示应用)
   - [`qml/main.qml`](#qmlmainqml) — 演示程序入口（窗口壳）
-  - [`qml/DemoContent.qml`](#qmldemocontentqml) — 演示内容：网格背景 + 侧边栏 + 六大区块，覆盖全部组件
+  - [`qml/DemoContent.qml`](#qmldemocontentqml) — 演示内容：网格背景 + 侧边栏 + 八大区块，覆盖全部组件
 - [六、工程集成](#六工程集成)
   - [`qml/ZmdUI/qmldir`](#qmlzmduiqmldir) — QML 模块清单，声明模块 URI 与单例
   - [`resources/qml.qrc`](#resourcesqmlqrc) — Qt 资源系统清单，资源路径与磁盘结构一致
-  - [`src/main.cpp`](#srcmaincpp) — 应用入口：Basic 样式 + 高 DPI + 资源导入路径
+  - [`src/main.cpp`](#srcmaincpp) — 应用入口：Basic 样式 + 高 DPI + 资源导入路径 + 剪贴板桥注入
+  - [`src/zclipboard.cpp`](#srczclipboardcpp) — 剪贴板桥：把剪贴板位图存成临时文件（QML 读不到位图）
   - [`CMakeLists.txt`](#cmakeliststxt) — CMake 构建脚本：跨平台 + MSVC/MinGW 双编译器 + 一键部署
   - [`.gitignore`](#gitignore) — 忽略各编译器的构建目录与部署产物
 - [七、自动化验证工具](#七自动化验证工具)
   - [`tests/tst_hover.qml`](#testststhoverqml) — qmltestrunner 行为测试：规则 / 属性 / 几何断言（9 项）
+  - [`tests/tst_richtext.qml`](#testststrichtextqml) — qmltestrunner 行为测试：富文本块模型 / 序列化 / 结构操作（38 项）
+  - [`tests/tst_chatinput.qml`](#testststchatinputqml) — qmltestrunner 行为测试：附件模型 / 上限 / canSend / 发送快照 / 回车语义 / 拖放粘贴 / 选择框（57 项）
   - [`tools/smoke.qml`](#toolssmokeqml) — 无头冒烟：离屏渲染演示内容并抓图，零 QML 报错才算通过
   - [`tools/smoke_scroll.qml`](#toolssmokescrollqml) — 分段滚动截图，逐屏核对各区块渲染结果
   - [`tools/probe_popup.qml`](#toolsprobepopupqml) — 弹层探针：强制展开工具提示与对话框后抓图
@@ -350,7 +355,8 @@ ZmdUI/
 │   │   │   │   │   └── qrc_qml.cpp.obj
 │   │   │   │   └── mocs_compilation.cpp.obj
 │   │   │   └── src/
-│   │   │       └── main.cpp.obj
+│   │   │       ├── main.cpp.obj
+│   │   │       └── zclipboard.cpp.obj
 │   │   ├── ZmdUIDemo_autogen.dir/
 │   │   │   ├── AutoRcc_qml_3YJK5W5UP7_Info.json
 │   │   │   ├── AutoRcc_qml_3YJK5W5UP7_Lock.lock
@@ -368,6 +374,9 @@ ZmdUI/
 │   ├── ZmdUIDemo_autogen/
 │   │   ├── 3YJK5W5UP7/
 │   │   │   └── qrc_qml.cpp
+│   │   ├── UVLADIE3JM/
+│   │   │   ├── moc_zclipboard.cpp
+│   │   │   └── moc_zclipboard.cpp.d
 │   │   ├── include/
 │   │   ├── deps
 │   │   ├── moc_predefs.h
@@ -391,6 +400,12 @@ ZmdUI/
 │   │   ├── QML/
 │   │   │   ├── plugins.qmltypes
 │   │   │   └── qmldir
+│   │   ├── Qt/
+│   │   │   └── labs/
+│   │   │       └── folderlistmodel/
+│   │   │           ├── plugins.qmltypes
+│   │   │           ├── qmldir
+│   │   │           └── qmlfolderlistmodelplugin.dll
 │   │   ├── QtQml/
 │   │   │   ├── Models/
 │   │   │   │   ├── modelsplugin.dll
@@ -910,12 +925,75 @@ ZmdUI/
 │   │       │   ├── qmldir
 │   │       │   └── qtquickcontrols2plugin.dll
 │   │       ├── Dialogs/
-│   │       │   └── quickimpl/
-│   │       │       └── qml/
-│   │       │           ├── +Fusion/
-│   │       │           ├── +Imagine/
-│   │       │           ├── +Material/
-│   │       │           └── +Universal/
+│   │       │   ├── quickimpl/
+│   │       │   │   ├── qml/
+│   │       │   │   │   ├── +Fusion/
+│   │       │   │   │   │   ├── ColorDialog.qml
+│   │       │   │   │   │   ├── ColorInputs.qml
+│   │       │   │   │   │   ├── FileDialog.qml
+│   │       │   │   │   │   ├── FileDialogDelegate.qml
+│   │       │   │   │   │   ├── FolderBreadcrumbBar.qml
+│   │       │   │   │   │   ├── FolderDialog.qml
+│   │       │   │   │   │   ├── FolderDialogDelegate.qml
+│   │       │   │   │   │   ├── FontDialog.qml
+│   │       │   │   │   │   ├── MessageDialog.qml
+│   │       │   │   │   │   └── SideBar.qml
+│   │       │   │   │   ├── +Imagine/
+│   │       │   │   │   │   ├── ColorDialog.qml
+│   │       │   │   │   │   ├── ColorInputs.qml
+│   │       │   │   │   │   ├── FileDialog.qml
+│   │       │   │   │   │   ├── FileDialogDelegate.qml
+│   │       │   │   │   │   ├── FolderBreadcrumbBar.qml
+│   │       │   │   │   │   ├── FolderDialog.qml
+│   │       │   │   │   │   ├── FolderDialogDelegate.qml
+│   │       │   │   │   │   ├── FontDialog.qml
+│   │       │   │   │   │   ├── MessageDialog.qml
+│   │       │   │   │   │   └── SideBar.qml
+│   │       │   │   │   ├── +Material/
+│   │       │   │   │   │   ├── ColorDialog.qml
+│   │       │   │   │   │   ├── ColorInputs.qml
+│   │       │   │   │   │   ├── FileDialog.qml
+│   │       │   │   │   │   ├── FileDialogDelegate.qml
+│   │       │   │   │   │   ├── FolderBreadcrumbBar.qml
+│   │       │   │   │   │   ├── FolderDialog.qml
+│   │       │   │   │   │   ├── FolderDialogDelegate.qml
+│   │       │   │   │   │   ├── FontDialog.qml
+│   │       │   │   │   │   ├── MessageDialog.qml
+│   │       │   │   │   │   └── SideBar.qml
+│   │       │   │   │   ├── +Universal/
+│   │       │   │   │   │   ├── ColorDialog.qml
+│   │       │   │   │   │   ├── ColorInputs.qml
+│   │       │   │   │   │   ├── FileDialog.qml
+│   │       │   │   │   │   ├── FileDialogDelegate.qml
+│   │       │   │   │   │   ├── FolderBreadcrumbBar.qml
+│   │       │   │   │   │   ├── FolderDialog.qml
+│   │       │   │   │   │   ├── FolderDialogDelegate.qml
+│   │       │   │   │   │   ├── FontDialog.qml
+│   │       │   │   │   │   ├── MessageDialog.qml
+│   │       │   │   │   │   └── SideBar.qml
+│   │       │   │   │   ├── ColorDialog.qml
+│   │       │   │   │   ├── ColorInputs.qml
+│   │       │   │   │   ├── DelegateBackground.qml
+│   │       │   │   │   ├── FileDialog.qml
+│   │       │   │   │   ├── FileDialogDelegate.qml
+│   │       │   │   │   ├── FileDialogDelegateLabel.qml
+│   │       │   │   │   ├── FolderBreadcrumbBar.qml
+│   │       │   │   │   ├── FolderDialog.qml
+│   │       │   │   │   ├── FolderDialogDelegate.qml
+│   │       │   │   │   ├── FolderDialogDelegateLabel.qml
+│   │       │   │   │   ├── FontDialog.qml
+│   │       │   │   │   ├── FontDialogContent.qml
+│   │       │   │   │   ├── HueGradient.qml
+│   │       │   │   │   ├── MessageDialog.qml
+│   │       │   │   │   ├── PickerHandle.qml
+│   │       │   │   │   ├── SaturationLightnessPicker.qml
+│   │       │   │   │   └── SideBar.qml
+│   │       │   │   ├── plugins.qmltypes
+│   │       │   │   ├── qmldir
+│   │       │   │   └── qtquickdialogs2quickimplplugin.dll
+│   │       │   ├── plugins.qmltypes
+│   │       │   ├── qmldir
+│   │       │   └── qtquickdialogsplugin.dll
 │   │       ├── Effects/
 │   │       │   ├── effectsplugin.dll
 │   │       │   ├── plugins.qmltypes
@@ -974,6 +1052,7 @@ ZmdUI/
 │   ├── D3Dcompiler_47.dll
 │   ├── Qt6Core.dll
 │   ├── Qt6Gui.dll
+│   ├── Qt6LabsFolderListModel.dll
 │   ├── Qt6Network.dll
 │   ├── Qt6OpenGL.dll
 │   ├── Qt6Qml.dll
@@ -996,6 +1075,9 @@ ZmdUI/
 │   ├── Qt6QuickControls2Universal.dll
 │   ├── Qt6QuickControls2UniversalStyleImpl.dll
 │   ├── Qt6QuickControls2WindowsStyleImpl.dll
+│   ├── Qt6QuickDialogs2.dll
+│   ├── Qt6QuickDialogs2QuickImpl.dll
+│   ├── Qt6QuickDialogs2Utils.dll
 │   ├── Qt6QuickEffects.dll
 │   ├── Qt6QuickLayouts.dll
 │   ├── Qt6QuickShapes.dll
@@ -1299,14 +1381,14 @@ ZmdUI/
 │       │   │   │   ├── CMakeDetermineCompilerABI_CXX.bin
 │       │   │   │   ├── CMakeRCCompiler.cmake
 │       │   │   │   └── CMakeSystem.cmake
-│       │   │   ├── CMakeScratch/
 │       │   │   ├── ZmdUIDemo.dir/
 │       │   │   │   ├── ZmdUIDemo_autogen/
 │       │   │   │   │   ├── 3YJK5W5UP7/
 │       │   │   │   │   │   └── qrc_qml.cpp.obj
 │       │   │   │   │   └── mocs_compilation.cpp.obj
 │       │   │   │   └── src/
-│       │   │   │       └── main.cpp.obj
+│       │   │   │       ├── main.cpp.obj
+│       │   │   │       └── zclipboard.cpp.obj
 │       │   │   ├── ZmdUIDemo_autogen.dir/
 │       │   │   │   ├── AutoRcc_qml_3YJK5W5UP7_Info.json
 │       │   │   │   ├── AutoRcc_qml_3YJK5W5UP7_Lock.lock
@@ -1345,6 +1427,9 @@ ZmdUI/
 │       │   ├── ZmdUIDemo_autogen/
 │       │   │   ├── 3YJK5W5UP7/
 │       │   │   │   └── qrc_qml.cpp
+│       │   │   ├── UVLADIE3JM/
+│       │   │   │   ├── moc_zclipboard.cpp
+│       │   │   │   └── moc_zclipboard.cpp.d
 │       │   │   ├── include/
 │       │   │   ├── deps
 │       │   │   ├── moc_predefs.h
@@ -2065,6 +2150,7 @@ ZmdUI/
 │   ├── ZmdUI/
 │   │   ├── Theme.qml
 │   │   ├── ZButton.qml
+│   │   ├── ZChatInput.qml
 │   │   ├── ZCheckBox.qml
 │   │   ├── ZCutRect.qml
 │   │   ├── ZDialog.qml
@@ -2077,6 +2163,7 @@ ZmdUI/
 │   │   ├── ZPanel.qml
 │   │   ├── ZProgressBar.qml
 │   │   ├── ZRadioButton.qml
+│   │   ├── ZRichTextEditor.qml
 │   │   ├── ZScrollBar.qml
 │   │   ├── ZSectionTitle.qml
 │   │   ├── ZSideBar.qml
@@ -2094,9 +2181,13 @@ ZmdUI/
 ├── resources/
 │   └── qml.qrc
 ├── src/
-│   └── main.cpp
+│   ├── main.cpp
+│   ├── zclipboard.cpp
+│   └── zclipboard.h
 ├── tests/
-│   └── tst_hover.qml
+│   ├── tst_chatinput.qml
+│   ├── tst_hover.qml
+│   └── tst_richtext.qml
 ├── tools/
 │   ├── check_inverse_blocks.py
 │   ├── crop.qml
@@ -2122,7 +2213,7 @@ ZmdUI/
 └── README.md
 ```
 
-设计上分三层：**主题层**（`Theme.qml` 单例）→ **图元层**（4 个 Shape/Canvas 图元）→ **组件层**（19 个控件）。组件只从主题取值、只用图元绘制，因此换主题不用改组件，换视觉不用改业务。
+设计上分三层：**主题层**（`Theme.qml` 单例）→ **图元层**（4 个 Shape/Canvas 图元）→ **组件层**（22 个控件）。组件只从主题取值、只用图元绘制，因此换主题不用改组件，换视觉不用改业务。
 
 ## 一、主题与基础图元
 
@@ -3962,6 +4053,2512 @@ ProgressBar {
         color: Theme.ink
         horizontalAlignment: Text.AlignRight
         verticalAlignment: Text.AlignVCenter
+    }
+}
+```
+
+### `qml/ZmdUI/ZRichTextEditor.qml`
+
+块级富文本编辑器：文字 / 图片 / 文件块混排，块级格式 + 序列化
+
+```qml
+import QtQuick
+import QtQuick.Controls.Basic
+
+/*!
+    \qmltype ZRichTextEditor
+    \inqmlmodule ZmdUI
+    \brief 富文本编辑器：文字 / 图片 / 文件三类内容块混排，自带格式工具栏与序列化接口。
+
+    文档是一个**块数组**（\l blocks），每块是纯 JS 对象，三种形态：
+
+    \list
+    \li \c text  —— 文字块（正文 / 标题 / 引用 / 代码 + 粗体 / 斜体 / 下划线 / 删除线 / 对齐）
+    \li \c image —— 图片块（等比缩放 + 名称 + 说明 + 加载失败时的工程占位图）
+    \li \c file  —— 文件块（文件名 + 大小 + 扩展名徽标，点击发出 \l fileActivated）
+    \endlist
+
+    \qml
+    ZRichTextEditor {
+        width: 640
+        placeholderText: "输入正文…"
+        onImageRequested: imagePicker.open()
+        onFileRequested:  filePicker.open()
+
+        Component.onCompleted: {
+            insertTextBlock(-1, "终端工业机能风富文本")
+            insertImageBlock("file:///C:/shots/board.png", "board.png", "面板截图")
+            insertFileBlock("file:///C:/out/config.json", "config.json", 12800)
+        }
+    }
+    \endqml
+
+    \section1 为什么是"块"而不是"字符级富文本"
+
+    Qt Quick 的 \c TextEdit 只提供**整段**的 \c font 属性，没有从 QML 侧给选区上
+    \c QTextCharFormat 的接口（\c textDocument 暴露的是 QObject，QTextCursor /
+    QTextCharFormat 都不在 QML 里）。纯 QML 想做「选中几个字加粗」就必须自己实现
+    文本排版与光标。本库坚持纯 QML、零第三方依赖，所以把"富"做在**块**这一级：
+    每块可以有自己的字体、字号、装饰、对齐，块与块之间混排图文文件 —— 这样既拿到了
+    真正的富文本排版能力，又不需要编译器 / C++ 侧支持。
+
+    \section1 为什么编辑器自己不做滚动
+
+    不内置 Flickable，内容多高就长多高，由宿主决定怎么滚。这样避免了两个有名的问题：
+    嵌套滚动（内层抢走滚轮，手感黏）和拖选被抢（父 Flickable 在拖拽超过阈值后接管，
+    拖选文字拖到一半变成滚页面）。放进 \c ScrollView / 宿主的 \c Flickable / \c ZListView
+    里都行，见演示程序。
+*/
+Item {
+    id: editor
+
+    /*! 块的形态枚举。也接受等价的字符串（"body" / "heading" / "quote" / "code"）。 */
+    enum BlockStyle { Body, Heading, Quote, Code }
+
+    // ════════════════════════════════════════════════════════════════
+    //  1. 公共属性
+    // ════════════════════════════════════════════════════════════════
+
+    /*!
+        文档内容：块对象数组。**替换**它才会触发界面重建；修改单个块的字段
+        （比如用户打字）是原地改，不会重建、不会丢光标。
+
+        每块的字段见 \l makeTextBlock / \l makeImageBlock / \l makeFileBlock。
+    */
+    property var blocks: []
+
+    /*!
+        内容版本号。每次内容变动自增。
+
+        \note 块是**纯 JS 对象**，字段被原地改了不会发属性变更信号。所有需要跟随
+        内容刷新的界面绑定都挂在 \l revision 上，靠它强制重算。自己的代码没必要碰它。
+    */
+    property int revision: 0
+
+    /*! 当前聚焦 / 选中的块下标，-1 表示没有 */
+    /*! 当前块下标（-1 = 没有当前块，例如空文档）。工具栏的格式开关作用在它身上。 */
+    property int currentIndex: 0
+
+    /*! 只读模式：隐藏工具栏，文字块不可编辑 */
+    property bool readOnly: false
+
+    /*! 是否画外框（放进 ZPanel 这类已经有卡片的容器里时关掉，避免双层边框） */
+    property bool framed: true
+
+    /*! 是否显示工具栏 */
+    property bool showToolbar: true
+
+    /*! 是否显示顶部深色标题条 */
+    property bool showHeader: true
+
+    /*! 标题条上的等宽小字 */
+    property string headerText: "RICH TEXT / COMPOSER"
+
+    /*! 空文字块的占位提示 */
+    property string placeholderText: "输入正文…"
+
+    /*! 图片块的最大显示高度（等比缩放，超出就按这个高度裁容器） */
+    property int maxImageHeight: 240
+
+    /*! 内容块之间的垂直间距 */
+    property int blockSpacing: Theme.spacingSm
+
+    /*! 内容变动（打字、增删块、改格式）时发出 */
+    signal contentsChanged()
+
+    /*! 用户点了工具栏的「图片」——宿主该打开文件选择框，选完调用 imageBlockAt / insertImageBlock */
+    signal imageRequested()
+
+    /*! 用户点了工具栏的「文件」——同上，选完调用 insertFileBlock */
+    signal fileRequested()
+
+    /*! 文件块被点击（双击或点击徽标），宿主可以打开 / 定位这个文件 */
+    signal fileActivated(string url, string name)
+
+    /*! 某个块被点击选中 */
+    signal blockActivated(int index)
+
+    /*! 内部：重建后要抢焦点的文字块下标（-1 = 不抢） */
+    property int _focusRequest: -1
+
+    implicitWidth: Theme.dp(560)
+    implicitHeight: content.height
+
+    // ════════════════════════════════════════════════════════════════
+    //  2. 纯函数：块工厂 / 归一化 / 序列化
+    //     全部不碰界面状态，可以直接在 qmltestrunner 里断言。
+    // ════════════════════════════════════════════════════════════════
+
+    /*! 造一个文字块。\a style 传字符串或 \l BlockStyle 枚举都行。 */
+    function makeTextBlock(text, style) {
+        return {
+            type: "text",
+            text: text === undefined || text === null ? "" : String(text),
+            style: styleNameOf(style),
+            bold: false,
+            italic: false,
+            underline: false,
+            strike: false,
+            align: "left"
+        }
+    }
+
+    /*! 造一个图片块。\a caption 是图下的说明文字。 */
+    function makeImageBlock(url, name, caption) {
+        return {
+            type: "image",
+            url: url ? String(url) : "",
+            name: name ? String(name) : "",
+            caption: caption ? String(caption) : ""
+        }
+    }
+
+    /*! 造一个文件块。\a size 是字节数，界面按 B/KB/MB 自动换算。 */
+    function makeFileBlock(url, name, size) {
+        return {
+            type: "file",
+            url: url ? String(url) : "",
+            name: name ? String(name) : "未命名文件",
+            size: Math.max(0, Math.round(Number(size) || 0))
+        }
+    }
+
+    /*!
+        把任意来路不明的对象补成合法块。JSON 反序列化、外部赋值都走这里，
+        所以下游只可能见到三种形态、字段齐全的块，不用到处写防御性判断。
+    */
+    function normalizeBlock(raw) {
+        if (!raw || typeof raw !== "object")
+            return makeTextBlock("")
+
+        var type = String(raw.type || "text").toLowerCase()
+
+        if (type === "image")
+            return {
+                type: "image",
+                url: raw.url ? String(raw.url) : "",
+                name: raw.name ? String(raw.name) : "",
+                caption: raw.caption ? String(raw.caption) : ""
+            }
+
+        if (type === "file")
+            return {
+                type: "file",
+                url: raw.url ? String(raw.url) : "",
+                name: raw.name ? String(raw.name) : "未命名文件",
+                size: Math.max(0, Math.round(Number(raw.size) || 0))
+            }
+
+        var block = makeTextBlock(raw.text === undefined || raw.text === null ? "" : raw.text,
+                                  raw.style)
+        block.bold = !!raw.bold
+        block.italic = !!raw.italic
+        block.underline = !!raw.underline
+        block.strike = !!raw.strike
+        block.align = alignNameOf(raw.align)
+        return block
+    }
+
+    /*! 枚举 / 字符串 → 规范的样式名。 */
+    function styleNameOf(v) {
+        if (typeof v === "string") {
+            var s = v.toLowerCase()
+            return _styleNames.indexOf(s) >= 0 ? s : "body"
+        }
+        var n = Number(v)
+        return (n >= 0 && n < _styleNames.length) ? _styleNames[n] : "body"
+    }
+
+    /*! 对齐方式归一化。 */
+    function alignNameOf(v) {
+        var s = v ? String(v).toLowerCase() : "left"
+        return (s === "center" || s === "right") ? s : "left"
+    }
+
+    /*! 样式名 → 中文短标签（工具栏、无障碍都用它）。 */
+    function styleLabelOf(v) {
+        switch (styleNameOf(v)) {
+        case "heading": return "标题"
+        case "quote":   return "引用"
+        case "code":    return "代码"
+        default:        return "正文"
+        }
+    }
+
+    /*! 字节数 → 人读的大小。0 或非法值一律 "0 B"。 */
+    function formatBytes(n) {
+        var v = Number(n)
+        if (!isFinite(v) || v <= 0)
+            return "0 B"
+        var units = ["B", "KB", "MB", "GB", "TB"]
+        var i = 0
+        while (v >= 1024 && i < units.length - 1) {
+            v /= 1024
+            ++i
+        }
+        return (i === 0 ? String(Math.round(v)) : v.toFixed(1)) + " " + units[i]
+    }
+
+    /*! 文件名 → 大写扩展名徽标，没有扩展名给 "FILE"。 */
+    function extensionOf(name) {
+        var s = name ? String(name) : ""
+        var dot = s.lastIndexOf(".")
+        if (dot < 0 || dot === s.length - 1)
+            return "FILE"
+        var ext = s.substring(dot + 1).toUpperCase()
+        return ext.length > 5 ? ext.substring(0, 5) : ext
+    }
+
+    /*! 取第 \a index 块，越界给 null。 */
+    function blockAt(index) {
+        return (index >= 0 && index < blocks.length) ? blocks[index] : null
+    }
+
+    /*! 只读快照：某个文字块的格式（\l revision 变化后所有调用者会重算）。 */
+    function formatOf(index) {
+        var b = blockAt(index)
+        if (!b)
+            return { type: "text", style: "body", bold: false, italic: false,
+                     underline: false, strike: false, align: "left" }
+        return {
+            type: b.type || "text",
+            style: styleNameOf(b.style),
+            bold: !!b.bold,
+            italic: !!b.italic,
+            underline: !!b.underline,
+            strike: !!b.strike,
+            align: b.align || "left"
+        }
+    }
+
+    /*! 某类块的数量。 */
+    function countBlocks(type) {
+        var n = 0
+        for (var i = 0; i < blocks.length; ++i)
+            if ((blocks[i].type || "text") === type)
+                ++n
+        return n
+    }
+
+    /*! 各类块的统计快照（挂 revision，供标题条上的读数绑定）。 */
+    readonly property var stats: {
+        var r = revision
+        return { rev: r,
+                 text: countBlocks("text"),
+                 image: countBlocks("image"),
+                 file: countBlocks("file") }
+    }
+
+    /*! 文档是否为空（没有块，或者只有空文字块）。 */
+    readonly property bool isEmpty: {
+        var r = revision
+        if (blocks.length === 0)
+            return true
+        for (var i = 0; i < blocks.length; ++i) {
+            var b = blocks[i]
+            if ((b.type || "text") !== "text")
+                return false
+            if (b.text && b.text.length > 0)
+                return false
+        }
+        return true
+    }
+
+    /*!
+        纯文本导出：文字块逐行输出，图片 / 文件块各自折成一行占位标记。
+        用于复制到剪贴板、喂给只认纯文本的接口。
+    */
+    function plainTextOf(list) {
+        var arr = list || blocks
+        var lines = []
+        for (var i = 0; i < arr.length; ++i) {
+            var b = arr[i]
+            var t = b.type || "text"
+            if (t === "image")
+                lines.push("[图片" + (b.name ? ": " + b.name : "") + "]")
+            else if (t === "file")
+                lines.push("[文件" + (b.name ? ": " + b.name : "") + "]")
+            else
+                lines.push(b.text || "")
+        }
+        return lines.join("\n")
+    }
+
+    /*! 文档 → JSON 字符串。 */
+    function toJSON() {
+        return JSON.stringify(blocks)
+    }
+
+    /*! JSON 字符串 → 块数组。解析失败返回空数组，不会抛。 */
+    function blocksFromJSON(text) {
+        var raw = null
+        try {
+            raw = JSON.parse(text)
+        } catch (e) {
+            return []
+        }
+        if (!raw || raw.length === undefined)
+            return []
+        var out = []
+        for (var i = 0; i < raw.length; ++i)
+            out.push(normalizeBlock(raw[i]))
+        return out
+    }
+
+    /*! 每个文字块该用的字体（把块格式翻成 QQmlFont）。 */
+    function textFontFor(fmt) {
+        var style = fmt ? styleNameOf(fmt.style) : "body"
+        var family = style === "code" ? Theme.familyMono : Theme.family
+        var pixel = style === "heading" ? 24 : style === "code" ? 13 : 14
+        var weight = style === "heading" ? Font.Black : (fmt && fmt.bold ? Font.Bold : Font.Normal)
+        return Qt.font({
+            family: family,
+            pixelSize: pixel,
+            weight: weight,
+            italic: (fmt && fmt.italic) || style === "quote",
+            underline: !!(fmt && fmt.underline),
+            strikeout: !!(fmt && fmt.strike),
+            letterSpacing: style === "heading" ? 1 : 0
+        })
+    }
+
+    /*! 文字块的水平对齐 → 对齐枚举。 */
+    function hAlignFor(align) {
+        var a = alignNameOf(align)
+        // 用 Text.Align* 而不是 TextEdit.Align*：两者取值相同，
+        // 但 Text 的这几个枚举更基础，不会因为控件类型换实现而找不到。
+        return a === "center" ? Text.AlignHCenter
+             : a === "right" ? Text.AlignRight
+             : Text.AlignLeft
+    }
+
+    // 枚举值与样式名的对照表。靠"枚举按声明顺序从 0 开始"这条 QML 保证，
+    // 不写自引用的 ZRichTextEditor.BlockStyle.Xxx，避免类型自引用。
+    readonly property var _styleNames: ["body", "heading", "quote", "code"]
+
+    // ════════════════════════════════════════════════════════════════
+    //  3. 结构操作
+    // ════════════════════════════════════════════════════════════════
+
+    /*! 整体替换内容。非法项会被 \l normalizeBlock 补成合法块。 */
+    function setBlocks(list) {
+        var out = []
+        if (list)
+            for (var i = 0; i < list.length; ++i)
+                out.push(normalizeBlock(list[i]))
+        blocks = out
+        currentIndex = out.length > 0 ? 0 : -1
+        ++revision
+        contentsChanged()
+    }
+
+    /*!
+        在 \a afterIndex 后面插入一块，返回新块下标。
+        \a afterIndex 传 -1 表示插到最前面；传 \c blocks.length 等价插到末尾。
+    */
+    function insertBlock(afterIndex, block) {
+        var list = blocks.slice()
+        var at = Math.max(0, Math.min(list.length, Number(afterIndex) + 1))
+        var normalized = normalizeBlock(block)
+
+        // 先登记再赋值：Repeater 是同步重建的，delegate 的 Component.onCompleted
+        // 会在 blocks = list 这一句里就跑起来，晚一步登记就抢不到焦点。
+        if (normalized.type === "text")
+            _focusRequest = at
+
+        list.splice(at, 0, normalized)
+        blocks = list
+        currentIndex = at
+        ++revision
+        contentsChanged()
+        return at
+    }
+
+    /*! 在末尾追加（工具栏 / 「继续输入」都走这里）。 */
+    function appendBlock(block) {
+        return insertBlock(blocks.length - 1, block)
+    }
+
+    /*! 插入文字块。\a afterIndex 缺省为当前块。 */
+    function insertTextBlock(afterIndex, text, style) {
+        var at = afterIndex === undefined ? _targetIndex() : afterIndex
+        return insertBlock(at, makeTextBlock(text || "", style))
+    }
+
+    /*! 插入图片块。\a afterIndex 缺省为当前块。 */
+    function insertImageBlock(url, name, caption, afterIndex) {
+        var at = afterIndex === undefined ? _targetIndex() : afterIndex
+        return insertBlock(at, makeImageBlock(url, name, caption))
+    }
+
+    /*! 插入文件块。\a afterIndex 缺省为当前块。 */
+    function insertFileBlock(url, name, size, afterIndex) {
+        var at = afterIndex === undefined ? _targetIndex() : afterIndex
+        return insertBlock(at, makeFileBlock(url, name, size))
+    }
+
+    /*! 删除一块。成功返回 true。 */
+    function removeBlock(index) {
+        var i = Number(index)
+        if (!(i >= 0 && i < blocks.length))
+            return false
+        var list = blocks.slice()
+        list.splice(i, 1)
+        blocks = list
+        currentIndex = list.length === 0 ? -1 : Math.min(i, list.length - 1)
+        ++revision
+        contentsChanged()
+        return true
+    }
+
+    /*! 上下移动一块（内容区拖拽排序的按钮版）。越界或原地不动返回 false。 */
+    function moveBlock(from, to) {
+        var a = Number(from), b = Number(to)
+        if (!(a >= 0 && a < blocks.length) || !(b >= 0 && b < blocks.length) || a === b)
+            return false
+        var list = blocks.slice()
+        var moved = list.splice(a, 1)[0]
+        list.splice(b, 0, moved)
+        blocks = list
+        currentIndex = b
+        ++revision
+        contentsChanged()
+        return true
+    }
+
+    /*! 设置当前块的样式。非文字块会被忽略，返回 false。 */
+    function setStyle(style) {
+        var b = blockAt(_targetIndex())
+        if (!b || (b.type || "text") !== "text")
+            return false
+        b.style = styleNameOf(style)
+        ++revision
+        contentsChanged()
+        return true
+    }
+
+    /*! 反转当前文字块的某个布尔格式（"bold" / "italic" / "underline" / "strike"）。 */
+    function toggleFormat(flag) {
+        var b = blockAt(_targetIndex())
+        if (!b || (b.type || "text") !== "text")
+            return false
+        if (["bold", "italic", "underline", "strike"].indexOf(flag) < 0)
+            return false
+        b[flag] = !b[flag]
+        ++revision
+        contentsChanged()
+        return true
+    }
+
+    /*! 设置当前文字块的对齐。 */
+    function setAlign(align) {
+        var b = blockAt(_targetIndex())
+        if (!b || (b.type || "text") !== "text")
+            return false
+        b.align = alignNameOf(align)
+        ++revision
+        contentsChanged()
+        return true
+    }
+
+    /*! 清空为「只有一个空文字块」的初始状态。 */
+    function clear() {
+        blocks = [makeTextBlock("")]
+        currentIndex = 0
+        _focusRequest = 0
+        ++revision
+        contentsChanged()
+    }
+
+    /*! 当前操作的块下标：优先 \l currentIndex，没有就落在最后一块。 */
+    function _targetIndex() {
+        if (currentIndex >= 0 && currentIndex < blocks.length)
+            return currentIndex
+        return blocks.length - 1
+    }
+
+    /*! 内容被 delegate 反向写回时用：只自增版本号 + 发信号，不重建。 */
+    function _contentEdited() {
+        ++revision
+        contentsChanged()
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  4. 版面：外框 → 标题条 → 工具栏 → 内容区
+    // ════════════════════════════════════════════════════════════════
+
+    // ── 外框 ──
+    ZCutRect {
+        anchors.fill: parent
+        visible: editor.framed
+        color: Theme.surface
+        strokeColor: Theme.line
+        strokeWidth: Theme.border
+        cutTopRight: Theme.cutLg
+        cutBottomLeft: Theme.cutMd
+    }
+
+    // 外框右上角的小装饰：斜线块，呼应面板的语言
+    ZHatchPattern {
+        visible: editor.framed
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.rightMargin: Theme.border
+        anchors.topMargin: Theme.border
+        width: Theme.cutLg * 3
+        height: 26
+        lineColor: Theme.hatch
+        spacing: Theme.hatchStep
+    }
+
+    Column {
+        id: content
+        x: editor.framed ? Theme.border : 0
+        y: editor.framed ? Theme.border : 0
+        width: parent.width - (editor.framed ? Theme.border * 2 : 0)
+
+        // ── 标题条：深色底 + 等宽读数 ──
+        Item {
+            id: headerRow
+            width: parent.width
+            height: editor.showHeader ? 30 : 0
+            visible: editor.showHeader
+
+            ZCutRect {
+                anchors.fill: parent
+                color: Theme.inkBlock
+                cutTopRight: editor.framed ? Theme.cutLg - 2 : 0
+            }
+
+            Row {
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spacingMd
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingSm
+
+                Rectangle {
+                    width: 4
+                    height: 12
+                    color: Theme.accent
+                }
+
+                Text {
+                    text: editor.headerText
+                    font: Theme.fontMonoSm
+                    color: Theme.textOnSub
+                }
+
+                Text {
+                    text: "·"
+                    font: Theme.fontMonoSm
+                    color: Theme.alpha(Theme.textOnSub, 0.35)
+                }
+
+                Text {
+                    text: editor.readOnly ? "READ ONLY" : "EDITING"
+                    font: Theme.fontMonoSm
+                    color: editor.readOnly ? Theme.accentGlow : Theme.alpha(Theme.textOnSub, 0.7)
+                }
+            }
+
+            // 右侧读数：块数 / 图 / 文件
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spacingMd + (editor.framed ? Theme.cutMd : 0)
+                anchors.verticalCenter: parent.verticalCenter
+                text: editor.pad2(editor.stats.text) + " TXT  /  "
+                      + editor.pad2(editor.stats.image) + " IMG  /  "
+                      + editor.pad2(editor.stats.file) + " FILE"
+                font: Theme.fontMonoSm
+                color: Theme.alpha(Theme.textOnSub, 0.55)
+            }
+        }
+
+        // ── 工具栏 ──
+        Item {
+            id: toolbarRow
+            width: parent.width
+            height: (editor.showToolbar && !editor.readOnly)
+                    ? Math.max(toolbarFlow.implicitHeight, moveBar.height) + Theme.spacingSm * 2 : 0
+            visible: editor.showToolbar && !editor.readOnly
+
+            Rectangle {
+                anchors.fill: parent
+                color: Theme.surfaceMuted
+            }
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                height: 1
+                color: Theme.lineSoft
+            }
+
+            Flow {
+                id: toolbarFlow
+                x: Theme.spacingMd
+                y: Theme.spacingSm
+                // 给右侧固定的「上移 / 下移 / 删除」留位置，免得它们被挤到第二行
+                width: parent.width - Theme.spacingMd * 3 - moveBar.width
+                spacing: 3
+
+                // ── 块样式 ──
+                ToolChip { caption: "正文"; active: editor._styleNow() === "body"
+                           tooltip: "正文段落"; onClicked: editor.setStyle("body") }
+                ToolChip { caption: "标题"; active: editor._styleNow() === "heading"
+                           tooltip: "大标题"; onClicked: editor.setStyle("heading") }
+                ToolChip { caption: "引用"; active: editor._styleNow() === "quote"
+                           tooltip: "引用块（左侧粗竖线）"; onClicked: editor.setStyle("quote") }
+                ToolChip { caption: "代码"; active: editor._styleNow() === "code"
+                           tooltip: "等宽代码块"; onClicked: editor.setStyle("code") }
+
+                ToolDivider {}
+
+                // ── 字型 ──
+                ToolChip { caption: "B"; mono: true; bold: true; active: editor._flagNow("bold")
+                           tooltip: "加粗"; onClicked: editor.toggleFormat("bold") }
+                ToolChip { caption: "I"; mono: true; italic: true; active: editor._flagNow("italic")
+                           tooltip: "斜体"; onClicked: editor.toggleFormat("italic") }
+                ToolChip { caption: "U"; mono: true; active: editor._flagNow("underline")
+                           tooltip: "下划线"; onClicked: editor.toggleFormat("underline") }
+                ToolChip { caption: "S"; mono: true; active: editor._flagNow("strike")
+                           tooltip: "删除线"; onClicked: editor.toggleFormat("strike") }
+
+                ToolDivider {}
+
+                // ── 对齐 ──
+                ToolChip { caption: "左"; active: editor._alignNow() === "left"
+                           tooltip: "左对齐"; onClicked: editor.setAlign("left") }
+                ToolChip { caption: "中"; active: editor._alignNow() === "center"
+                           tooltip: "居中"; onClicked: editor.setAlign("center") }
+                ToolChip { caption: "右"; active: editor._alignNow() === "right"
+                           tooltip: "右对齐"; onClicked: editor.setAlign("right") }
+
+                ToolDivider {}
+
+                // ── 插入 ──
+                ToolChip { caption: "+ 图片"; active: false
+                           tooltip: "插入图片块"; onClicked: editor.imageRequested() }
+                ToolChip { caption: "+ 文件"; active: false
+                           tooltip: "插入文件块"; onClicked: editor.fileRequested() }
+                ToolChip { caption: "+ 文字"; active: false
+                           tooltip: "在下方新起一段"; onClicked: editor.insertTextBlock(undefined, "") }
+            }
+
+            // 块顺序 / 删除：贴右边固定，不参与换行 —— 它们作用于「当前块」，
+            // 混在样式芯片里会被误读成样式开关。
+            Row {
+                id: moveBar
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spacingMd
+                y: Theme.spacingSm
+                spacing: 3
+
+                ToolChip { caption: "↑"; mono: true; enabled: editor.currentIndex > 0
+                           tooltip: "当前块上移"
+                           onClicked: editor.moveBlock(editor.currentIndex, editor.currentIndex - 1) }
+                ToolChip { caption: "↓"; mono: true
+                           enabled: editor.currentIndex >= 0 && editor.currentIndex < editor.blocks.length - 1
+                           tooltip: "当前块下移"
+                           onClicked: editor.moveBlock(editor.currentIndex, editor.currentIndex + 1) }
+                ToolChip { caption: "×"; mono: true; tone: "danger"
+                           tooltip: "删除当前块"
+                           onClicked: editor.removeBlock(editor.currentIndex) }
+            }
+        }
+
+        // ── 内容区 ──
+        Item {
+            id: docArea
+            width: parent.width
+            height: docColumn.height + Theme.spacingMd
+
+            // 空白文档时铺一层极淡的网格，提示"这里是可编辑区"
+            ZGridBackground {
+                anchors.fill: parent
+                visible: editor.isEmpty
+                opacity: 0.45
+                // 必须显式透明：ZGridBackground 默认会用 bgColor 平涂一层底，
+                // 直接放在卡片里会把卡片底色盖成 #F2F2F2（暗色主题下尤其难看）
+                bgColor: "transparent"
+                minorColor: Theme.gridLine
+                majorColor: Theme.gridLineMajor
+                crossColor: Theme.lineSoft
+                minorStep: Theme.gridMinor
+                majorStep: Theme.gridMajor
+            }
+
+            Column {
+                id: docColumn
+                x: Theme.spacingMd
+                y: Theme.spacingSm
+                width: docArea.width - Theme.spacingMd * 2
+                spacing: editor.blockSpacing
+
+                Repeater {
+                    model: editor.blocks
+
+                    delegate: Loader {
+                        id: blockLoader
+
+                        required property int index
+                        required property var modelData
+
+                        width: docColumn.width
+                        // Loader 继承 QQuickImplicitSizeItem，implicitWidth/implicitHeight 只读，
+                        // 不能直接赋值（写了编译报 read-only），所以用可写的 height 去接
+                        // delegate 根的隐式高度。
+                        // Loader.item 的静态类型是 QObject，读 implicitHeight 会报
+                        // missing-property；运行时读到的确实是 Item，断言收窄是对的。
+                        // qmllint disable missing-property
+                        height: item instanceof Item ? item.implicitHeight : 0
+
+                        sourceComponent: {
+                            var t = modelData ? (modelData.type || "text") : "text"
+                            if (t === "image")
+                                return imageDelegate
+                            if (t === "file")
+                                return fileDelegate
+                            return textDelegate
+                        }
+
+                        onLoaded: {
+                            item.blockIndex = blockLoader.index
+                            item.blockData = blockLoader.modelData
+                        }
+                    }
+                }
+
+                // 「继续输入」：空白文档或末尾都能一键新起一段
+                Item {
+                    width: docColumn.width
+                    // 只读时没有"继续输入"这回事；但如果整篇是空的，还是要留一行说明，
+                    // 否则只读 + 空文档 = 一条标题栏下面什么都没有。
+                    height: (editor.readOnly && editor.blocks.length > 0) ? 0 : 34
+                    visible: height > 0
+
+                    MouseArea {
+                        anchors.fill: parent
+                        enabled: !editor.readOnly
+                        hoverEnabled: true
+                        cursorShape: Qt.IBeamCursor
+                        onClicked: editor.insertTextBlock(editor.blocks.length - 1, "")
+                        onEntered: addLabel.color = Theme.ink
+                        onExited: addLabel.color = Theme.muted
+                    }
+
+                    Rectangle {
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.bottom: parent.bottom
+                        height: 1
+                        color: Theme.lineSoft
+                        opacity: 0.5
+                    }
+
+                    Text {
+                        id: addLabel
+                        anchors.left: parent.left
+                        anchors.verticalCenter: parent.verticalCenter
+                        text: editor.blocks.length > 0 ? "+ 点击继续输入"
+                            : editor.readOnly ? "空文档 / NO CONTENT"
+                            : "+ 点击开始输入"
+                        font: Theme.fontMonoSm
+                        color: Theme.muted
+                    }
+                }
+            }
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  5. 内部小工具
+    // ════════════════════════════════════════════════════════════════
+
+    function pad2(n) {
+        return (n < 10 ? "0" : "") + n
+    }
+
+    // 工具栏的高亮取值。读 revision 让它跟着内容刷新。
+    function _styleNow() {
+        var r = revision
+        var b = blockAt(_targetIndex())
+        return b ? styleNameOf(b.style) : "body"
+    }
+
+    function _flagNow(flag) {
+        var r = revision
+        var b = blockAt(_targetIndex())
+        return b ? !!b[flag] : false
+    }
+
+    function _alignNow() {
+        var r = revision
+        var b = blockAt(_targetIndex())
+        return b ? alignNameOf(b.align) : "left"
+    }
+
+    // ── 工具栏芯片：选中 = 亮黄底黑字，悬停 = 悬停底 ──
+    component ToolChip: Button {
+        id: chip
+
+        property string caption: ""
+        property bool active: false
+        property bool mono: false
+        property bool bold: false
+        property bool italic: false
+        property string tone: ""          // "" 普通 / "danger" 危险
+        property string tooltip: ""
+
+        // 芯片窄一点：工具栏一行要放下 12 个芯片 + 右侧 3 个操作，
+        // 用 spacingMd 做内边距就会把「+ 文字」挤到第二行。
+        implicitWidth: Math.max(26, chipLabel.implicitWidth + Theme.spacingSm * 2)
+        implicitHeight: 24
+        padding: 0
+        hoverEnabled: true
+        text: ""
+
+        background: ZCutRect {
+            anchors.fill: parent
+            color: !chip.enabled ? "transparent"
+                 : chip.active ? (chip.tone === "danger" ? Theme.danger : Theme.accent)
+                 : chip.hovered ? Theme.surfaceHover
+                 : "transparent"
+            strokeColor: chip.active ? "transparent"
+                       : chip.hovered ? Theme.lineSoft : "transparent"
+            strokeWidth: 1
+            cutTopRight: Theme.cutSm
+            cutBottomLeft: 3
+
+            Behavior on color {
+                ColorAnimation { duration: Theme.durFast; easing.type: Theme.easingStd }
+            }
+        }
+
+        contentItem: Text {
+            id: chipLabel
+            text: chip.caption
+            // 一个 font 绑定写完所有子属性。
+            // 不能既写 `font: ...` 又写 `font.bold: ...`：那是对同一属性重复绑定，
+            // 静态检查会报 duplicate-property-binding，运行时后者还会静默盖掉前者的绑定。
+            // 注意：注释行不要以 qmllint 开头，否则会被当成 lint 指令解析。
+            font: Qt.font({
+                family: chip.mono ? Theme.familyMono : Theme.family,
+                pixelSize: chip.mono ? 13 : 14,
+                bold: chip.bold,
+                italic: chip.italic
+            })
+            color: !chip.enabled ? Theme.muted
+                 : chip.active ? (chip.tone === "danger" ? Theme.textOnSub : Theme.textOnAccent)
+                 : Theme.ink
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        // 只给 text，不碰 visible —— 可见性归 ToolTip 自己的 delay/timeout 状态机
+        ZToolTip { text: chip.tooltip }
+    }
+
+    component ToolDivider: Rectangle {
+        width: 1
+        height: 14
+        color: Theme.lineSoft
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  6. 文字块
+    // ════════════════════════════════════════════════════════════════
+
+    Component {
+        id: textDelegate
+
+        Item {
+            id: tRoot
+
+            property int blockIndex: -1
+            property var blockData: null
+
+            // Loader.onLoaded 才把 blockData 补进来（晚于 delegate 的 onCompleted），
+            // 所以在这里接住它，把文字灌进 TextArea。
+            onBlockDataChanged: if (area) area._syncFromBlock()
+
+            // 抢焦点必须等 blockIndex 有了真值再判：delegate 的 Component.onCompleted
+            // 阶段 blockIndex 还是 -1，而 _focusRequest 的"没有请求"哨兵恰好也是 -1，
+            // 在 onCompleted 里判相等会让**每个**文字块都抢一次焦点，最后一个赢 ——
+            // 表现为窗口刚显示时末块被选中、工具栏高亮跳到最后。
+            onBlockIndexChanged: {
+                if (tRoot.blockIndex >= 0 && editor._focusRequest === tRoot.blockIndex) {
+                    editor._focusRequest = -1
+                    if (area)
+                        area.forceActiveFocus()
+                }
+            }
+
+            // 唯一的格式依赖点：revision 一变，fmt 重新求值（新对象 → 属性通知 → 下面全部重算）
+            readonly property var fmt: {
+                var r = editor.revision
+                return editor.formatOf(tRoot.blockIndex)
+            }
+
+            readonly property bool isHeading: fmt.style === "heading"
+            readonly property bool isQuote: fmt.style === "quote"
+            readonly property bool isCode: fmt.style === "code"
+            readonly property bool selected: editor.currentIndex === tRoot.blockIndex
+
+            // 文字相对块左边缘的缩进：给标题的黄竖条、引用的灰竖条让位。
+            // 代码块没有竖条，靠 leftPadding 内缩，所以 leftInset 是 0。
+            readonly property int leftInset: isHeading ? 10 : isQuote ? 14 : 0
+            readonly property int leftPad: isCode ? Theme.spacingMd : 0
+            readonly property int topInset: isHeading ? Theme.spacingSm
+                                            : (isQuote || isCode) ? Theme.spacingSm : 2
+            readonly property int bottomInset: isHeading ? 4 : (isQuote || isCode) ? Theme.spacingSm : 2
+
+            width: parent ? parent.width : 0
+            implicitHeight: area.height + topInset + bottomInset
+
+            // 引用 / 代码块的底
+            ZCutRect {
+                anchors.fill: parent
+                visible: tRoot.isQuote || tRoot.isCode
+                color: tRoot.isCode ? Theme.surfaceSunken : Theme.surfaceMuted
+                strokeColor: tRoot.isCode ? Theme.lineSoft : "transparent"
+                strokeWidth: tRoot.isCode ? 1 : 0
+                cutTopRight: tRoot.isCode ? Theme.cutSm : 0
+                cutBottomLeft: tRoot.isCode ? 4 : 0
+            }
+
+            // 左侧竖条：标题用亮黄，引用用深灰粗线
+            Rectangle {
+                visible: tRoot.isHeading || tRoot.isQuote
+                x: 0
+                y: Theme.spacingXs
+                width: tRoot.isHeading ? 4 : 3
+                height: Math.max(0, tRoot.height - Theme.spacingXs * 2)
+                color: tRoot.isHeading ? Theme.accent : Theme.lineSoft
+            }
+
+            // 聚焦时的整块轮廓
+            ZCutRect {
+                anchors.fill: parent
+                anchors.margins: -2
+                visible: tRoot.selected && area.activeFocus
+                color: "transparent"
+                strokeColor: Theme.accent
+                strokeWidth: 1
+                cutTopRight: Theme.cutSm
+                cutBottomLeft: 4
+                opacity: 0.9
+            }
+
+            TextArea {
+                id: area
+
+                x: tRoot.leftInset
+                y: tRoot.topInset
+                width: tRoot.width - tRoot.leftInset
+                height: contentHeight + topPadding + bottomPadding
+
+                textFormat: TextEdit.PlainText
+                wrapMode: TextEdit.Wrap
+                background: null
+                padding: 0
+                leftPadding: tRoot.leftPad
+                rightPadding: Theme.spacingSm
+                topPadding: 0
+                bottomPadding: 0
+
+                readOnly: editor.readOnly
+                selectByMouse: true
+                // 块编辑器里 Tab 应该归文本自己用（缩进），不该把块塞进窗口的 Tab 焦点链，
+                // 否则 Tab 一次跳一个块，正文里的 Tab 就没法用了。
+                activeFocusOnTab: false
+
+                font: editor.textFontFor(tRoot.fmt)
+                color: tRoot.isQuote ? Theme.inkSoft : Theme.ink
+                horizontalAlignment: editor.hAlignFor(tRoot.fmt.align)
+                selectionColor: Theme.accent
+                selectedTextColor: Theme.textOnAccent
+                placeholderText: tRoot.blockIndex === 0 ? editor.placeholderText : ""
+                placeholderTextColor: Theme.muted
+
+                // 首次装载 / 外部整体替换后同步；用户打字不回灌到 text（避免绑成环丢光标）
+                Component.onCompleted: _syncFromBlock()
+
+                // blockData 是 Loader 在 onLoaded 里补上的 —— 那是**晚于**本项
+                // Component.onCompleted 的时刻，所以首次装载必须在 onLoaded 之后
+                // 再同步一次，否则文字块永远是空的（图片/文件块因为是绑定所以没事）。
+                function _syncFromBlock() {
+                    var raw = tRoot.blockData ? tRoot.blockData.text : ""
+                    var t = (raw === undefined || raw === null) ? "" : String(raw)
+                    if (area.text !== t)
+                        area.text = t
+                }
+
+                onTextChanged: {
+                    if (!tRoot.blockData || tRoot.blockData.text === area.text)
+                        return
+                    tRoot.blockData.text = area.text
+                    editor._contentEdited()
+                }
+
+                onActiveFocusChanged: {
+                    if (activeFocus) {
+                        editor.currentIndex = tRoot.blockIndex
+                        editor.blockActivated(tRoot.blockIndex)
+                    }
+                }
+            }
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  7. 图片块
+    // ════════════════════════════════════════════════════════════════
+
+    Component {
+        id: imageDelegate
+
+        Item {
+            id: iRoot
+
+            property int blockIndex: -1
+            property var blockData: null
+
+            readonly property bool selected: editor.currentIndex === iRoot.blockIndex
+            readonly property string _url: iRoot.blockData ? (iRoot.blockData.url || "") : ""
+            readonly property string _name: iRoot.blockData ? (iRoot.blockData.name || "") : ""
+            readonly property string _caption: iRoot.blockData ? (iRoot.blockData.caption || "") : ""
+
+            // 图片原始宽高比；还没加载到就给 16:10 兜底，避免首帧高度为 0 抖动
+            readonly property real _ratio: (img.implicitWidth > 0 && img.implicitHeight > 0)
+                                           ? (img.implicitWidth / img.implicitHeight) : 1.6
+            readonly property real frameHeight: {
+                var w = iRoot.width > 0 ? iRoot.width : editor.implicitWidth
+                return Math.max(Theme.dp(96), Math.min(editor.maxImageHeight, w / _ratio))
+            }
+
+            readonly property bool _showPlaceholder: img.status !== Image.Ready
+
+            width: parent ? parent.width : 0
+            implicitHeight: frameHeight + (_caption.length > 0 ? 24 : 0)
+
+            ZCutRect {
+                id: imageFrame
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: iRoot.frameHeight
+                color: Theme.surfaceSunken
+                strokeColor: iRoot.selected ? Theme.accent : Theme.lineSoft
+                strokeWidth: iRoot.selected ? 2 : 1
+                cutTopRight: Theme.cutLg
+                cutBottomLeft: Theme.cutSm
+
+                Image {
+                    id: img
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    source: iRoot._url
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    cache: true
+                    smooth: true
+                }
+
+                // ── 占位图：没选图 / 加载失败时的工程图样式 ──
+                Item {
+                    anchors.fill: parent
+                    anchors.margins: 2
+                    visible: iRoot._showPlaceholder
+
+                    ZHatchPattern {
+                        anchors.fill: parent
+                        lineColor: Theme.hatch
+                        spacing: Theme.hatchStep
+                        cross: true
+                    }
+
+                    // 四角瞄准框
+                    Repeater {
+                        model: 4
+                        delegate: ZCutRect {
+                            required property int index
+                            width: 14
+                            height: 14
+                            color: "transparent"
+                            strokeColor: Theme.muted
+                            strokeWidth: 1
+                            x: index % 2 === 0 ? 6 : parent.width - width - 6
+                            y: index < 2 ? 6 : parent.height - height - 6
+                            cutTopRight: index === 1 || index === 2 ? 10 : 0
+                            cutBottomLeft: index === 1 || index === 2 ? 10 : 0
+                        }
+                    }
+
+                    Column {
+                        anchors.centerIn: parent
+                        spacing: Theme.spacingXs
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: iRoot._url.length > 0 ? "IMAGE UNAVAILABLE" : "NO IMAGE"
+                            font: Theme.fontMonoMd
+                            color: Theme.muted
+                        }
+
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: iRoot._name.length > 0 ? iRoot._name : "点工具栏「+ 图片」插入"
+                            font: Theme.fontMonoSm
+                            color: Theme.muted
+                            opacity: 0.8
+                        }
+                    }
+                }
+
+                // 左上角 IMG 徽标
+                ZTag {
+                    anchors.left: parent.left
+                    anchors.leftMargin: Theme.spacingSm
+                    anchors.top: parent.top
+                    anchors.topMargin: Theme.spacingSm
+                    text: "IMG"
+                    tone: Theme.Tone.Ink
+                }
+
+                // 右上角删除
+                ToolChip {
+                    anchors.right: parent.right
+                    anchors.rightMargin: Theme.spacingSm
+                    anchors.top: parent.top
+                    anchors.topMargin: Theme.spacingSm
+                    caption: "×"
+                    mono: true
+                    tone: "danger"
+                    tooltip: "移除这张图"
+                    onClicked: editor.removeBlock(iRoot.blockIndex)
+                }
+
+                TapHandler {
+                    acceptedButtons: Qt.LeftButton
+                    onTapped: {
+                        editor.currentIndex = iRoot.blockIndex
+                        editor.blockActivated(iRoot.blockIndex)
+                    }
+                }
+            }
+
+            // 图下说明
+            Text {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: imageFrame.bottom
+                anchors.topMargin: 5
+                visible: iRoot._caption.length > 0
+                text: iRoot._caption
+                font: Theme.fontMonoSm
+                color: Theme.muted
+                elide: Text.ElideRight
+            }
+        }
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  8. 文件块
+    // ════════════════════════════════════════════════════════════════
+
+    Component {
+        id: fileDelegate
+
+        Item {
+            id: fRoot
+
+            property int blockIndex: -1
+            property var blockData: null
+
+            readonly property bool selected: editor.currentIndex === fRoot.blockIndex
+            readonly property string _url: fRoot.blockData ? (fRoot.blockData.url || "") : ""
+            readonly property string _name: fRoot.blockData ? (fRoot.blockData.name || "") : ""
+            readonly property var _size: fRoot.blockData ? (fRoot.blockData.size || 0) : 0
+
+            width: parent ? parent.width : 0
+            implicitHeight: 52
+
+            ZCutRect {
+                id: fileFrame
+                anchors.fill: parent
+                color: fileHover.hovered ? Theme.surfaceHover : Theme.surface
+                strokeColor: fRoot.selected ? Theme.accent : Theme.lineSoft
+                strokeWidth: fRoot.selected ? 2 : 1
+                cutTopRight: Theme.cutMd
+                cutBottomLeft: 4
+
+                Behavior on color {
+                    ColorAnimation { duration: Theme.durFast; easing.type: Theme.easingStd }
+                }
+            }
+
+            // 左侧扩展名徽标
+            ZCutRect {
+                id: extBadge
+                x: Theme.spacingSm
+                anchors.verticalCenter: parent.verticalCenter
+                width: 40
+                height: 40
+                color: Theme.subBg
+                cutTopRight: 8
+                cutBottomLeft: 3
+
+                Text {
+                    anchors.centerIn: parent
+                    text: editor.extensionOf(fRoot._name)
+                    font: Qt.font({ family: Theme.familyMono, pixelSize: 11, bold: true })
+                    color: Theme.textOnSub
+                }
+            }
+
+            // 文件名 + 元信息
+            Column {
+                anchors.left: extBadge.right
+                anchors.leftMargin: Theme.spacingMd
+                anchors.right: removeChip.left
+                anchors.rightMargin: Theme.spacingSm
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: 3
+
+                Text {
+                    width: parent.width
+                    text: fRoot._name.length > 0 ? fRoot._name : "未命名文件"
+                    font: Theme.fontStrong
+                    color: Theme.ink
+                    elide: Text.ElideMiddle
+                }
+
+                Text {
+                    width: parent.width
+                    text: editor.formatBytes(fRoot._size) + "  ·  ATTACHMENT"
+                    font: Theme.fontMonoSm
+                    color: Theme.muted
+                    elide: Text.ElideRight
+                }
+            }
+
+            ToolChip {
+                id: removeChip
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spacingSm
+                anchors.verticalCenter: parent.verticalCenter
+                caption: "×"
+                mono: true
+                tone: "danger"
+                tooltip: "移除附件"
+                onClicked: editor.removeBlock(fRoot.blockIndex)
+            }
+
+            HoverHandler { id: fileHover }
+
+            // 点击区只覆盖「徽标 + 文件名」这一段，右边留出删除按钮的地盘。
+            // 如果让 TapHandler 铺满整行，点 × 会先删块、再触发 fileActivated(已删除的块)。
+            Item {
+                anchors.left: parent.left
+                anchors.right: removeChip.left
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+
+                TapHandler {
+                    acceptedButtons: Qt.LeftButton
+                    onTapped: {
+                        editor.currentIndex = fRoot.blockIndex
+                        editor.blockActivated(fRoot.blockIndex)
+                        editor.fileActivated(fRoot._url, fRoot._name)
+                    }
+                }
+            }
+        }
+    }
+}
+```
+
+### `qml/ZmdUI/ZChatInput.qml`
+
+QQ 式消息输入框：正文 + 图片 / 文件附件，内置系统文件选择框，拖放与粘贴自动转附件，回车发送
+
+```qml
+import QtQuick
+import QtQuick.Controls.Basic
+import QtQuick.Dialogs
+
+/*!
+    \qmltype ZChatInput
+    \inqmlmodule ZmdUI
+    \brief 聊天输入框：多行文本 + 图片 / 文件附件，Enter 发送、拖入即加附件。
+
+    形制照着 IM 的消息输入框做：上面是**附件预览区**（图片缩略图、文件卡片，都可单独删掉），
+    中间是可长高的多行输入区，底部一排工具（图片 / 文件 / 清空）与发送按钮。
+
+    \qml
+    ZChatInput {
+        width: 560
+        placeholderText: "输入消息…"
+        onSendRequested: (text, attachments) => chat.send(text, attachments)
+    }
+    \endqml
+
+    \section1 「图片」/「文件」按钮默认就能用
+
+    点它们会弹出系统文件选择框（\c QtQuick.Dialogs），选完按扩展名分流成图片缩略图
+    或文件卡片。宿主想换成自己的选择器（带预览、最近使用、远程目录……）时，
+    把 \l useSystemDialogs 置 \c false，然后接 \l imagePickRequested /
+    \l filePickRequested，选完再调 \l addImage / \l addFile / \l addUrlsAsAttachments。
+
+    组件仍然不发网络请求、不决定发送后要不要清空：点「发送」只发出
+    \l sendRequested，是否清空由 \l clearOnSend 或宿主自己决定。
+
+    \section1 键盘约定
+
+    \list
+    \li 默认 \c Enter 发送、\c Shift+Enter 换行（\l sendOnEnter 可反转为「Enter 换行、Ctrl+Enter 发送」）
+    \li \c Ctrl+Enter 在两种模式下都发送 —— 不用记当前是哪种模式
+    \li \c Escape 发出 \l cancelRequested，宿主可用来收起 @ 候选、清空草稿等
+    \endlist
+
+    \section1 为什么输入区会"长高"而不是一开始就带滚动条
+
+    高度在 \l minTextHeight 与 \l maxTextHeight 之间跟着 \c contentHeight 走：
+    一两行时没有滚动条，写长消息超过上限后由 \c TextEdit 内部滚动，光标始终可见。
+    这和 ZRichTextEditor 的"完全不滚动"不同 —— 聊天框固定在屏幕一角，
+    不可能把整页撑高。
+*/
+Item {
+    id: composer
+
+    // ════════════════════════════════════════════════════════════════
+    //  1. 数据
+    // ════════════════════════════════════════════════════════════════
+
+    /*! 草稿正文。直接读写输入区，不需要中间变量。 */
+    property alias text: area.text
+
+    /*!
+        附件数组，元素形如 `{ type: "image" | "file", url, name, size, id }`。
+
+        约定：**整体替换**才会刷新界面。组件内部增删附件一律用
+        `attachments = attachments.slice()` 重新赋值，自己的代码也请照做，
+        不要 `attachments.push(...)` —— 那改的是数组本身，绑定收不到通知。
+    */
+    property var attachments: []
+
+    /*!
+        附件版本号。附件数组被整体替换时自增，给"想在附件变化时做点事"
+        的绑定一个稳定的依赖点（\l attachments 本身也能绑，这个只是方便）。
+    */
+    property int revision: 0
+
+    // ════════════════════════════════════════════════════════════════
+    //  2. 外观
+    // ════════════════════════════════════════════════════════════════
+
+    /*! 是否画外框（放进 ZPanel 这类已有卡片的容器时关掉，避免双层边框） */
+    property bool framed: true
+
+    /*! 是否显示底部工具栏 */
+    property bool showToolbar: true
+
+    /*! 是否显示顶部深色标题条 */
+    property bool showHeader: true
+
+    /*! 标题条上的等宽小字 */
+    property string headerText: "MESSAGE / COMPOSER"
+
+    /*! 空输入时的占位提示 */
+    property string placeholderText: "输入消息，Enter 发送，Shift+Enter 换行…"
+
+    /*! 发送按钮文字 */
+    property string sendText: "发送"
+
+    /*! 附件区留空时要显示的一行提示（空串则不显示） */
+    property string attachHintText: "可粘贴图片、拖动文件到此处"
+
+    /*! 输入区最小高度（一行文字的呼吸感） */
+    property int minTextHeight: 74
+
+    /*! 输入区最大高度，超过后输入区内部滚动 */
+    property int maxTextHeight: 140
+
+    /*! 图片缩略图边长 */
+    property int thumbSize: 64
+
+    /*! 文件卡片宽度 */
+    property int fileCardWidth: 208
+
+    /*! 文件卡片高度 */
+    property int fileCardHeight: 56
+
+    /*! 是否允许加图片附件（关掉后工具栏的「图片」按钮不出现） */
+    property bool allowImage: true
+
+    /*! 是否允许加文件附件 */
+    property bool allowFile: true
+
+    /*! 只读：输入区不可编辑、工具栏与发送按钮禁用 */
+    property bool readOnly: false
+
+    /*! 发送中：发送按钮换成忙碌外观并禁用，输入区仍可继续写 */
+    property bool busy: false
+
+    /*! 点「图片」/「文件」时，组件是否自己弹系统文件选择框。
+        默认 \c true —— 不接线也能用。宿主想换成自己的选择器（比如带预览、
+        带最近使用、或者远程目录浏览）时把它置 false，然后接
+        \l imagePickRequested / \l filePickRequested 自己处理，
+        选完再调 \l addImage / \l addFile / \l addUrlsAsAttachments。 */
+    property bool useSystemDialogs: true
+
+    // ════════════════════════════════════════════════════════════════
+    //  3. 行为
+    // ════════════════════════════════════════════════════════════════
+
+    /*!
+        Enter 的行为。`true`（默认）= Enter 发送、Shift+Enter 换行；
+        `false` = Enter 换行、Ctrl+Enter 发送。两种模式下 Ctrl+Enter 都能发。
+    */
+    property bool sendOnEnter: true
+
+    /*! 发出 \l sendRequested 之后是否自动清空草稿（默认不清，交给宿主决定） */
+    property bool clearOnSend: false
+
+    /*! 正文长度上限（字符数）。0 = 不限制；超限只是不能发送，不会截断用户输入 */
+    property int maxLength: 2000
+
+    /*! 附件数量上限，0 = 不限制 */
+    property int maxAttachments: 9
+
+    /*! 用户点了「发送」（或按了发送快捷键） */
+    signal sendRequested(string text, var attachments)
+
+    /*! 加进一个附件（\a index 是加入后的下标） */
+    signal attachmentAdded(var attachment, int index)
+
+    /*! 删掉一个附件 */
+    signal attachmentRemoved(var attachment, int index)
+
+    /*! 用户点了「图片」——宿主该打开文件选择框，选完调 \l addImage */
+    signal imagePickRequested()
+
+    /*! 用户点了「文件」——同上，选完调 \l addFile */
+    signal filePickRequested()
+
+    /*! 用户按了 Escape */
+    signal cancelRequested()
+
+    /*! 正文被编辑（每次内容变化都会发，宿主可用来做"正在输入"） */
+    signal textEdited()
+
+    /*!
+        拖文件进输入框时发出，\a urls 是 `list<url>`。
+        图片会按扩展名自动成为图片附件、其余成为文件附件（受 \l maxAttachments 限制）；
+        这个信号只是给宿主"知道发生了什么"，**不需要**再自己调 \l addImage / \l addFile。
+    */
+    signal filesDropped(var urls)
+
+    /*!
+        用户在输入区按 Ctrl+V，而剪贴板里**没有文本**时发出——这通常意味着剪贴板里是位图。
+        QML 没有读剪贴板图片的能力，需要宿主用 C++ 取图、存成文件，再回调 \l addImage：
+
+        \qml
+        ZChatInput {
+            onPasteRequested: {
+                var url = ZClipboard.saveImage()      // 宿主注入的 context property
+                if (url.length > 0)
+                    addImage(url, "clipboard.png")
+            }
+        }
+        \endqml
+    */
+    signal pasteRequested()
+
+    /*!
+        某条限制被撞到。\a kind 是 `"length"`（超出 \l maxLength）或
+        `"attachments"`（超出 \l maxAttachments），宿主可以据此弹提示。
+    */
+    signal limitReached(string kind)
+
+    /*! 附件个数 */
+    readonly property int attachmentCount: attachments ? attachments.length : 0
+
+    /*! 其中图片个数 */
+    readonly property int imageCount: countOfType("image")
+
+    /*! 其中文件个数 */
+    readonly property int fileCount: countOfType("file")
+
+    /*! 正文 + 附件是否至少有一个非空 */
+    readonly property bool hasContent: text.trim().length > 0 || attachmentCount > 0
+
+    /*! 正文是否超过 \l maxLength */
+    readonly property bool overLimit: maxLength > 0 && text.length > maxLength
+
+    /*! 现在按「发送」会不会真的发出去 */
+    readonly property bool canSend: hasContent && !readOnly && !busy && !overLimit
+
+    /*! 输入区是否拿到了焦点（宿主可用来做"点击空白处聚焦"） */
+    readonly property bool inputFocused: area.activeFocus
+
+    /*! 标题条右侧的草稿摘要，例如 `"128 字 · 2 图 · 1 文件"` */
+    readonly property string draftSummary: {
+        var parts = [text.length + " 字"]
+        if (imageCount > 0)
+            parts.push(imageCount + " 图")
+        if (fileCount > 0)
+            parts.push(fileCount + " 文件")
+        return parts.join(" · ")
+    }
+
+    /*! 计数文案，例如 `"128 / 2000"` */
+    readonly property string counterText: maxLength > 0 ? (text.length + " / " + maxLength)
+                                                        : (text.length + " 字")
+
+    /*! 内部：附件自增 id（只用来给委托一个稳定 key） */
+    // 附件 id 的计数器。故意做成普通 JS 对象而不是 `property int`：
+    // 工厂函数常被写在 `attachments: [ makeImageAttachment(...) ]` 这种**绑定**里，
+    // 如果计数器是 QML 属性，绑定求值期间读写它会把自己标记成依赖，
+    // 于是 Qt 报 "Binding loop detected for property attachments"。
+    // 放在对象字段里，绑定时只读 `_idGen` 这个属性本身（值不变），写入不触发失效。
+    property var _idGen: ({ next: 1 })
+
+    /*! 内部：是否正把文件拖在输入框上 */
+    property bool _dropActive: false
+
+    /*! 内部：是否已经就"超长"报过警（用来做边沿触发，避免每敲一个字都发信号） */
+    property bool _overLimitReported: false
+
+    /*! 内部：上一次的正文，用来做 diff 找出"这次粘贴进来的是哪一段" */
+    property string _lastText: ""
+
+    /*! 内部：正在把粘贴进来的 file:/// 文本改写成附件，别让改写本身再触发一次扫描 */
+    property bool _suppressPasteScan: false
+
+    /*! 内部：按扩展名认作图片的那些后缀（小写、不含点） */
+    readonly property var _imageExtensions: [
+        "png", "jpg", "jpeg", "jfif", "gif", "bmp", "webp", "svg",
+        "ico", "tif", "tiff", "heic", "heif", "avif"
+    ]
+
+    implicitWidth: Theme.dp(560)
+    implicitHeight: body.height
+
+    // ════════════════════════════════════════════════════════════════
+    //  4. 纯函数：附件工厂 / 归一化 / 换算 / 序列化
+    //     全部不碰界面状态，可以直接在 qmltestrunner 里断言。
+    // ════════════════════════════════════════════════════════════════
+
+    /*! 造一个图片附件。 */
+    function makeImageAttachment(url, name) {
+        return normalizeAttachment({
+            type: "image",
+            url: url ? String(url) : "",
+            name: name ? String(name) : (url ? fileNameOf(url) : "image")
+        })
+    }
+
+    /*! 造一个文件附件。\a size 是字节数。 */
+    function makeFileAttachment(url, name, size) {
+        return normalizeAttachment({
+            type: "file",
+            url: url ? String(url) : "",
+            name: name ? String(name) : (url ? fileNameOf(url) : "file"),
+            size: size
+        })
+    }
+
+    /*! 把一个可能残缺的附件对象补成合法形状（类型只认 image / file，其它按 file 处理）。 */
+    function normalizeAttachment(att) {
+        var src = att || {}
+        var type = String(src.type || "").toLowerCase() === "image" ? "image" : "file"
+        var url = src.url ? String(src.url) : ""
+        var name = src.name ? String(src.name) : (url ? fileNameOf(url) : type)
+        var size = Number(src.size)
+        return {
+            type: type,
+            url: url,
+            name: name,
+            size: isFinite(size) && size > 0 ? Math.round(size) : 0,
+            id: src.id ? String(src.id) : ("att-" + (composer._idGen.next++))
+        }
+    }
+
+    /*! 从路径里取文件名（同时认 `/` 与 `\`）。 */
+    function fileNameOf(url) {
+        var s = url ? String(url) : ""
+        var cut = Math.max(s.lastIndexOf("/"), s.lastIndexOf("\\"))
+        return cut >= 0 ? s.substring(cut + 1) : s
+    }
+
+    /*! 取扩展名（小写、不含点）。没有扩展名返回空串。 */
+    function extensionOf(name) {
+        var s = name ? String(name) : ""
+        var dot = s.lastIndexOf(".")
+        if (dot <= 0 || dot === s.length - 1)
+            return ""
+        return s.substring(dot + 1).toLowerCase()
+    }
+
+    /*! 字节数 → 人读的大小。 */
+    function formatBytes(bytes) {
+        var n = Number(bytes)
+        if (!isFinite(n) || n <= 0)
+            return "0 B"
+        if (n < 1024)
+            return Math.round(n) + " B"
+        if (n < 1024 * 1024)
+            return (n / 1024).toFixed(1) + " KB"
+        if (n < 1024 * 1024 * 1024)
+            return (n / (1024 * 1024)).toFixed(1) + " MB"
+        return (n / (1024 * 1024 * 1024)).toFixed(1) + " GB"
+    }
+
+    /*! 按扩展名猜一个 url 是不是图片（拖进来 / 粘进来的东西要靠它分流）。 */
+    function isImageUrl(url) {
+        var ext = extensionOf(fileNameOf(url ? String(url) : ""))
+        return ext.length > 0 && _imageExtensions.indexOf(ext) >= 0
+    }
+
+    /*!
+        把 \l FileDialog.selectedFiles（`list<url>`）转成普通字符串数组。
+        单独抽出来是因为 QML 的列表属性在 JS 里是"类数组"对象，
+        直接往 \l addUrlsAsAttachments 里塞，某些 Qt 版本会拿到带包装的对象。
+    */
+    function urlsOf(files) {
+        var out = []
+        if (!files)
+            return out
+        for (var i = 0; i < files.length; ++i) {
+            var one = files[i]
+            if (one === undefined || one === null)
+                continue
+            var s = String(one)
+            if (s.length > 0)
+                out.push(s)
+        }
+        return out
+    }
+
+    /*!
+        取 \a after 相对 \a before 新插入的那一段：去掉共同前缀、共同后缀，中间就是这次改动的净增量。
+        粘贴时用它认出"刚插进来的内容是什么"，纯函数，方便单测。
+    */
+    function insertedText(before, after) {
+        var b = before === undefined || before === null ? "" : String(before)
+        var a = after === undefined || after === null ? "" : String(after)
+        var head = 0
+        var headMax = Math.min(b.length, a.length)
+        while (head < headMax && b.charAt(head) === a.charAt(head))
+            ++head
+        var tail = 0
+        var tailMax = Math.min(b.length - head, a.length - head)
+        while (tail < tailMax &&
+               b.charAt(b.length - 1 - tail) === a.charAt(a.length - 1 - tail))
+            ++tail
+        return a.substring(head, a.length - tail)
+    }
+
+    /*!
+        把一段文本按行拆开：**每一行都是 `file:///…`** 时返回这些 url，否则返回空数组。
+        资源管理器里 Ctrl+C 复制文件，粘到 QML 的 TextEdit 里就是一行一个 file url，
+        这样就能把它们转成附件，而不是把一串路径塞进正文。
+    */
+    function fileUrlsIn(block) {
+        var s = block === undefined || block === null ? "" : String(block)
+        if (s.length === 0)
+            return []
+        var lines = s.replace(/\r\n?/g, "\n").split("\n")
+        var out = []
+        for (var i = 0; i < lines.length; ++i) {
+            var line = lines[i].replace(/^\s+/, "").replace(/\s+$/, "")
+            if (line.length === 0)
+                continue
+            if (!/^file:\/\/\/\S+$/.test(line))
+                return []
+            out.push(line)
+        }
+        return out
+    }
+
+    /*! 附件数组里某种形态的个数。 */
+    function countOfType(type) {
+        var want = String(type || "")
+        var n = 0
+        for (var i = 0; i < attachments.length; ++i) {
+            if (String(attachments[i].type) === want)
+                ++n
+        }
+        return n
+    }
+
+    /*! 草稿序列化：`{ text, attachments }`，附件是浅拷贝（改返回值不影响界面）。 */
+    function draftToJSON() {
+        var list = []
+        for (var i = 0; i < attachments.length; ++i) {
+            var a = attachments[i]
+            list.push({ type: a.type, url: a.url, name: a.name, size: a.size, id: a.id })
+        }
+        return { text: text, attachments: list }
+    }
+
+    /*! 从 \l draftToJSON 的结构恢复草稿（字段缺失按空处理）。 */
+    function draftFromJSON(draft) {
+        var src = draft || {}
+        text = src.text === undefined || src.text === null ? "" : String(src.text)
+        var list = []
+        var incoming = src.attachments
+        if (incoming && incoming.length !== undefined) {
+            for (var i = 0; i < incoming.length; ++i)
+                list.push(normalizeAttachment(incoming[i]))
+        }
+        attachments = list
+        revision++
+    }
+
+    /*! 当前按下这个修饰键组合时，回车是否应该"发送"。 */
+    function isSendCombo(modifiers) {
+        var ctrl = (modifiers & Qt.ControlModifier) !== 0
+        var shift = (modifiers & Qt.ShiftModifier) !== 0
+        if (ctrl)
+            return true
+        if (shift)
+            return false
+        return sendOnEnter
+    }
+
+    /*! 取一份附件快照（发给宿主的永远是新数组，宿主改它不会污染草稿）。 */
+    function snapshotAttachments() {
+        var list = []
+        for (var i = 0; i < attachments.length; ++i) {
+            var a = attachments[i]
+            list.push({ type: a.type, url: a.url, name: a.name, size: a.size, id: a.id })
+        }
+        return list
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  5. 操作：加 / 删附件、发送、清空
+    // ════════════════════════════════════════════════════════════════
+
+    /*!
+        加一个附件，返回它加入后的下标；被拒绝（只读 / 超上限 / 无效）返回 -1。
+        图片与文件走同一入口，形态由 \c att.type 决定。
+    */
+    function addAttachment(att) {
+        if (readOnly)
+            return -1
+        if (!att || (att.url === undefined && att.name === undefined))
+            return -1
+        if (maxAttachments > 0 && attachmentCount >= maxAttachments) {
+            limitReached("attachments")
+            return -1
+        }
+        var normalized = normalizeAttachment(att)
+        var list = attachments.slice()
+        list.push(normalized)
+        attachments = list
+        revision++
+        attachmentAdded(normalized, list.length - 1)
+        return list.length - 1
+    }
+
+    /*! 加图片附件（\l addAttachment 的语法糖）。 */
+    function addImage(url, name) {
+        return addAttachment(makeImageAttachment(url, name))
+    }
+
+    /*! 加文件附件（\l addAttachment 的语法糖）。 */
+    function addFile(url, name, size) {
+        return addAttachment(makeFileAttachment(url, name, size))
+    }
+
+    /*!
+        把一批 url（拖进来、粘进来）加成附件：图片后缀走 \l addImage，其余走 \l addFile。
+        遵守 \l maxAttachments，越界的部分会被 \l limitReached 挡掉。返回真正加进去的个数。
+    */
+    function addUrlsAsAttachments(urls) {
+        if (readOnly || !urls)
+            return 0
+        var count = urls.length
+        if (count === undefined)
+            return 0
+        var added = 0
+        for (var i = 0; i < count; ++i) {
+            var u = urls[i] === undefined || urls[i] === null ? "" : String(urls[i])
+            if (u.length === 0)
+                continue
+            var name = fileNameOf(u)
+            var idx = isImageUrl(u) ? addImage(u, name) : addFile(u, name, 0)
+            if (idx >= 0)
+                ++added
+        }
+        return added
+    }
+
+    /*! 删掉第 \a index 个附件，返回是否删掉了。 */
+    function removeAttachment(index) {
+        if (readOnly)
+            return false
+        if (!(index >= 0 && index < attachments.length))
+            return false
+        var list = attachments.slice()
+        var removed = list[index]
+        list.splice(index, 1)
+        attachments = list
+        revision++
+        attachmentRemoved(removed, index)
+        return true
+    }
+
+    /*! 清空全部附件。 */
+    function clearAttachments() {
+        if (attachments.length === 0)
+            return
+        attachments = []
+        revision++
+    }
+
+    /*! 清空草稿（正文 + 附件）。 */
+    function clear() {
+        area.text = ""
+        clearAttachments()
+        _overLimitReported = false
+    }
+
+    /*!
+        尝试发送。返回是否真的发出去了：
+        没有内容 / 只读 / 忙碌 / 超长 时返回 `false`，并不发信号。
+    */
+    function submit() {
+        if (!hasContent)
+            return false
+        if (readOnly || busy)
+            return false
+        if (overLimit) {
+            limitReached("length")
+            return false
+        }
+        sendRequested(area.text, snapshotAttachments())
+        if (clearOnSend)
+            clear()
+        return true
+    }
+
+    /*! 把焦点放进输入区。 */
+    function focusInput() {
+        area.forceActiveFocus()
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    //  6. 界面
+    // ════════════════════════════════════════════════════════════════
+
+    ZCutRect {
+        id: bg
+        anchors.fill: parent
+        color: Theme.surface
+        strokeColor: composer._dropActive ? Theme.accent
+                                          : (area.activeFocus ? Theme.line : Theme.lineSoft)
+        strokeWidth: Theme.border
+        cutTopRight: composer.framed ? Theme.cutMd : 0
+        cutBottomLeft: composer.framed ? Theme.cutMd : 0
+    }
+
+    Column {
+        id: body
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+
+        // ── 标题条 ────────────────────────────────────────────────
+        ZCutRect {
+            id: headerBar
+            width: parent.width
+            height: composer.showHeader ? 30 : 0
+            visible: composer.showHeader
+            color: Theme.ink
+            cutTopRight: composer.framed ? Theme.cutMd : 0
+
+            Text {
+                id: headerLabel
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spacingLg
+                anchors.verticalCenter: parent.verticalCenter
+                text: composer.headerText
+                font: Theme.fontMonoSm
+                color: Theme.textOnSub
+            }
+
+            Text {
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spacingLg
+                anchors.verticalCenter: parent.verticalCenter
+                text: composer.draftSummary.toUpperCase()
+                font: Theme.fontMonoSm
+                color: composer.hasContent ? Theme.accent : Theme.muted
+            }
+        }
+
+        // ── 附件预览区 ────────────────────────────────────────────
+        Item {
+            id: attachZone
+            width: parent.width
+            height: composer.attachmentCount > 0 ? attachFlow.height + Theme.spacingSm * 2
+                 : (composer.attachHintText.length > 0 ? 26 : 0)
+            visible: height > 0
+
+            Flow {
+                id: attachFlow
+                x: Theme.spacingMd
+                y: Theme.spacingSm
+                width: parent.width - Theme.spacingMd * 2
+                spacing: Theme.spacingSm
+                visible: composer.attachmentCount > 0
+
+                Repeater {
+                    model: composer.attachments
+
+                    delegate: Loader {
+                        id: attachLoader
+
+                        required property int index
+                        required property var modelData
+
+                        // 委托里的两个 Component 声明在文件级作用域，看不到 attachLoader 这个 id，
+                        // 但它们靠上下文直接读 modelData / index —— 这两个是 Repeater 委托的上下文属性，
+                        // sourceComponent 造出来的项会继承它。
+                        sourceComponent: modelData && modelData.type === "image" ? imageThumb : fileCard
+                    }
+                }
+            }
+
+            Text {
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spacingMd
+                anchors.verticalCenter: parent.verticalCenter
+                visible: composer.attachmentCount === 0
+                text: composer.attachHintText
+                font: Theme.fontMonoSm
+                color: Theme.muted
+            }
+        }
+
+        // ── 输入区 ────────────────────────────────────────────────
+        Item {
+            id: textWrap
+            width: parent.width
+            height: area.height
+
+            Text {
+                id: placeholderLabel
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.leftMargin: Theme.spacingMd
+                anchors.rightMargin: Theme.spacingMd
+                anchors.topMargin: Theme.spacingSm
+                text: composer.placeholderText
+                font: Theme.fontBody
+                color: Theme.muted
+                visible: area.text.length === 0 && !composer.readOnly
+                elide: Text.ElideRight
+            }
+
+            TextArea {
+                id: area
+
+                width: parent.width
+                height: Math.max(composer.minTextHeight,
+                                 Math.min(contentHeight + topPadding + bottomPadding,
+                                          composer.maxTextHeight))
+
+                leftPadding: Theme.spacingMd
+                rightPadding: Theme.spacingMd
+                topPadding: Theme.spacingSm
+                bottomPadding: Theme.spacingSm
+
+                readOnly: composer.readOnly
+                selectByMouse: true
+                wrapMode: TextEdit.Wrap
+                clip: true
+                background: null
+
+                color: Theme.ink
+                selectionColor: Theme.accent
+                selectedTextColor: Theme.textOnAccent
+                font: Theme.fontBody
+                textFormat: TextEdit.PlainText
+
+                cursorDelegate: Rectangle {
+                    width: Theme.border
+                    color: Theme.accent
+                    visible: area.cursorVisible
+                }
+
+                Keys.onPressed: function (event) {
+                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                        if (composer.isSendCombo(event.modifiers)) {
+                            event.accepted = true
+                            composer.submit()
+                        }
+                        return
+                    }
+                    if (event.key === Qt.Key_Escape) {
+                        event.accepted = true
+                        composer.cancelRequested()
+                    }
+                    // Ctrl+V 而剪贴板里没有文本 = 多半是位图。QML 读不到位图，交给宿主。
+                    if (event.key === Qt.Key_V
+                            && (event.modifiers & Qt.ControlModifier) !== 0
+                            && (event.modifiers & Qt.ShiftModifier) === 0
+                            && !composer.readOnly
+                            && !area.canPaste) {
+                        event.accepted = true
+                        composer.pasteRequested()
+                    }
+                }
+
+                onTextChanged: {
+                    // 资源管理器里 Ctrl+C 复制文件，粘进来是一行一个 file:///…。
+                    // 拦下来转成附件，别把一串路径塞进正文。
+                    // 只在输入区有焦点时扫：程序化地设 text（恢复草稿、演示页的初始文案）
+                    // 不该被当成粘贴处理。
+                    if (composer._suppressPasteScan) {
+                        composer._suppressPasteScan = false
+                    } else if (area.activeFocus) {
+                        var inserted = composer.insertedText(composer._lastText, area.text)
+                        var pastedUrls = composer.fileUrlsIn(inserted)
+                        if (pastedUrls.length > 0) {
+                            // 先把正文还原回粘贴前（这次赋值会再进一次本函数，
+                            // 被 _suppressPasteScan 挡掉），再把 url 变成附件。
+                            composer._suppressPasteScan = true
+                            area.text = composer._lastText
+                            composer.addUrlsAsAttachments(pastedUrls)
+                            return
+                        }
+                    }
+                    composer._lastText = area.text
+
+                    // 只越过上限的那一刻报一次，否则每敲一个字都会甩一条信号出去。
+                    if (composer.overLimit && !composer._overLimitReported) {
+                        composer._overLimitReported = true
+                        composer.limitReached("length")
+                    } else if (!composer.overLimit) {
+                        composer._overLimitReported = false
+                    }
+                    composer.textEdited()
+                }
+            }
+        }
+
+        // ── 工具栏 ────────────────────────────────────────────────
+        Item {
+            id: toolbar
+            width: parent.width
+            height: composer.showToolbar ? 42 : 0
+            visible: composer.showToolbar
+
+            Rectangle {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                height: Theme.border
+                color: Theme.lineSoft
+            }
+
+            Row {
+                id: chipBar
+                anchors.left: parent.left
+                anchors.leftMargin: Theme.spacingMd
+                anchors.verticalCenter: parent.verticalCenter
+                spacing: Theme.spacingXs
+
+                ToolChip {
+                    caption: "图片"
+                    visible: composer.allowImage
+                    enabled: !composer.readOnly
+                    onClicked: composer.openImagePicker()
+                }
+
+                ToolChip {
+                    caption: "文件"
+                    visible: composer.allowFile
+                    enabled: !composer.readOnly
+                    onClicked: composer.openFilePicker()
+                }
+
+                Item {
+                    width: Theme.spacingMd
+                    height: 1
+                }
+
+                ToolChip {
+                    caption: "清空"
+                    enabled: !composer.readOnly && composer.hasContent
+                    onClicked: composer.clear()
+                }
+            }
+
+            // 右侧从内到外：发送按钮 ← 字数 ← 快捷键提示。
+            // 三者都贴 sendButton.left 会叠在一起（提示和字数互相压字）。
+            Text {
+                id: counterLabel
+                anchors.right: sendButton.left
+                anchors.rightMargin: Theme.spacingMd
+                anchors.verticalCenter: parent.verticalCenter
+                text: composer.counterText
+                font: Theme.fontMonoSm
+                color: composer.overLimit ? Theme.danger : Theme.muted
+            }
+
+            Text {
+                id: hintLabel
+                anchors.right: counterLabel.left
+                anchors.rightMargin: Theme.spacingMd
+                anchors.verticalCenter: parent.verticalCenter
+                width: Math.max(0, parent.width - chipBar.width - sendButton.width
+                                - counterLabel.width - Theme.spacingMd * 5)
+                horizontalAlignment: Text.AlignRight
+                elide: Text.ElideRight
+                text: composer.sendOnEnter ? "ENTER 发送 · SHIFT+ENTER 换行"
+                                           : "ENTER 换行 · CTRL+ENTER 发送"
+                font: Theme.fontMonoSm
+                color: Theme.muted
+            }
+
+            ZButton {
+                id: sendButton
+                anchors.right: parent.right
+                anchors.rightMargin: Theme.spacingMd
+                anchors.verticalCenter: parent.verticalCenter
+                height: Theme.controlHeightSm
+                text: composer.busy ? "发送中" : composer.sendText
+                variant: Theme.Variant.Primary
+                // mono 在 ZButton 里是"右侧等宽小字"（快捷键提示），不是布尔开关
+                mono: composer.sendOnEnter ? "ENTER" : "CTRL+↵"
+                enabled: composer.canSend
+                onClicked: composer.submit()
+            }
+        }
+    }
+
+    // ── 图片缩略图委托 ────────────────────────────────────────────
+    Component {
+        id: imageThumb
+
+        Item {
+            id: thumb
+            width: composer.thumbSize
+            height: composer.thumbSize
+
+            readonly property var att: modelData
+
+            ZCutRect {
+                anchors.fill: parent
+                color: Theme.surfaceMuted
+                strokeColor: Theme.lineSoft
+                strokeWidth: Theme.border
+                cutTopRight: Theme.cutSm
+                cutBottomLeft: Theme.cutSm
+            }
+
+            Image {
+                id: thumbImage
+                anchors.fill: parent
+                anchors.margins: 2
+                source: thumb.att && thumb.att.url ? thumb.att.url : ""
+                sourceSize.width: 160
+                sourceSize.height: 160
+                fillMode: Image.PreserveAspectCrop
+                clip: true
+                asynchronous: true
+                visible: status === Image.Ready
+            }
+
+            // 没图 / 破图时的占位：斜线纹理 + IMG 徽标
+            Item {
+                anchors.fill: parent
+                anchors.margins: 2
+                visible: !thumbImage.visible
+
+                ZHatchPattern {
+                    anchors.fill: parent
+                    lineColor: Theme.hatchStrong
+                    spacing: Theme.hatchStep
+                }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: "IMG"
+                    font: Theme.fontMonoSm
+                    color: Theme.muted
+                }
+            }
+
+            // 文件名压条：内缩到描边里面，并带上和缩略图一样的左下切角，
+            // 否则会盖住底板描边、把左下角的切角顶成直角。
+            ZCutRect {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.bottom: parent.bottom
+                anchors.leftMargin: 2
+                anchors.rightMargin: 2
+                anchors.bottomMargin: 2
+                height: 15
+                color: Theme.ink
+                opacity: 0.82
+                cutTopRight: Theme.cutSm
+                cutBottomLeft: Theme.cutSm
+
+                Text {
+                    anchors.left: parent.left
+                    anchors.leftMargin: 3
+                    anchors.right: parent.right
+                    anchors.rightMargin: 8
+                    anchors.verticalCenter: parent.verticalCenter
+                    text: thumb.att ? thumb.att.name : ""
+                    font: Qt.font({ family: Theme.familyMono, pixelSize: 10 })
+                    color: Theme.textOnSub
+                    elide: Text.ElideMiddle
+                }
+            }
+
+            RemoveBadge {
+                anchors.right: parent.right
+                anchors.top: parent.top
+                onClicked: composer.removeAttachment(index)
+            }
+
+            // 缩略图只有 64 见方，文件名一定会被省略号吃掉，悬停给全名
+            ZToolTip {
+                text: thumb.att ? thumb.att.name : ""
+            }
+        }
+    }
+
+    // ── 文件卡片委托 ──────────────────────────────────────────────
+    Component {
+        id: fileCard
+
+        ZCutRect {
+            id: card
+
+            readonly property var att: modelData
+            readonly property string ext: composer.extensionOf(att ? att.name : "")
+
+            width: composer.fileCardWidth
+            height: composer.fileCardHeight
+            color: Theme.surfaceMuted
+            strokeColor: Theme.lineSoft
+            strokeWidth: Theme.border
+            cutTopRight: Theme.cutSm
+            cutBottomLeft: Theme.cutSm
+
+            ZCutRect {
+                id: extBadge
+                width: 40
+                // 描边有宽度，徽标要收在描边内侧，否则黑块会盖过卡片边框
+                y: Theme.border
+                height: parent.height - Theme.border * 2
+                color: Theme.ink
+                // 左下角也要切，不然黑块会把卡片左下角的切角顶出去
+                cutTopRight: Theme.cutSm
+                cutBottomLeft: Theme.cutSm
+
+                Text {
+                    anchors.centerIn: parent
+                    text: card.ext.length > 0 ? card.ext.toUpperCase() : "FILE"
+                    font: Qt.font({ family: Theme.familyMono, pixelSize: 11, bold: true })
+                    color: Theme.textOnSub
+                    elide: Text.ElideRight
+                    width: parent.width - 6
+                    horizontalAlignment: Text.AlignHCenter
+                }
+            }
+
+            Text {
+                id: fileNameLabel
+                anchors.left: extBadge.right
+                anchors.leftMargin: Theme.spacingSm
+                anchors.right: removeBadge.left
+                anchors.rightMargin: 4
+                anchors.top: parent.top
+                anchors.topMargin: Theme.spacingSm
+                text: card.att ? card.att.name : ""
+                font: Theme.fontStrong
+                color: Theme.ink
+                elide: Text.ElideMiddle
+            }
+
+            Text {
+                anchors.left: extBadge.right
+                anchors.leftMargin: Theme.spacingSm
+                anchors.top: fileNameLabel.bottom
+                anchors.topMargin: 2
+                // 拖进来 / 粘进来的文件拿不到字节数（QML 没有 stat 能力），
+                // 这时候只写 ATTACHMENT，别显示 "0 B" 骗人。
+                text: (card.att && card.att.size > 0
+                       ? composer.formatBytes(card.att.size) + "  ·  " : "") + "ATTACHMENT"
+                font: Theme.fontMonoSm
+                color: Theme.muted
+            }
+
+            RemoveBadge {
+                id: removeBadge
+                anchors.right: parent.right
+                anchors.top: parent.top
+                onClicked: composer.removeAttachment(index)
+            }
+        }
+    }
+
+    // ── 小部件：工具栏芯片 ────────────────────────────────────────
+    component ToolChip: Button {
+        id: chip
+
+        property string caption
+
+        implicitHeight: 26
+        // 窄内边距：一行要放下三颗芯片 + 提示 + 计数 + 发送按钮
+        implicitWidth: Math.max(28, chipLabel.implicitWidth + Theme.spacingSm * 2)
+        padding: 0
+        focusPolicy: Qt.NoFocus
+        hoverEnabled: true
+
+        background: ZCutRect {
+            color: chip.down ? Theme.accent
+                 : chip.hovered ? Theme.surfaceHover
+                 : "transparent"
+            strokeColor: chip.hovered || chip.down ? Theme.line : Theme.lineSoft
+            strokeWidth: Theme.border
+            cutTopRight: Theme.cutSm
+            opacity: chip.enabled ? 1.0 : 0.45
+        }
+
+        contentItem: Text {
+            id: chipLabel
+            text: chip.caption
+            font: Qt.font({
+                family: Theme.family,
+                pixelSize: 12,
+                bold: chip.hovered && chip.enabled
+            })
+            color: chip.down ? Theme.textOnAccent : (chip.enabled ? Theme.ink : Theme.muted)
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+    }
+
+    // ── 小部件：附件上的删除角标 ──────────────────────────────────
+    component RemoveBadge: Item {
+        id: badge
+
+        signal clicked()
+
+        width: 18
+        height: 18
+
+        ZCutRect {
+            anchors.fill: parent
+            color: Theme.ink
+            cutBottomLeft: Theme.cutSm
+            opacity: badgeHover.hovered ? 1.0 : 0.72
+        }
+
+        Text {
+            anchors.centerIn: parent
+            text: "×"
+            font: Qt.font({ family: Theme.familyMono, pixelSize: 12, bold: true })
+            color: Theme.textOnSub
+        }
+
+        HoverHandler {
+            id: badgeHover
+        }
+
+        TapHandler {
+            acceptedButtons: Qt.LeftButton
+            onTapped: badge.clicked()
+        }
+    }
+
+    /*!
+        打开「选图片」：发 \l imagePickRequested，并在 \l useSystemDialogs 为真时弹出
+        系统文件选择框。工具栏的「图片」按钮走的就是这里；宿主想从菜单、快捷键
+        触发同一个动作，直接调它即可。
+    */
+    function openImagePicker() {
+        imagePickRequested()
+        if (useSystemDialogs)
+            imageDialog.open()
+    }
+
+    /*! 打开「选文件」：发 \l filePickRequested，并（在 \l useSystemDialogs 为真时）弹选择框。 */
+    function openFilePicker() {
+        filePickRequested()
+        if (useSystemDialogs)
+            fileDialog.open()
+    }
+
+    // ── 系统文件选择框 ────────────────────────────────────────────
+    // Windows / macOS / Linux 上 Qt 走各自的原生对话框；没有原生实现的平台退回
+    // Qt Quick 自绘的那套。选完直接按扩展名分流加进附件。
+    FileDialog {
+        id: imageDialog
+        title: "选择图片"
+        fileMode: FileDialog.OpenFiles
+        nameFilters: [
+            "图片 (*.png *.jpg *.jpeg *.jfif *.gif *.bmp *.webp *.svg *.ico *.tif *.tiff *.heic *.avif)",
+            "所有文件 (*)"
+        ]
+        onAccepted: composer.addUrlsAsAttachments(composer.urlsOf(imageDialog.selectedFiles))
+    }
+
+    FileDialog {
+        id: fileDialog
+        title: "选择文件"
+        fileMode: FileDialog.OpenFiles
+        nameFilters: ["所有文件 (*)"]
+        onAccepted: composer.addUrlsAsAttachments(composer.urlsOf(fileDialog.selectedFiles))
+    }
+
+    // ── 拖放 ──────────────────────────────────────────────────────
+    // 注意：TextArea 自己也会接拖放（并把文件路径当文本插进来），
+    // 所以 DropArea 必须声明在它之后（叠在上面）才能真正拿到 drop 事件。
+    DropArea {
+        id: dropZone
+        anchors.fill: parent
+        onEntered: composer._dropActive = true
+        onExited: composer._dropActive = false
+        onDropped: function (drop) {
+            composer._dropActive = false
+            if (!drop.hasUrls)
+                return
+            composer.filesDropped(drop.urls)
+            composer.addUrlsAsAttachments(drop.urls)
+        }
+    }
+
+    ZCutRect {
+        anchors.fill: parent
+        anchors.margins: Theme.border
+        visible: composer._dropActive
+        color: Theme.alpha(Theme.accent, 0.16)
+        strokeColor: Theme.accent
+        strokeWidth: Theme.border
+        cutTopRight: composer.framed ? Theme.cutMd : 0
+        cutBottomLeft: composer.framed ? Theme.cutMd : 0
+
+        Text {
+            anchors.centerIn: parent
+            text: "松开添加附件 / DROP TO ATTACH"
+            font: Theme.fontMonoSm
+            color: Theme.ink
+        }
     }
 }
 ```
@@ -6286,7 +8883,7 @@ Window {
 
 ### `qml/DemoContent.qml`
 
-演示内容：网格背景 + 侧边栏 + 六大区块，覆盖全部组件
+演示内容：网格背景 + 侧边栏 + 八大区块，覆盖全部组件
 
 ```qml
 import QtQuick
@@ -7096,6 +9693,91 @@ Item {
                         }
                     }
                 }
+
+                // ══════════════════════════════════════════
+                //  区块 07 —— 富文本
+                // ══════════════════════════════════════════
+                ZSectionTitle {
+                    index: "07"
+                    eyebrow: "RICH TEXT / BLOCK COMPOSER"
+                    title: "富文本"
+                    subtitle: "COMPOSER"
+                }
+
+                ZPanel {
+                    width: parent.width
+                    title: "块级富文本编辑器"
+                    tag: "RICH-01"
+                    eyebrow: "TEXT / IMAGE / FILE"
+                    footerText: "块级富文本 · 加粗斜体下划线删除线按块生效 · 图片与文件块可混排"
+
+                    ZRichTextEditor {
+                        id: richDemo
+
+                        width: parent.width
+                        headerText: "RICH TEXT / COMPOSER"
+
+                        blocks: [
+                            makeTextBlock("「富文本」块级编排", "heading"),
+                            makeTextBlock("这一段是正文。点工具栏上的 B / I / U / S 会给整个块加粗、"
+                                          + "倾斜、下划线、删除线 —— 富在这里是块级属性，不是选区级的字符格式。"),
+                            makeImageBlock("", "", "图注：图片块等宽铺满，说明文字压在下方的灰条里"),
+                            makeFileBlock("", "verification.md", 48321),
+                            makeTextBlock("代码块用等宽字体 + 灰底，左侧不画竖条。", "code")
+                        ]
+
+                        onImageRequested: console.log("imageRequested")
+                        onFileRequested: console.log("fileRequested")
+                        onFileActivated: (url, name) => console.log("fileActivated", name)
+                    }
+                }
+
+                // ══════════════════════════════════════════
+                //  区块 08 —— 消息输入
+                // ══════════════════════════════════════════
+                ZSectionTitle {
+                    index: "08"
+                    eyebrow: "MESSAGE / CHAT COMPOSER"
+                    title: "消息输入"
+                    subtitle: "COMPOSER"
+                }
+
+                ZPanel {
+                    width: parent.width
+                    title: "聊天输入框"
+                    tag: "CHAT-01"
+                    eyebrow: "TEXT / IMAGE / FILE"
+                    footerText: "QQ 式消息输入 · Enter 发送 / Shift+Enter 换行 · 图片与文件可拖入或选入"
+
+                    ZChatInput {
+                        id: chatDemo
+
+                        width: parent.width
+                        headerText: "MESSAGE / COMPOSER"
+                        text: "今晚 8 点同步配置，附件是新的 bot_007.json。"
+
+                        attachments: [
+                            makeImageAttachment("", "screenshot.png"),
+                            makeFileAttachment("", "bot_007.json", 28416)
+                        ]
+
+                        onSendRequested: (text, files) => console.log("send", text.length, files.length)
+                        onImagePickRequested: console.log("imagePickRequested")
+                        onFilePickRequested: console.log("filePickRequested")
+                        onCancelRequested: console.log("cancelRequested")
+                        onFilesDropped: urls => console.log("filesDropped", urls.length)
+
+                        // 剪贴板里是图片时，QML 自己拿不到，借 C++ 桥存成临时文件再加进来。
+                        // qml.exe 跑测试时没有 ZClipboard，所以要守卫一下。
+                        onPasteRequested: {
+                            if (typeof ZClipboard === "undefined")
+                                return
+                            var url = ZClipboard.saveImage()
+                            if (url.length > 0)
+                                chatDemo.addImage(url, "clipboard.png")
+                        }
+                    }
+                }
             }
         }
     }
@@ -7125,7 +9807,7 @@ Item {
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "ZMDUI COMPONENT LIBRARY / 24 TYPES / QT 6 QML"
+                text: "ZMDUI COMPONENT LIBRARY / 27 TYPES / QT 6 QML"
                 font: Theme.fontMonoSm
                 color: Theme.textOnAccent
                 opacity: 0.75
@@ -7209,6 +9891,7 @@ module ZmdUI
 # 主题单例必须排在首位：组件的默认值绑定依赖它。
 singleton Theme 1.0 Theme.qml
 ZButton 1.0 ZButton.qml
+ZChatInput 1.0 ZChatInput.qml
 ZCheckBox 1.0 ZCheckBox.qml
 ZCutRect 1.0 ZCutRect.qml
 ZDialog 1.0 ZDialog.qml
@@ -7221,6 +9904,7 @@ ZListView 1.0 ZListView.qml
 ZPanel 1.0 ZPanel.qml
 ZProgressBar 1.0 ZProgressBar.qml
 ZRadioButton 1.0 ZRadioButton.qml
+ZRichTextEditor 1.0 ZRichTextEditor.qml
 ZScrollBar 1.0 ZScrollBar.qml
 ZSectionTitle 1.0 ZSectionTitle.qml
 ZSideBar 1.0 ZSideBar.qml
@@ -7249,6 +9933,7 @@ Qt 资源系统清单，资源路径与磁盘结构一致
         <file alias="qml/ZmdUI/qmldir">../qml/ZmdUI/qmldir</file>
         <file alias="qml/ZmdUI/Theme.qml">../qml/ZmdUI/Theme.qml</file>
         <file alias="qml/ZmdUI/ZButton.qml">../qml/ZmdUI/ZButton.qml</file>
+        <file alias="qml/ZmdUI/ZChatInput.qml">../qml/ZmdUI/ZChatInput.qml</file>
         <file alias="qml/ZmdUI/ZCheckBox.qml">../qml/ZmdUI/ZCheckBox.qml</file>
         <file alias="qml/ZmdUI/ZCutRect.qml">../qml/ZmdUI/ZCutRect.qml</file>
         <file alias="qml/ZmdUI/ZDialog.qml">../qml/ZmdUI/ZDialog.qml</file>
@@ -7261,6 +9946,7 @@ Qt 资源系统清单，资源路径与磁盘结构一致
         <file alias="qml/ZmdUI/ZPanel.qml">../qml/ZmdUI/ZPanel.qml</file>
         <file alias="qml/ZmdUI/ZProgressBar.qml">../qml/ZmdUI/ZProgressBar.qml</file>
         <file alias="qml/ZmdUI/ZRadioButton.qml">../qml/ZmdUI/ZRadioButton.qml</file>
+        <file alias="qml/ZmdUI/ZRichTextEditor.qml">../qml/ZmdUI/ZRichTextEditor.qml</file>
         <file alias="qml/ZmdUI/ZScrollBar.qml">../qml/ZmdUI/ZScrollBar.qml</file>
         <file alias="qml/ZmdUI/ZSectionTitle.qml">../qml/ZmdUI/ZSectionTitle.qml</file>
         <file alias="qml/ZmdUI/ZSideBar.qml">../qml/ZmdUI/ZSideBar.qml</file>
@@ -7278,7 +9964,7 @@ Qt 资源系统清单，资源路径与磁盘结构一致
 
 ### `src/main.cpp`
 
-应用入口：Basic 样式 + 高 DPI + 资源导入路径
+应用入口：Basic 样式 + 高 DPI + 资源导入路径 + 剪贴板桥注入
 
 ```cpp
 // ZmdUI —— 终末地工业机能风 QML 组件库 / 演示程序入口
@@ -7294,8 +9980,11 @@ Qt 资源系统清单，资源路径与磁盘结构一致
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QQuickStyle>
 #include <QQuickWindow>
+
+#include "zclipboard.h"
 
 int main(int argc, char *argv[])
 {
@@ -7321,6 +10010,13 @@ int main(int argc, char *argv[])
     // 让 "import ZmdUI 1.0" 能在 qrc 里解析到 :/qml/ZmdUI/qmldir
     engine.addImportPath(QStringLiteral("qrc:/qml"));
 
+    // 剪贴板桥：QML 读不到剪贴板位图，粘图片要借 C++ 的 QClipboard。
+    // 用 context property 注入（而不是 QML 单例），这样纯 qml.exe 跑测试时
+    // 根本不需要它，QML 侧用 typeof ZClipboard 守卫即可。
+    ZClipboard clipboardBridge;
+    engine.rootContext()->setContextProperty(
+        QStringLiteral("ZClipboard"), &clipboardBridge);
+
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
         []() { QCoreApplication::exit(-1); },
@@ -7331,6 +10027,75 @@ int main(int argc, char *argv[])
         return -1;
 
     return app.exec();
+}
+```
+
+### `src/zclipboard.cpp`
+
+剪贴板桥：把剪贴板位图存成临时文件（QML 读不到位图）
+
+```cpp
+#include "zclipboard.h"
+
+#include <QClipboard>
+#include <QDateTime>
+#include <QDir>
+#include <QGuiApplication>
+#include <QImage>
+#include <QMimeData>
+#include <QUrl>
+
+ZClipboard::ZClipboard(QObject *parent)
+    : QObject(parent)
+{
+}
+
+bool ZClipboard::hasImage() const
+{
+    const QClipboard *clipboard = QGuiApplication::clipboard();
+    return clipboard && !clipboard->image().isNull();
+}
+
+bool ZClipboard::hasUrls() const
+{
+    const QClipboard *clipboard = QGuiApplication::clipboard();
+    if (!clipboard)
+        return false;
+    const QMimeData *mime = clipboard->mimeData();
+    return mime && mime->hasUrls();
+}
+
+QString ZClipboard::saveImage(const QString &preferredExtension) const
+{
+    const QClipboard *clipboard = QGuiApplication::clipboard();
+    if (!clipboard)
+        return QString();
+
+    const QImage image = clipboard->image();
+    if (image.isNull())
+        return QString();
+
+    QString extension = preferredExtension.trimmed().toLower();
+    if (extension.startsWith(QLatin1Char('.')))
+        extension = extension.mid(1);
+    if (extension.isEmpty())
+        extension = QStringLiteral("png");
+
+    // 放临时目录下的固定子目录：文件名带毫秒时间戳，天然不重名。
+    // 不自动清理是故意的 —— 用户可能把这条消息发出去之后界面还在显示缩略图。
+    const QString dir = QDir::tempPath() + QStringLiteral("/zmdui-clipboard");
+    if (!QDir().mkpath(dir))
+        return QString();
+
+    const QString fileName = QStringLiteral("clip-%1.%2")
+                                 .arg(QDateTime::currentMSecsSinceEpoch())
+                                 .arg(extension);
+    const QString path = dir + QLatin1Char('/') + fileName;
+
+    if (!image.save(path))
+        return QString();
+
+    return QUrl::fromLocalFile(path).toString();
 }
 ```
 
@@ -7529,6 +10294,8 @@ option(ZMDUI_WARNINGS "打开编译警告" ON)
 # 也是它能"拷走 exe 就能跑"的前提。
 qt_add_executable(ZmdUIDemo
     src/main.cpp
+    src/zclipboard.cpp
+    src/zclipboard.h
     resources/qml.qrc
 )
 
@@ -8192,6 +10959,1110 @@ TestCase {
         Theme.mode = Theme.Mode.Light
         wait(150)
         compare(Theme.isDark, false, "应切回浅色")
+    }
+}
+```
+
+### `tests/tst_richtext.qml`
+
+qmltestrunner 行为测试：富文本块模型 / 序列化 / 结构操作（38 项）
+
+```qml
+import QtQuick
+import QtTest
+import ZmdUI 1.0
+
+/*!
+    ZRichTextEditor 的行为测试（qmltestrunner）。
+
+    跑法：
+        qmltestrunner -input tests/tst_richtext.qml -import qml
+
+    测试分两层：
+      1. 纯函数层 —— 块工厂、归一化、序列化、单位换算。这些不碰界面，
+         断言可以写得很硬。
+      2. 结构操作层 —— 增删改移、格式开关、信号与 revision 计数。
+
+    故意不去模拟"在 TextArea 里打字"：离屏平台的合成事件到不了控件，
+    而且真要验排版得靠像素比对（那是离屏探针的活，不是单测的活）。
+*/
+TestCase {
+    id: root
+    name: "ZRichTextEditorBehaviors"
+    when: windowShown
+
+    width: 800
+    height: 600
+
+    // 每一条用例都用一个全新的编辑器，避免状态互相污染
+    Component {
+        id: editorComponent
+        ZRichTextEditor {
+            width: 600
+        }
+    }
+
+    function makeEditor() {
+        var ed = createTemporaryObject(editorComponent, root)
+        verify(ed !== null, "editor should instantiate")
+        return ed
+    }
+
+    // ── 1. 块工厂 ────────────────────────────────────────────────
+
+    function test_makeTextBlockDefaults() {
+        var ed = makeEditor()
+        var b = ed.makeTextBlock("你好")
+        compare(b.type, "text")
+        compare(b.text, "你好")
+        compare(b.style, "body")
+        compare(b.bold, false)
+        compare(b.italic, false)
+        compare(b.underline, false)
+        compare(b.strike, false)
+        compare(b.align, "left")
+    }
+
+    function test_makeTextBlockCoercesNullishText() {
+        var ed = makeEditor()
+        compare(ed.makeTextBlock().text, "")
+        compare(ed.makeTextBlock(null).text, "")
+        compare(ed.makeTextBlock(42).text, "42")
+    }
+
+    function test_makeTextBlockAcceptsEnumAndStringStyle() {
+        var ed = makeEditor()
+        compare(ed.makeTextBlock("", "heading").style, "heading")
+        compare(ed.makeTextBlock("", ZRichTextEditor.BlockStyle.Quote).style, "quote")
+        compare(ed.makeTextBlock("", 99).style, "body")
+        compare(ed.makeTextBlock("", "nonsense").style, "body")
+    }
+
+    function test_makeImageBlock() {
+        var ed = makeEditor()
+        var b = ed.makeImageBlock("file:///a.png", "a.png", "说明")
+        compare(b.type, "image")
+        compare(b.url, "file:///a.png")
+        compare(b.name, "a.png")
+        compare(b.caption, "说明")
+
+        var empty = ed.makeImageBlock()
+        compare(empty.url, "")
+        compare(empty.name, "")
+        compare(empty.caption, "")
+    }
+
+    function test_makeFileBlockClampsSize() {
+        var ed = makeEditor()
+        compare(ed.makeFileBlock("u", "n", 2048).size, 2048)
+        compare(ed.makeFileBlock("u", "n", -5).size, 0)
+        compare(ed.makeFileBlock("u", "n", "abc").size, 0)
+        compare(ed.makeFileBlock("u", "n", 10.6).size, 11)
+        compare(ed.makeFileBlock().name, "未命名文件")
+    }
+
+    // ── 2. 归一化 ────────────────────────────────────────────────
+
+    function test_normalizeBlockTurnsGarbageIntoTextBlock() {
+        var ed = makeEditor()
+        var nullish = ed.normalizeBlock(null)
+        compare(nullish.type, "text")
+        compare(nullish.text, "")
+
+        var scalar = ed.normalizeBlock("hello")
+        compare(scalar.type, "text")
+        compare(scalar.text, "")
+    }
+
+    function test_normalizeBlockFillsMissingFields() {
+        var ed = makeEditor()
+        var img = ed.normalizeBlock({ type: "image" })
+        compare(img.url, "")
+        compare(img.name, "")
+        compare(img.caption, "")
+
+        var file = ed.normalizeBlock({ type: "file", name: "x.zip" })
+        compare(file.size, 0)
+        compare(file.name, "x.zip")
+
+        var text = ed.normalizeBlock({ type: "text", text: "hi", bold: 1, align: "CENTER" })
+        compare(text.bold, true)
+        compare(text.align, "center")
+    }
+
+    function test_normalizeBlockIgnoresUnknownType() {
+        var ed = makeEditor()
+        var b = ed.normalizeBlock({ type: "video", text: "x" })
+        compare(b.type, "text", "unknown types fall back to text")
+        compare(b.text, "x", "and keep the text payload")
+    }
+
+    // ── 3. 名字 / 单位换算 ──────────────────────────────────────
+
+    function test_styleNameOf() {
+        var ed = makeEditor()
+        compare(ed.styleNameOf("heading"), "heading")
+        compare(ed.styleNameOf("HEADING"), "heading")
+        compare(ed.styleNameOf(0), "body")
+        compare(ed.styleNameOf(1), "heading")
+        compare(ed.styleNameOf(2), "quote")
+        compare(ed.styleNameOf(3), "code")
+        compare(ed.styleNameOf(-1), "body")
+        compare(ed.styleNameOf(4), "body")
+    }
+
+    function test_styleLabelOf() {
+        var ed = makeEditor()
+        compare(ed.styleLabelOf("body"), "正文")
+        compare(ed.styleLabelOf("heading"), "标题")
+        compare(ed.styleLabelOf("quote"), "引用")
+        compare(ed.styleLabelOf("code"), "代码")
+    }
+
+    function test_alignNameOf() {
+        var ed = makeEditor()
+        compare(ed.alignNameOf("center"), "center")
+        compare(ed.alignNameOf("RIGHT"), "right")
+        compare(ed.alignNameOf("justify"), "left")
+        compare(ed.alignNameOf(undefined), "left")
+    }
+
+    function test_formatBytes() {
+        var ed = makeEditor()
+        compare(ed.formatBytes(0), "0 B")
+        compare(ed.formatBytes(-10), "0 B")
+        compare(ed.formatBytes(NaN), "0 B")
+        compare(ed.formatBytes(512), "512 B")
+        compare(ed.formatBytes(1024), "1.0 KB")
+        compare(ed.formatBytes(1536), "1.5 KB")
+        compare(ed.formatBytes(1024 * 1024), "1.0 MB")
+        compare(ed.formatBytes(1024 * 1024 * 1024), "1.0 GB")
+    }
+
+    function test_extensionOf() {
+        var ed = makeEditor()
+        compare(ed.extensionOf("a.png"), "PNG")
+        compare(ed.extensionOf("a.tar.gz"), "GZ")
+        compare(ed.extensionOf("noext"), "FILE")
+        compare(ed.extensionOf("trailing."), "FILE")
+        compare(ed.extensionOf(""), "FILE")
+        compare(ed.extensionOf(undefined), "FILE")
+        // 超长扩展名截到 5 个字符，徽标才放得下
+        compare(ed.extensionOf("a.verylongext"), "VERYL")
+    }
+
+    // ── 4. 序列化 ────────────────────────────────────────────────
+
+    function test_jsonRoundTrip() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("一段话", "heading"),
+                      ed.makeImageBlock("file:///p.png", "p.png", "图注"),
+                      ed.makeFileBlock("file:///d.pdf", "d.pdf", 4096)])
+        var text = ed.toJSON()
+        verify(text.length > 0)
+
+        var back = ed.blocksFromJSON(text)
+        compare(back.length, 3)
+        compare(back[0].type, "text")
+        compare(back[0].text, "一段话")
+        compare(back[0].style, "heading")
+        compare(back[1].type, "image")
+        compare(back[1].caption, "图注")
+        compare(back[2].type, "file")
+        compare(back[2].size, 4096)
+    }
+
+    function test_blocksFromJSONSurvivesGarbage() {
+        var ed = makeEditor()
+        compare(ed.blocksFromJSON("not json").length, 0)
+        compare(ed.blocksFromJSON("{}").length, 0)
+        compare(ed.blocksFromJSON("null").length, 0)
+        compare(ed.blocksFromJSON("").length, 0)
+    }
+
+    // ── 5. 派生状态 ─────────────────────────────────────────────
+
+    function test_blockAtOutOfRange() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a")])
+        compare(ed.blockAt(0).text, "a")
+        compare(ed.blockAt(-1), null)
+        compare(ed.blockAt(1), null)
+        compare(ed.blockAt(999), null)
+    }
+
+    function test_countBlocksAndStats() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a"),
+                      ed.makeTextBlock("b"),
+                      ed.makeImageBlock("u", "n"),
+                      ed.makeFileBlock("u", "n", 1)])
+        compare(ed.countBlocks("text"), 2)
+        compare(ed.countBlocks("image"), 1)
+        compare(ed.countBlocks("file"), 1)
+        compare(ed.stats.text, 2)
+        compare(ed.stats.image, 1)
+        compare(ed.stats.file, 1)
+    }
+
+    function test_isEmpty() {
+        var ed = makeEditor()
+        ed.setBlocks([])
+        compare(ed.isEmpty, true)
+
+        ed.setBlocks([ed.makeTextBlock("")])
+        compare(ed.isEmpty, true, "one blank text block is still empty")
+
+        ed.setBlocks([ed.makeTextBlock("x")])
+        compare(ed.isEmpty, false)
+
+        ed.setBlocks([ed.makeImageBlock("u", "n")])
+        compare(ed.isEmpty, false, "an image alone is not empty")
+    }
+
+    function test_plainTextOf() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("第一行"),
+                      ed.makeImageBlock("u", "p.png"),
+                      ed.makeTextBlock("第二行"),
+                      ed.makeFileBlock("u", "d.pdf", 10)])
+        compare(ed.plainTextOf(), "第一行\n[图片: p.png]\n第二行\n[文件: d.pdf]")
+    }
+
+    function test_textFontFor() {
+        var ed = makeEditor()
+        var body = ed.textFontFor(ed.formatOf(-1))
+        compare(body.pixelSize, 14)
+        var heading = ed.textFontFor({ style: "heading" })
+        compare(heading.pixelSize, 24)
+        var code = ed.textFontFor({ style: "code" })
+        compare(code.pixelSize, 13)
+        compare(ed.textFontFor({ style: "body", bold: true }).bold, true)
+        compare(ed.textFontFor({ style: "body", italic: true }).italic, true)
+        compare(ed.textFontFor({ style: "body", underline: true }).underline, true)
+        compare(ed.textFontFor({ style: "body", strike: true }).strikeout, true)
+        // 引用块强制斜体
+        compare(ed.textFontFor({ style: "quote" }).italic, true)
+    }
+
+    function test_hAlignFor() {
+        var ed = makeEditor()
+        compare(ed.hAlignFor("left"), Text.AlignLeft)
+        compare(ed.hAlignFor("center"), Text.AlignHCenter)
+        compare(ed.hAlignFor("right"), Text.AlignRight)
+        compare(ed.hAlignFor(undefined), Text.AlignLeft)
+    }
+
+    // ── 6. 结构操作 ─────────────────────────────────────────────
+
+    function test_setBlocksResetsCurrentIndex() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a"), ed.makeTextBlock("b")])
+        compare(ed.blocks.length, 2)
+        compare(ed.currentIndex, 0)
+
+        ed.setBlocks([])
+        compare(ed.blocks.length, 0)
+        compare(ed.currentIndex, -1)
+    }
+
+    function test_setBlocksNormalizesInput() {
+        var ed = makeEditor()
+        ed.setBlocks([{ type: "video", text: "x" }, null])
+        compare(ed.blocks.length, 2)
+        compare(ed.blocks[0].type, "text")
+        compare(ed.blocks[1].type, "text")
+    }
+
+    function test_insertBlockPositions() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a"), ed.makeTextBlock("c")])
+
+        // 在 0 号后面插 → 落在 1
+        compare(ed.insertBlock(0, ed.makeTextBlock("b")), 1)
+        compare(ed.blocks[1].text, "b")
+
+        // -1 表示插到最前面
+        compare(ed.insertBlock(-1, ed.makeTextBlock("z")), 0)
+        compare(ed.blocks[0].text, "z")
+
+        // 超出末尾 → 夹到尾部
+        var at = ed.insertBlock(999, ed.makeTextBlock("last"))
+        compare(at, ed.blocks.length - 1)
+        compare(ed.blocks[at].text, "last")
+    }
+
+    function test_appendBlock() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a")])
+        var at = ed.appendBlock(ed.makeTextBlock("b"))
+        compare(at, 1)
+        compare(ed.blocks[1].text, "b")
+        compare(ed.currentIndex, 1)
+    }
+
+    function test_insertHelpersDefaultToCurrentBlock() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a"), ed.makeTextBlock("b")])
+        ed.currentIndex = 0
+
+        ed.insertImageBlock("u", "img.png")
+        compare(ed.blocks[1].type, "image")
+
+        ed.insertFileBlock("u", "f.txt", 12)
+        compare(ed.blocks[2].type, "file")
+
+        ed.insertTextBlock(undefined, "after")
+        compare(ed.blocks[3].type, "text")
+        compare(ed.blocks[3].text, "after")
+    }
+
+    function test_removeBlockClampsCurrentIndex() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a"), ed.makeTextBlock("b"), ed.makeTextBlock("c")])
+
+        compare(ed.removeBlock(1), true)
+        compare(ed.blocks.length, 2)
+        compare(ed.blocks[1].text, "c")
+
+        compare(ed.removeBlock(99), false, "out of range")
+        compare(ed.removeBlock(-1), false)
+
+        compare(ed.removeBlock(0), true)
+        compare(ed.removeBlock(0), true)
+        compare(ed.blocks.length, 0)
+        compare(ed.currentIndex, -1, "emptying the doc drops the cursor")
+    }
+
+    function test_moveBlock() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a"), ed.makeTextBlock("b"), ed.makeTextBlock("c")])
+
+        compare(ed.moveBlock(0, 2), true)
+        compare(ed.blocks[0].text, "b")
+        compare(ed.blocks[1].text, "c")
+        compare(ed.blocks[2].text, "a")
+        compare(ed.currentIndex, 2, "cursor follows the moved block")
+
+        compare(ed.moveBlock(1, 1), false, "same slot is a no-op")
+        compare(ed.moveBlock(0, 9), false)
+        compare(ed.moveBlock(-2, 0), false)
+    }
+
+    function test_setStyleOnlyOnTextBlocks() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a")])
+        compare(ed.setStyle("heading"), true)
+        compare(ed.blocks[0].style, "heading")
+
+        ed.insertImageBlock("u", "n")
+        ed.currentIndex = 1
+        compare(ed.setStyle("quote"), false, "images have no text style")
+        compare(ed.blocks[1].type, "image")
+    }
+
+    function test_toggleFormat() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a")])
+
+        compare(ed.toggleFormat("bold"), true)
+        compare(ed.blocks[0].bold, true)
+        compare(ed.toggleFormat("bold"), true)
+        compare(ed.blocks[0].bold, false, "toggling twice restores")
+
+        compare(ed.toggleFormat("italic"), true)
+        compare(ed.toggleFormat("underline"), true)
+        compare(ed.toggleFormat("strike"), true)
+        compare(ed.blocks[0].italic && ed.blocks[0].underline && ed.blocks[0].strike, true)
+
+        compare(ed.toggleFormat("bogus"), false, "unknown flag is rejected")
+    }
+
+    function test_setAlign() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("a")])
+        compare(ed.setAlign("center"), true)
+        compare(ed.blocks[0].align, "center")
+        compare(ed.setAlign("nonsense"), true)
+        compare(ed.blocks[0].align, "left")
+    }
+
+    function test_clearLeavesOneBlankTextBlock() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeImageBlock("u", "n")])
+        ed.clear()
+        compare(ed.blocks.length, 1)
+        compare(ed.blocks[0].type, "text")
+        compare(ed.blocks[0].text, "")
+        compare(ed.currentIndex, 0)
+        compare(ed.isEmpty, true)
+    }
+
+    // ── 7. 信号与版本号 ─────────────────────────────────────────
+
+    function test_revisionIncrementsOnEveryMutation() {
+        var ed = makeEditor()
+        var r0 = ed.revision
+        ed.setBlocks([ed.makeTextBlock("a")])
+        var r1 = ed.revision
+        verify(r1 > r0, "setBlocks bumps revision")
+
+        ed.toggleFormat("bold")
+        verify(ed.revision > r1, "format change bumps revision")
+        var r2 = ed.revision
+
+        ed.insertBlock(-1, ed.makeTextBlock("z"))
+        verify(ed.revision > r2)
+
+        // 原地改字段也必须涨版本号，否则界面不会刷新
+        var r3 = ed.revision
+        ed.setStyle("code")
+        verify(ed.revision > r3)
+    }
+
+    function test_contentsChangedFires() {
+        var ed = makeEditor()
+        var spy = createTemporaryObject(componentSpy, ed)
+        verify(spy !== null)
+
+        ed.setBlocks([ed.makeTextBlock("a")])
+        spy.clear()
+        ed.toggleFormat("bold")
+        compare(spy.count, 1, "toggleFormat emits once")
+
+        spy.clear()
+        ed.removeBlock(0)
+        compare(spy.count, 1, "removeBlock emits once")
+    }
+
+    Component {
+        id: componentSpy
+        SignalSpy { target: parent; signalName: "contentsChanged" }
+    }
+
+    // ── 8. 装配 ─────────────────────────────────────────────────
+
+    function test_rendersBlocksAndSizesItself() {
+        var ed = makeEditor()
+        ed.setBlocks([ed.makeTextBlock("标题", "heading"),
+                      ed.makeTextBlock("正文段落"),
+                      ed.makeImageBlock("file:///nope.png", "nope.png", "图注"),
+                      ed.makeFileBlock("file:///nope.pdf", "nope.pdf", 2048)])
+        wait(50)
+        // 4 块都要渲染出高度；缺图 / 缺文件不该让整块塌成 0
+        verify(ed.implicitHeight > 0, "editor reports an implicit height")
+        compare(ed.blocks.length, 4)
+    }
+
+    function test_emptyEditorShowsPlaceholderState() {
+        var ed = makeEditor()
+        ed.setBlocks([])
+        wait(50)
+        verify(ed.implicitHeight > 0, "empty editor still occupies the drop/placeholder area")
+        verify(ed.isEmpty)
+    }
+}
+```
+
+### `tests/tst_chatinput.qml`
+
+qmltestrunner 行为测试：附件模型 / 上限 / canSend / 发送快照 / 回车语义 / 拖放粘贴 / 选择框（57 项）
+
+```qml
+import QtQuick
+import QtTest
+import ZmdUI 1.0
+
+/*!
+    ZChatInput 的行为测试（qmltestrunner）。
+
+    跑法：
+        qmltestrunner -input tests/tst_chatinput.qml -import qml
+
+    测试分两层：
+      1. 纯函数层 —— 附件工厂、归一化、换算、序列化、快捷键判定。不碰界面，断言可以写得很硬。
+      2. 草稿操作层 —— 增删附件、上限、canSend / submit、信号与 revision。
+
+    故意不去模拟"在 TextArea 里敲键盘"：离屏平台的合成事件到不了控件，
+    而且回车到底该发消息还是换行，本身就抽成了 isSendCombo 这个纯函数，
+    直接断言它比模拟按键更准。
+*/
+TestCase {
+    id: root
+    name: "ZChatInputBehaviors"
+    when: windowShown
+
+    width: 800
+    height: 600
+
+    Component {
+        id: chatComponent
+        ZChatInput {
+            width: 600
+        }
+    }
+
+    Component {
+        id: spyComponent
+        SignalSpy { }
+    }
+
+    function makeChat() {
+        var chat = createTemporaryObject(chatComponent, root)
+        verify(chat !== null, "chat input should instantiate")
+        return chat
+    }
+
+    function makeSpy(target, signalName) {
+        var spy = spyComponent.createObject(root, { "target": target, "signalName": signalName })
+        verify(spy !== null, "spy should instantiate for " + signalName)
+        return spy
+    }
+
+    // ── 1. 附件工厂与归一化 ──────────────────────────────────────
+
+    function test_makeImageAttachmentDefaults() {
+        var chat = makeChat()
+        var a = chat.makeImageAttachment("file:///pic.png")
+        compare(a.type, "image")
+        compare(a.url, "file:///pic.png")
+        compare(a.name, "pic.png")
+        compare(a.size, 0)
+        verify(String(a.id).length > 0, "every attachment gets an id")
+    }
+
+    function test_makeFileAttachmentKeepsSize() {
+        var chat = makeChat()
+        var a = chat.makeFileAttachment("file:///doc.pdf", "doc.pdf", 2048)
+        compare(a.type, "file")
+        compare(a.name, "doc.pdf")
+        compare(a.size, 2048)
+    }
+
+    function test_makeFileAttachmentClampsBadSize() {
+        var chat = makeChat()
+        compare(chat.makeFileAttachment("u", "n", -5).size, 0)
+        compare(chat.makeFileAttachment("u", "n", "abc").size, 0)
+        compare(chat.makeFileAttachment("u", "n", 12.6).size, 13)
+    }
+
+    function test_normalizeAttachmentTurnsUnknownTypeIntoFile() {
+        var chat = makeChat()
+        compare(chat.normalizeAttachment({ type: "video", url: "u" }).type, "file")
+        compare(chat.normalizeAttachment({}).type, "file")
+        compare(chat.normalizeAttachment(null).type, "file")
+        compare(chat.normalizeAttachment({ type: "IMAGE" }).type, "image")
+    }
+
+    function test_normalizeAttachmentFillsMissingFields() {
+        var chat = makeChat()
+        var a = chat.normalizeAttachment({ type: "image", url: "file:///a/b/photo.jpg" })
+        compare(a.name, "photo.jpg", "name falls back to the file name in the url")
+        verify(String(a.id).length > 0)
+        compare(a.size, 0)
+    }
+
+    function test_normalizeAttachmentKeepsGivenId() {
+        var chat = makeChat()
+        compare(chat.normalizeAttachment({ type: "file", id: "abc" }).id, "abc")
+    }
+
+    function test_attachmentIdsAreUnique() {
+        var chat = makeChat()
+        var a = chat.makeFileAttachment("u1", "n1")
+        var b = chat.makeFileAttachment("u2", "n2")
+        verify(a.id !== b.id, "generated ids must not collide")
+    }
+
+    function test_fileNameOf() {
+        var chat = makeChat()
+        compare(chat.fileNameOf("file:///c:/tmp/报告.pdf"), "报告.pdf")
+        compare(chat.fileNameOf("C:\\Users\\me\\a.png"), "a.png")
+        compare(chat.fileNameOf("plain.txt"), "plain.txt")
+        compare(chat.fileNameOf(""), "")
+        compare(chat.fileNameOf(null), "")
+    }
+
+    function test_extensionOf() {
+        var chat = makeChat()
+        compare(chat.extensionOf("a.PDF"), "pdf")
+        compare(chat.extensionOf(".gitignore"), "", "dot files have no extension")
+        compare(chat.extensionOf("archive.tar.gz"), "gz")
+        compare(chat.extensionOf("noext"), "")
+        compare(chat.extensionOf("trailing."), "")
+    }
+
+    function test_formatBytes() {
+        var chat = makeChat()
+        compare(chat.formatBytes(0), "0 B")
+        compare(chat.formatBytes(512), "512 B")
+        compare(chat.formatBytes(1536), "1.5 KB")
+        compare(chat.formatBytes(1024 * 1024 * 3), "3.0 MB")
+        compare(chat.formatBytes(-1), "0 B")
+    }
+
+    // ── 2. 加附件 ────────────────────────────────────────────────
+
+    function test_addAttachmentAppendsAndBumpsRevision() {
+        var chat = makeChat()
+        var r0 = chat.revision
+        var idx = chat.addFile("file:///a.pdf", "a.pdf", 10)
+        compare(idx, 0)
+        compare(chat.attachmentCount, 1)
+        verify(chat.revision > r0, "adding bumps revision")
+        compare(chat.attachments[0].name, "a.pdf")
+    }
+
+    function test_addAttachmentWithoutUrlOrNameIsRejected() {
+        var chat = makeChat()
+        compare(chat.addAttachment({ type: "file" }), -1)
+        compare(chat.addAttachment(null), -1)
+        compare(chat.attachmentCount, 0)
+    }
+
+    function test_addAttachmentRejectedWhenReadOnly() {
+        var chat = makeChat()
+        chat.readOnly = true
+        compare(chat.addImage("u", "n"), -1)
+        compare(chat.attachmentCount, 0)
+    }
+
+    function test_maxAttachmentsEnforced() {
+        var chat = makeChat()
+        chat.maxAttachments = 2
+        var spy = makeSpy(chat, "limitReached")
+        compare(chat.addImage("u1", "n1"), 0)
+        compare(chat.addImage("u2", "n2"), 1)
+        compare(chat.addImage("u3", "n3"), -1, "third one is refused")
+        compare(chat.attachmentCount, 2)
+        compare(spy.count, 1)
+        compare(spy.signalArguments[0][0], "attachments")
+    }
+
+    function test_maxAttachmentsZeroMeansUnlimited() {
+        var chat = makeChat()
+        chat.maxAttachments = 0
+        for (var i = 0; i < 20; ++i)
+            compare(chat.addImage("u" + i, "n" + i), i)
+        compare(chat.attachmentCount, 20)
+    }
+
+    function test_attachmentAddedCarriesPayload() {
+        var chat = makeChat()
+        var spy = makeSpy(chat, "attachmentAdded")
+        chat.addImage("file:///x.png", "x.png")
+        compare(spy.count, 1)
+        compare(spy.signalArguments[0][0].type, "image")
+        compare(spy.signalArguments[0][1], 0)
+    }
+
+    // ── 3. 删附件 ────────────────────────────────────────────────
+
+    function test_removeAttachmentRemovesTheRightOne() {
+        var chat = makeChat()
+        chat.addImage("u1", "a.png")
+        chat.addFile("u2", "b.pdf", 1)
+        chat.addImage("u3", "c.png")
+        verify(chat.removeAttachment(1))
+        compare(chat.attachmentCount, 2)
+        compare(chat.attachments[0].name, "a.png")
+        compare(chat.attachments[1].name, "c.png")
+    }
+
+    function test_removeAttachmentRejectsBadIndex() {
+        var chat = makeChat()
+        chat.addImage("u1", "a.png")
+        verify(!chat.removeAttachment(-1))
+        verify(!chat.removeAttachment(5))
+        compare(chat.attachmentCount, 1)
+    }
+
+    function test_removeAttachmentRejectedWhenReadOnly() {
+        var chat = makeChat()
+        chat.addImage("u1", "a.png")
+        chat.readOnly = true
+        verify(!chat.removeAttachment(0))
+        compare(chat.attachmentCount, 1)
+    }
+
+    function test_attachmentRemovedCarriesPayload() {
+        var chat = makeChat()
+        chat.addFile("u", "b.pdf", 3)
+        var spy = makeSpy(chat, "attachmentRemoved")
+        chat.removeAttachment(0)
+        compare(spy.count, 1)
+        compare(spy.signalArguments[0][0].name, "b.pdf")
+        compare(spy.signalArguments[0][1], 0)
+    }
+
+    function test_clearAttachments() {
+        var chat = makeChat()
+        chat.addImage("u1", "a.png")
+        chat.addFile("u2", "b.pdf", 1)
+        var r0 = chat.revision
+        chat.clearAttachments()
+        compare(chat.attachmentCount, 0)
+        verify(chat.revision > r0)
+        // 已经空了再清一次不该白涨版本号
+        var r1 = chat.revision
+        chat.clearAttachments()
+        compare(chat.revision, r1)
+    }
+
+    // ── 4. 派生状态 ──────────────────────────────────────────────
+
+    function test_hasContent() {
+        var chat = makeChat()
+        verify(!chat.hasContent, "empty draft has no content")
+        chat.text = "   "
+        verify(!chat.hasContent, "whitespace only does not count")
+        chat.text = "hi"
+        verify(chat.hasContent)
+        chat.text = ""
+        chat.addImage("u", "a.png")
+        verify(chat.hasContent, "an attachment counts as content")
+    }
+
+    function test_countsByType() {
+        var chat = makeChat()
+        chat.addImage("u1", "a.png")
+        chat.addImage("u2", "b.png")
+        chat.addFile("u3", "c.pdf", 1)
+        compare(chat.imageCount, 2)
+        compare(chat.fileCount, 1)
+        compare(chat.attachmentCount, 3)
+    }
+
+    function test_overLimitAndCounter() {
+        var chat = makeChat()
+        chat.maxLength = 3
+        chat.text = "abcd"
+        verify(chat.overLimit)
+        compare(chat.counterText, "4 / 3")
+        chat.text = "ab"
+        verify(!chat.overLimit)
+        compare(chat.counterText, "2 / 3")
+    }
+
+    function test_unlimitedCounter() {
+        var chat = makeChat()
+        chat.maxLength = 0
+        chat.text = "abc"
+        verify(!chat.overLimit, "maxLength 0 means no limit")
+        compare(chat.counterText, "3 字")
+    }
+
+    function test_draftSummary() {
+        var chat = makeChat()
+        compare(chat.draftSummary, "0 字")
+        chat.text = "hello"
+        compare(chat.draftSummary, "5 字")
+        chat.addImage("u", "a.png")
+        compare(chat.draftSummary, "5 字 · 1 图")
+        chat.addFile("u", "b.pdf", 1)
+        compare(chat.draftSummary, "5 字 · 1 图 · 1 文件")
+    }
+
+    function test_canSend() {
+        var chat = makeChat()
+        verify(!chat.canSend, "nothing to send")
+        chat.text = "hi"
+        verify(chat.canSend)
+        chat.readOnly = true
+        verify(!chat.canSend, "read only cannot send")
+        chat.readOnly = false
+        chat.busy = true
+        verify(!chat.canSend, "busy cannot send")
+        chat.busy = false
+        chat.maxLength = 1
+        verify(chat.overLimit)
+        verify(!chat.canSend, "over limit cannot send")
+    }
+
+    // ── 5. 发送 ──────────────────────────────────────────────────
+
+    function test_submitEmitsTextAndSnapshot() {
+        var chat = makeChat()
+        chat.text = "你好"
+        chat.addImage("file:///a.png", "a.png")
+        var spy = makeSpy(chat, "sendRequested")
+        verify(chat.submit())
+        compare(spy.count, 1)
+        compare(spy.signalArguments[0][0], "你好")
+        var sent = spy.signalArguments[0][1]
+        compare(sent.length, 1)
+        compare(sent[0].name, "a.png")
+    }
+
+    function test_submitSnapshotIsACopy() {
+        var chat = makeChat()
+        chat.text = "x"
+        chat.addImage("u", "a.png")
+        var spy = makeSpy(chat, "sendRequested")
+        chat.submit()
+        var sent = spy.signalArguments[0][1]
+        sent[0].name = "changed"
+        sent.push({ type: "file", name: "injected" })
+        compare(chat.attachments.length, 1, "mutating the snapshot must not touch the draft")
+        compare(chat.attachments[0].name, "a.png")
+    }
+
+    function test_submitRefusesWhenEmptyOrBlocked() {
+        var chat = makeChat()
+        var spy = makeSpy(chat, "sendRequested")
+        verify(!chat.submit(), "empty draft sends nothing")
+        chat.text = "hi"
+        chat.readOnly = true
+        verify(!chat.submit(), "read only sends nothing")
+        chat.readOnly = false
+        chat.busy = true
+        verify(!chat.submit(), "busy sends nothing")
+        chat.busy = false
+        chat.maxLength = 1
+        verify(!chat.submit(), "over limit sends nothing")
+        compare(spy.count, 0)
+    }
+
+    function test_submitKeepsDraftByDefault() {
+        var chat = makeChat()
+        chat.text = "hi"
+        chat.addImage("u", "a.png")
+        chat.submit()
+        compare(chat.text, "hi", "clearOnSend defaults to false")
+        compare(chat.attachmentCount, 1)
+    }
+
+    function test_clearOnSend() {
+        var chat = makeChat()
+        chat.clearOnSend = true
+        chat.text = "hi"
+        chat.addImage("u", "a.png")
+        chat.submit()
+        compare(chat.text, "")
+        compare(chat.attachmentCount, 0)
+    }
+
+    function test_clearResetsEverything() {
+        var chat = makeChat()
+        chat.text = "hi"
+        chat.addImage("u", "a.png")
+        chat.clear()
+        compare(chat.text, "")
+        compare(chat.attachmentCount, 0)
+        verify(!chat.canSend)
+    }
+
+    // ── 6. 序列化 ────────────────────────────────────────────────
+
+    function test_draftRoundTrip() {
+        var chat = makeChat()
+        chat.text = "草稿"
+        chat.addImage("file:///a.png", "a.png")
+        chat.addFile("file:///b.pdf", "b.pdf", 1234)
+        var dump = chat.draftToJSON()
+
+        var other = makeChat()
+        other.draftFromJSON(dump)
+        compare(other.text, "草稿")
+        compare(other.attachmentCount, 2)
+        compare(other.attachments[0].type, "image")
+        compare(other.attachments[1].name, "b.pdf")
+        compare(other.attachments[1].size, 1234)
+    }
+
+    function test_draftFromJSONSurvivesGarbage() {
+        var chat = makeChat()
+        chat.text = "先放点东西"
+        chat.addImage("u", "a.png")
+        chat.draftFromJSON(null)
+        compare(chat.text, "")
+        compare(chat.attachmentCount, 0)
+
+        chat.draftFromJSON({ attachments: [{ type: "weird", url: "u" }] })
+        compare(chat.attachmentCount, 1)
+        compare(chat.attachments[0].type, "file", "unknown type degrades to file")
+    }
+
+    // ── 7. 回车语义 ──────────────────────────────────────────────
+
+    function test_isSendComboDefaultsToEnterSends() {
+        var chat = makeChat()
+        verify(chat.sendOnEnter, "default mode is Enter sends")
+        verify(chat.isSendCombo(Qt.NoModifier), "Enter alone sends")
+        verify(!chat.isSendCombo(Qt.ShiftModifier), "Shift+Enter inserts a newline")
+        verify(chat.isSendCombo(Qt.ControlModifier), "Ctrl+Enter always sends")
+    }
+
+    function test_isSendComboSwappedMode() {
+        var chat = makeChat()
+        chat.sendOnEnter = false
+        verify(!chat.isSendCombo(Qt.NoModifier), "Enter alone inserts a newline")
+        verify(!chat.isSendCombo(Qt.ShiftModifier), "Shift+Enter still a newline")
+        verify(chat.isSendCombo(Qt.ControlModifier), "Ctrl+Enter sends")
+        verify(chat.isSendCombo(Qt.ControlModifier | Qt.ShiftModifier), "Ctrl+Shift+Enter sends")
+    }
+
+    // ── 8. 装配 ─────────────────────────────────────────────────
+
+    function test_rendersWithAttachments() {
+        var chat = makeChat()
+        chat.text = "一段草稿"
+        chat.addImage("file:///nope.png", "nope.png")
+        chat.addFile("file:///nope.pdf", "nope.pdf", 2048)
+        wait(50)
+        verify(chat.implicitHeight > 0, "composer reports an implicit height")
+        compare(chat.attachmentCount, 2)
+        compare(chat.imageCount, 1)
+        // 输入区高度在 min / max 之间，不该塌成 0
+        verify(chat.height > 0)
+    }
+
+    function test_heightStaysWithinBounds() {
+        var chat = makeChat()
+        chat.minTextHeight = 60
+        chat.maxTextHeight = 90
+        wait(50)
+        var h0 = chat.implicitHeight
+        chat.text = "很长的内容 ".repeat(200)
+        wait(50)
+        verify(chat.implicitHeight >= h0, "adding lines grows the composer")
+        verify(chat.implicitHeight <= h0 + 400, "growth is bounded by maxTextHeight")
+    }
+
+    function test_toolbarAndHeaderCanBeHidden() {
+        var chat = makeChat()
+        var withBoth = 0
+        wait(50)
+        withBoth = chat.implicitHeight
+        chat.showToolbar = false
+        chat.showHeader = false
+        wait(50)
+        verify(chat.implicitHeight < withBoth, "hiding chrome shrinks the composer")
+    }
+
+    // ── 9. 拖放与粘贴（把 url 变成附件的那条链路）────────────────
+
+    function test_isImageUrl() {
+        var chat = makeChat()
+        verify(chat.isImageUrl("file:///c:/tmp/a.png"))
+        verify(chat.isImageUrl("C:\\Users\\me\\照片.JPG"), "extension match is case-insensitive")
+        verify(chat.isImageUrl("file:///a/b/c.webp"))
+        verify(!chat.isImageUrl("file:///a/b/c.pdf"))
+        verify(!chat.isImageUrl("file:///a/b/noext"))
+        verify(!chat.isImageUrl(""), "empty url is not an image")
+        verify(!chat.isImageUrl(null))
+    }
+
+    function test_insertedTextFindsTheAppendedChunk() {
+        var chat = makeChat()
+        compare(chat.insertedText("abc", "abcdef"), "def")
+        compare(chat.insertedText("", "abc"), "abc")
+        compare(chat.insertedText("abc", "abc"), "", "no change inserts nothing")
+    }
+
+    function test_insertedTextFindsThePastedChunkInTheMiddle() {
+        var chat = makeChat()
+        // 用户把 "XY" 粘在 "ab|cd" 之间
+        compare(chat.insertedText("abcd", "abXYcd"), "XY")
+        // 常见前后缀（"aa"）不能被误算成插入内容
+        compare(chat.insertedText("aaaa", "aaXYaa"), "XY")
+    }
+
+    function test_insertedTextReportsDeletionAsEmpty() {
+        var chat = makeChat()
+        compare(chat.insertedText("abcdef", "abef"), "", "deletion inserts nothing")
+    }
+
+    function test_fileUrlsInSingleUrl() {
+        var chat = makeChat()
+        var urls = chat.fileUrlsIn("file:///C:/dev/ZmdUI/README.md")
+        compare(urls.length, 1)
+        compare(urls[0], "file:///C:/dev/ZmdUI/README.md")
+    }
+
+    function test_fileUrlsInMultipleLines() {
+        var chat = makeChat()
+        var urls = chat.fileUrlsIn("file:///a.png\r\nfile:///b.pdf\nfile:///c.txt")
+        compare(urls.length, 3, "CRLF and LF both split")
+        compare(urls[2], "file:///c.txt")
+    }
+
+    function test_fileUrlsInRejectsTextWithoutUrls() {
+        var chat = makeChat()
+        compare(chat.fileUrlsIn("看这个 file:///a.png").length, 0,
+                "a url buried in prose must stay text")
+        compare(chat.fileUrlsIn("hello").length, 0)
+        compare(chat.fileUrlsIn("").length, 0)
+        compare(chat.fileUrlsIn(null).length, 0)
+    }
+
+    function test_addUrlsAsAttachmentsSplitsImageAndFile() {
+        var chat = makeChat()
+        var added = chat.addUrlsAsAttachments(["file:///a.png", "file:///b.pdf"])
+        compare(added, 2)
+        compare(chat.attachmentCount, 2)
+        compare(chat.imageCount, 1, "png lands in the image bucket")
+        compare(chat.fileCount, 1, "pdf lands in the file bucket")
+        compare(chat.attachments[0].name, "a.png")
+        compare(chat.attachments[1].type, "file")
+        compare(chat.attachments[1].size, 0, "dropped files have no known size")
+    }
+
+    function test_addUrlsAsAttachmentsSkipsEmptyEntries() {
+        var chat = makeChat()
+        compare(chat.addUrlsAsAttachments(["", null, "file:///x.txt"]), 1)
+        compare(chat.attachmentCount, 1)
+        compare(chat.addUrlsAsAttachments([]), 0)
+        compare(chat.addUrlsAsAttachments(null), 0)
+    }
+
+    function test_addUrlsAsAttachmentsRespectsTheCap() {
+        var chat = makeChat()
+        chat.maxAttachments = 1
+        var spy = makeSpy(chat, "limitReached")
+        compare(chat.addUrlsAsAttachments(["file:///a.png", "file:///b.png"]), 1,
+                "only the first one fits")
+        compare(chat.attachmentCount, 1)
+        compare(spy.count, 1, "hitting the cap reports limitReached once")
+    }
+
+    function test_addUrlsAsAttachmentsIgnoredWhenReadOnly() {
+        var chat = makeChat()
+        chat.readOnly = true
+        compare(chat.addUrlsAsAttachments(["file:///a.png"]), 0)
+        compare(chat.attachmentCount, 0)
+    }
+
+    // ── 系统文件选择框的接线 ──────────────────────────────────────
+    function test_systemDialogsAreOnByDefault() {
+        var chat = makeChat()
+        verify(chat.useSystemDialogs, "不加任何配置，点「图片」/「文件」就该有东西弹出来")
+    }
+
+    function test_urlsOfDropsEmptyEntries() {
+        var chat = makeChat()
+        compare(chat.urlsOf(undefined).length, 0)
+        compare(chat.urlsOf([]).length, 0)
+        var got = chat.urlsOf(["file:///a.png", null, "", "file:///b.txt"])
+        compare(got.length, 2)
+        compare(got[0], "file:///a.png")
+        compare(got[1], "file:///b.txt")
+    }
+
+    function test_openImagePickerEmitsSignal() {
+        var chat = makeChat()
+        chat.useSystemDialogs = false   // 单测里绝不能真弹原生对话框
+        var spy = makeSpy(chat, "imagePickRequested")
+        chat.openImagePicker()
+        compare(spy.count, 1)
+    }
+
+    function test_openFilePickerEmitsSignal() {
+        var chat = makeChat()
+        chat.useSystemDialogs = false
+        var spy = makeSpy(chat, "filePickRequested")
+        chat.openFilePicker()
+        compare(spy.count, 1)
     }
 }
 ```
@@ -10322,3 +14193,397 @@ qml: SMOKE: window 1500 x 940 | contentItem 1500 x 940 | loaded true
 `gen_docs.py` 无法重新生成文档）。工作区根目录已修好，子目录待修。
 上面的文档同步是用编辑器改完后跑 `_check_doc_sync.py` 核对**逐字节一致**的
 （46 个章节 + `verification.md` 全部 IN SYNC），不是靠人眼比对。
+
+## 5o. 第十五轮：新增 `ZRichTextEditor`（块级富文本）
+
+**需求**：用户问「这个组件库里有富文本框吗？没有的话做一个，支持图片、文字、文件等」。
+
+**结论**：库里只有单行 `ZTextField`，没有任何多行 / 富文本能力，于是新写一个
+`qml/ZmdUI/ZRichTextEditor.qml`（约 1310 行），并注册进 `qmldir` 与 `qml.qrc`
+（类型数 25 → 26）。
+
+### 为什么"富"做在块一级，而不是字符一级
+
+这是本轮唯一一个必须解释的设计取舍，因为它决定了整个 API 的形状：
+
+* Qt Quick 的 `TextEdit` 只暴露**整段** `font`；`textDocument` 是 `QObject`，
+  QML 侧拿不到 `QTextCursor` / `QTextCharFormat`。
+* 想做到"选中几个字加粗"，就得自己算文字的排版位置再叠一层富文本绘制 ——
+  那不是组件，那是重写一个有布局引擎的编辑器。
+* 本库的承诺是**纯 QML + 零第三方依赖**（连图标都是 `Shape` / `Canvas` 画的），
+  所以富文本的"富"落在块上：每个文字块各自带字体 / 字号 / 粗斜体下划线删除线 / 对齐，
+  块与块之间可以混排 **文字 / 图片 / 文件**。
+
+于是 `blocks` 是三种纯 JS 对象的数组：
+
+| 类型 | 字段 |
+| --- | --- |
+| `text` | `text` `style`(body/heading/quote/code) `bold` `italic` `underline` `strike` `align` |
+| `image` | `url` `name` `caption` |
+| `file` | `url` `name` `size` |
+
+### 两个刻意的边界
+
+**① 编辑器不做内部滚动**（不内置 `Flickable`）。原因有二：嵌套滚动本来就难用；
+更关键的是父级 `Flickable` 会把文字拖选当成滚动手势抢走。
+现在的约定是"内容多高就多高，由外层容器负责滚"，放进 `ScrollView` / `Flickable` / 列表都行。
+
+**② 块对象是原地改字段的**，改 `block.text` 不会发信号（`blocks` 里装的是普通 JS 对象，
+没有 `Q_PROPERTY`）。所以引入 `revision` 版本号作为**唯一依赖点**：
+任何一次原地修改都会 `revision++`，绑定在 `revision` 上的派生属性（字数统计、空态、
+块计数）随之刷新；只有整体替换 `blocks` 才重建 `Repeater`。
+这条约定避免了"每次敲一个字符就重建整个委托树"。
+
+### 验证
+
+**① 静态检查：0 条新增实质警告**
+
+```text
+qmllint -I qml qml/ZmdUI/ZRichTextEditor.qml   → exit 0，非 [unqualified] 诊断 0 条
+qmllint -I qml qml/DemoContent.qml             → exit 0，无输出
+```
+
+剩下 29～30 条 `[unqualified]` 全部出现在委托 / `Component` 作用域里访问 `editor.xxx`，
+是库内既有模式（同命令实测基线：`ZButton.qml` 0 条、`ZPanel.qml` 2 条、
+`ZTextField.qml` 5 条、`ZTable.qml` 38 条），属 qmllint 的已知误报。
+
+**② 行为测试 38 项全绿**
+
+```text
+qmltestrunner -input tests/tst_richtext.qml -import qml
+Totals: 38 passed, 0 failed, 0 skipped, 0 blacklisted
+```
+
+八组用例：块工厂 / 归一化 / 名字与单位换算 / 序列化 / 派生状态 / 结构操作 / 信号与 `revision` / 装配。
+测试里用假 url（`"u"`、`file:///nope.png`）会打出 `QML QQuickImage: Cannot open` 的 QWARN ——
+那是故意的破图占位路径，不是失败。
+
+**③ 离屏渲染探针抓出 4 个"测试抓不到"的真缺陷**
+
+单元测试只喂数据、不看像素，所以下面这些只有真渲染才暴露：
+
+| 现象 | 根因 | 修法 |
+| --- | --- | --- |
+| 所有文字块显示为空（图片块、文件块却正常） | `Loader.onLoaded` 里才把 `blockData` 注入被加载项，而 `onLoaded` **晚于**该项的 `Component.onCompleted`，所以初始化时读到的 `blockData.text` 永远是空串 | 加 `_syncFromBlock()`，`onBlockDataChanged` 时再同步一次（信号只能挂在委托根上，`TextArea` 没有这个信号） |
+| `readOnly` + 空文档什么都不显示 | 底部"继续输入"行把最后一点高度也吃了，`implicitHeight` 只剩 42 | 空态单独分支：网格 + `空文档 / NO CONTENT`，`implicitHeight` = 76 |
+| 工具栏被挤成两行 | 12 颗格式芯片 + 3 颗块操作挤不下 | 块操作抽成右侧固定的 `moveBar`，`Flow` 宽度 = 总宽 − moveBar，芯片内边距收到 `spacingSm` |
+| 工具栏高亮落在最后一块 | `currentIndex` 默认 `-1`，`_targetIndex()` 回落到末块 | 默认改 `0`（`-1` 只表示"没有当前块"） |
+
+**④ 一个藏得很深的焦点 bug（靠探针才发现）**
+
+现象：窗口显示后 `currentIndex` 自己从 0 跳到末块，工具栏高亮跟着跑到「代码」。
+
+根因：`_focusRequest` 的"无请求"哨兵是 `-1`，而 `tRoot.blockIndex` 在 `Loader.onLoaded`
+之前**也是 `-1`** —— 于是每个文字块在 `Component.onCompleted` 里都判定"就是我要抢焦点"，
+挨个 `forceActiveFocus()`，最后一个赢。`Error().stack` 里只有 `onActiveFocusChanged` 一帧，
+因为 `setFocus` 来自 C++，看栈完全看不出来。
+
+修法：抢焦点从 `Component.onCompleted` 挪到委托根的 `onBlockIndexChanged`，
+并显式要求 `tRoot.blockIndex >= 0`。**哨兵值和合法值撞车**这类问题，
+静态检查、单元测试都不会报，只有"渲染出来看一眼"才发现。
+
+**⑤ 演示页已接入（区块 07）**
+
+`qml/DemoContent.qml` 新增「区块 07 —— 富文本」，五个块（标题 / 正文 / 图片 / 文件 / 代码）全上。
+离屏探针滚到底抓图：演示页 `contentHeight = 3916`，主编辑器 `implicitHeight = 961`，
+只读空文档 `implicitHeight = 76`，零 QML 警告。
+
+### 本轮踩到的可复用坑
+
+* **`Loader.implicitHeight` 是只读的**（继承 `QQuickImplicitSizeItem`），
+  写 `implicitHeight: item.implicitHeight` 直接编译报
+  `Invalid property assignment: "implicitHeight" is a read-only property`，
+  整个类型变 unavailable。要写 `height:`。
+* **一个 `Text` 上同时写 `font:` 和 `font.bold:` 就是重复绑定**，
+  qmllint 报 `Duplicate binding on property 'font'`。改成单个
+  `Qt.font({ family: …, pixelSize: …, bold: …, italic: … })`。
+* **qmllint 把注释当指令**：注释里出现 `[duplicate-property-binding]` 这种方括号警告名，
+  或注释行以 `qmllint` 开头，都会报 `Invalid qmllint directive`。写注释要避开这两种形态。
+* **`TextArea.pressed` 不是可绑属性**：`onPressedChanged` 直接编译报
+  `Cannot assign to non-existent property "onPressedChanged"`，
+  `console.log(area.pressed)` 打出来是 `function() { [native code] }`（truthy，等于没有守卫）。
+* **`console.log` 的中文在 PowerShell 里会变乱码**：调试输出改用
+  `caption.charCodeAt(0)` / `length` 这类纯 ASCII 数字，别用中文当探针信标。
+
+### 文档同步（本轮）
+
+`README.md`（类型数 26、组件速查新增 `ZRichTextEditor` 行、已知限制补一条）、
+`tools/gen_docs.py` 的 `CHAPTERS`（二章加组件、七章加 `tests/tst_richtext.qml`）、
+以及本文 —— 然后跑 `python tools/gen_docs.py` 重新生成 `docs/ZmdUI_组件库文档.md`。
+
+顺带修了环境问题：`docs/` 的 Windows 文件权限（用 `diagnose-windows-sandbox-acl` 补上
+当前用户的完全控制），文档生成命令本身仍需在完全权限下执行才能写入 `docs/`。
+
+## 5p. 第十六轮：新增 `ZChatInput`（QQ 式消息输入框）
+
+需求原文：「再给我做一个qq聊天输入框那样的组件，可以输入文本、图片、文件」。
+
+### 设计取舍
+
+* **不弹系统文件对话框**。纯 QML 侧没有跨平台的 `FileDialog` 实现路径（那是
+  `QtQuick.Dialogs` 的职责，且各平台行为不一致）。点「图片 / 文件」只发
+  `imagePickRequested()` / `filePickRequested()`，宿主接自己的 `FileDialog`，选完再回填
+  `addImage(url, name)` / `addFile(url, name, size)`。组件对"文件从哪来"不做假设。
+* **不碰剪贴板位图**。`QClipboard` 的图片要 C++ 侧取，QML 只能拿到文本。所以"粘贴截图"
+  由宿主把图存成文件后走 `addImage`。拖放例外：`DropArea` 能直接拿到 `drop.urls`。
+* **`attachments` 整体替换 + `revision`**，和 `ZRichTextEditor.blocks` 同一套约定：
+  块/附件是纯 JS 对象，原地改字段不发信号，靠版本号做唯一依赖点。
+* **发送语义**：`Enter` 发送 / `Shift+Enter` 换行（`sendOnEnter: false` 时反过来，
+  `Ctrl+Enter` 恒发送），`Esc` 发 `cancelRequested()`。逻辑抽成纯函数 `isSendCombo(modifiers)` 便于单测。
+
+### 验证
+
+**① 静态检查：0 条新增实质警告**
+
+```text
+qmllint -I qml qml/ZmdUI/ZChatInput.qml qml/DemoContent.qml qml/main.qml
+→ exit 0，非 [unqualified] 诊断 0 条（合计 20 条 [unqualified]，全是委托访问 composer.xxx）
+```
+
+**② 行为测试 42 项全绿**
+
+```text
+qmltestrunner -input tests/tst_chatinput.qml -import qml
+Totals: 42 passed, 0 failed, 0 skipped, 0 blacklisted
+```
+
+八组：附件工厂 / 归一化（类型、空名兜底、扩展名）/ 文件名与 `formatBytes` /
+加附件与上限（含 `maxAttachments: 0` = 不限）/ 删附件 / 派生状态
+（`canSend` `overLimit` `draftSummary` `counterText`）/ 发送与快照拷贝 / 序列化往返 / 回车语义 / 装配。
+
+**③ 首跑虽然 42 项全过，但运行期有两处 `ReferenceError`** —— 测试断言不看日志，
+只有把 QWARN 翻出来才知道有代码在静默跑错：
+
+| 报错 | 根因 | 修法 |
+| --- | --- | --- |
+| `ZChatInput.qml:591: ReferenceError: fixTextLength is not defined` | 辅助函数写在 `Item { id: textWrap }` 的作用域里，却在 `TextArea.onTextChanged` 里裸调用 | 内联到处理函数里，并用 `_overLimitReported` 做边沿触发（只在刚越界时发一次 `limitReached("length")`，否则每敲一个字都发） |
+| `ZChatInput.qml:701 / :783: ReferenceError: attachLoader is not defined` | 委托用的是 `Loader { sourceComponent: imageThumb / fileCard }`，而两个 `Component` 声明在**文件级作用域**；id 是词法解析的，看不见 Repeater 委托里的那个 Loader | 改用 Repeater 委托的上下文属性 `modelData` / `index`（见下一节探针结论） |
+
+**④ 探针：`Repeater → Loader{sourceComponent} → Component` 里到底能拿到什么**
+
+专门写了个最小复现（两个 Repeater + 三组委托，各打一行日志），结论：
+
+* 委托根上写 `required property var modelData` / `required property int index`
+  **不会被注入**，运行期报 `Required property modelData was not initialized`
+  —— 因为 `sourceComponent` 造出来的项不是模型的直接委托，Qt 不给它初始化 required 属性。
+* 直接读上下文属性 `modelData` / `index` **可以**，`sourceComponent` 的项继承 Repeater 委托的上下文。
+* 模型是 **JS 对象数组**时 `modelData` 就是对象本身（本组件就是这种传法）；
+  换成 `ListModel` 命名角色则 `modelData` 是 `undefined`，只能用角色名。
+
+**⑤ 离屏渲染探针抓到的第 3 个缺陷**
+
+| 现象 | 根因 | 修法 |
+| --- | --- | --- |
+| 底部工具栏里快捷键提示和字数计数**叠字**（渲染成 `SHIFT+ENTER 换行30 / 2000`） | `hintLabel` 和 `counterLabel` 都锚在 `sendButton.left` 上，同一个锚点同一个边距 | 改成链式：字数锚按钮左侧，提示锚字数左侧，并把剩余宽度的算式一起扣掉字数宽度 |
+| `attachments: [ makeImageAttachment(...) ]` 报 `Binding loop detected for property "attachments"` | 工厂 `normalizeAttachment` 里 `id: "att-" + composer._nextAttachmentId++`，计数器是 **QML 属性**；绑定求值时读它、同时写它，等于自己依赖自己 | 计数器改成普通 JS 对象字段 `property var _idGen: ({ next: 1 })`，绑定只读到 `_idGen` 这个属性本身（值不变），写的是它内部字段，不触发失效 |
+| 缩略图的文件名压条盖住底板描边、把左下切角顶成直角；文件卡的扩展名徽标黑块盖过卡片边框 | 压条与徽标锚到父项边缘（`height: parent.height`），既没给描边让位，也没继承父项的切角 | 都按 `Theme.border` 内缩，并补 `cutBottomLeft: Theme.cutSm` 与父项对齐 |
+
+**⑥ 演示页已接入（区块 08）**
+
+`qml/DemoContent.qml` 新增「区块 08 —— 消息输入」，预填一段正文 + 一张图
+（url 留空，走 `IMG` 斜线占位）+ 一张文件卡，并接上 `sendRequested` /
+`imagePickRequested` / `filePickRequested` / `cancelRequested`。
+离屏探针滚到底抓图：演示页 `contentHeight = 4426`，零 QML 警告。
+
+### 本轮踩到的可复用坑
+
+* **`Theme` 的尺寸令牌真名**是 `Theme.border`(2) / `Theme.borderThick`(3) / `Theme.spacingXs`(4)，
+  写成 `border2` / `spacingXs4` 会报 `Member "border2" not found on type "Theme"`。
+* **`ZButton.mono` 是 `property string`**（按钮右侧的等宽小字，如 `F2` / `DEL`），不是布尔开关；
+  传 `true` 报 `Cannot assign literal of type bool to QString`。
+* **测试全绿 ≠ 代码没错**：`ReferenceError` 只进日志不进断言。跑完一定要把
+  `QWARN` 抓出来看一遍，本轮的 2 个 bug 都是这么发现的。
+* **工厂函数里不要动 QML 属性**：`makeImageAttachment(...)` 这类工厂很容易被用户写进
+  `attachments: [ … ]` 这种**绑定**里。只要工厂内部读写了一个 QML 属性（本轮的 id 计数器），
+  这个绑定就会依赖自己，Qt 直接报 `Binding loop`，而且**组件本身不报错**，只有用户那样写才炸。
+  状态要么放 JS 对象字段（`property var _gen: ({ next: 1 })`），要么让工厂保持无副作用。
+
+### 文档同步（本轮）
+
+`README.md`（类型数 27 = 1 单例 + 4 图元 + 22 控件、目录树、组件速查新增 `ZChatInput` 行、
+验证命令加 `tst_chatinput`、已知限制补"不弹系统对话框 / 不读剪贴板位图"）、
+`tools/gen_docs.py` 的 `CHAPTERS`（二章加组件、七章加 `tests/tst_chatinput.qml`、
+演示页描述改八大区块）、演示页底部装饰条改 `27 TYPES`，以及本文 ——
+然后跑 `python tools/gen_docs.py` 重新生成 `docs/ZmdUI_组件库文档.md`。
+
+## 5q. 第十七轮：拖放与 Ctrl+V 都不生效
+
+### 报障
+
+> 图片文件拖进去不生效，ctrl v 复制也不行
+
+### 根因一：`DropArea` 只发信号，没人落地
+
+组件这边 `DropArea.onDropped` 只做了 `composer.filesDropped(drop.urls)` 一件事，
+**自己不添加附件**；演示页那边又只接了 `onSendRequested`。
+两边一凑，拖进来的文件被完整地"观察"了一遍，然后什么也没发生。
+
+这类"信号发得没错，但没人接"的空转，本质是把职责推给了宿主却没写进文档。
+
+### 根因二：Ctrl+V 的三条路径能力完全不同
+
+先用一个隐藏 `Window` + `TextEdit` 的探针，配合 PowerShell 的
+`System.Windows.Forms.Clipboard` 造三种剪贴板内容实测（走真实 windows 平台，
+不是 offscreen —— offscreen 下剪贴板是空的）：
+
+| 复制的是什么 | `canPaste` | `paste()` 之后 `text` | 纯 QML 能做吗 |
+| --- | --- | --- | --- |
+| 一段文字 | `true` | 19 个字符 | 能，默认行为 |
+| 资源管理器里的文件 | `true` | 30 个字符 = `file:///C:/dev/ZmdUI/README.md` | **能**，按行拆开就是 url 列表 |
+| 一张位图 | `false` | 空 | **不能**，`QClipboard::image()` 在 QML 里不可达 |
+
+另外确认过：本机 Qt 的 QML 模块里**没有** Clipboard 类型
+（`C:\dev\Qt\6.11.2\mingw_64\qml` 下 `Qt.labs.platform` 只有 `labsplatformplugin.dll` +
+`plugins.qmltypes` + `qmldir`）。所以"粘截图"只能由宿主语言出手。
+
+### 修法
+
+1. **拖放自己落地**：`DropArea.onDropped` 在发信号之后调
+   `composer.addUrlsAsAttachments(drop.urls)`，按扩展名分流
+   （`isImageUrl(url)` 命中 `png/jpg/jpeg/gif/bmp/webp/svg/ico/tif/heic/avif` → 图片桶，
+   其余 → 文件桶），并照常遵守 `maxAttachments`。
+   `filesDropped(urls)` 保留，但语义改成"通知"，不再要求宿主自己加。
+2. **文件粘贴转附件**：在 `TextArea.onTextChanged` 里用 `insertedText(before, after)`
+   做共同前缀 / 共同后缀的 diff，把这次插入的净增量取出来；若它整体是由
+   `file:///…` 组成的行列表（`fileUrlsIn(block)`），就
+   `_suppressPasteScan = true` → 把正文还原成粘贴前 → `addUrlsAsAttachments(urls)`。
+   这样正文里不会多出一串路径，用户看到的是附件卡。
+   扫描前置 `area.activeFocus`：程序化地设 `text`（恢复草稿、演示页的初始文案）
+   不该被当成粘贴处理。
+3. **位图粘贴交给宿主**：新增 `signal pasteRequested()`。在 `Keys.onPressed` 里判
+   `Qt.Key_V + Ctrl`（不带 Shift）、非只读、且 `!area.canPaste`（= 剪贴板里没有文本，
+   典型就是位图）时发出。
+4. **演示程序加 C++ 桥**：`src/zclipboard.cpp/.h` 的 `ZClipboard` 提供
+   `hasImage()` / `hasUrls()` / `saveImage(ext = "png")`——把
+   `QGuiApplication::clipboard()->image()` 存进 `<temp>/zmdui-clipboard/clip-<毫秒>.<ext>`，
+   返回 `file:///…`。`main.cpp` 里用
+   `engine.rootContext()->setContextProperty("ZClipboard", &clipboardBridge)`
+   注入（不是 QML 单例，这样纯 `qml.exe` 跑测试时根本不需要它），
+   QML 侧 `typeof ZClipboard === "undefined"` 守卫。
+   演示页 `onPasteRequested` 调 `ZClipboard.saveImage()` 再 `chatDemo.addImage(url, "clipboard.png")`。
+
+另外两处顺手修的细节：
+
+* 拖进来 / 粘进来的文件拿不到字节数（QML 没有 `stat`），文件卡原来会显示 `0 B · ATTACHMENT`，
+  改成 `size > 0` 时才写大小，否则只写 `ATTACHMENT`。
+* `DropArea` 必须声明在 `TextArea` **之后**才能拿到 drop 事件：`TextEdit` 自己也会接拖放
+  并把文件路径当文本插进来。这一点在代码里补了注释。
+
+### 验证
+
+* `qmllint -I qml qml/ZmdUI/ZChatInput.qml qml/DemoContent.qml qml/main.qml`
+  → `exit 0`，非 `[unqualified]` 诊断 **0 条**（合计 22 条 unqualified，全是委托里访问
+  `composer.xxx` 与 `ZClipboard` 这种库内既有误报）。
+* `qmltestrunner -input tests/tst_chatinput.qml -import qml`
+  → **`Totals: 53 passed, 0 failed`**（原 42 项 + 本轮新增 11 项：`isImageUrl`、
+  `insertedText` 三种（追加 / 中间插入 / 删除）、`fileUrlsIn` 三种（单 url / 多行 / 混在正文里）、
+  `addUrlsAsAttachments` 四种（分流 / 跳过空项 / 遵守上限并只报一次 `limitReached` / 只读忽略））。
+  除故意的破图 `QWARN` 外无运行期警告，无 `Binding loop`。
+* 演示页离屏探针滚到底抓图：`contentHeight = 4426`，零 QML 警告，
+  证明 `onPasteRequested` 里的 `typeof ZClipboard` 守卫在纯 `qml.exe` 下不会炸。
+* C++ 构建：`cmake --build build-mingw` 通过，`ZClipboard` 编进 `ZmdUIDemo.exe`。
+
+上面这些只能证明"代码写对了"，证明不了"用户按下去有用"。所以另做了三组真机验证：
+
+| 验证 | 做法 | 结果 |
+| --- | --- | --- |
+| 文件粘贴真正落成附件 | 真窗口里 `focusInput()` 后把两行 `file:///…` 塞进 `text`（等价于粘贴完成后的状态） | `attachments=2 img=0 file=2`、`textlen=0`、`names=["README.md","CMakeLists.txt"]` |
+| 位图粘贴确实发出请求 | `System.Windows.Forms.Clipboard::SetImage` 放一张 80x60 位图 → 用 `SendKeys` 往探针窗口发真实 `Ctrl+V` 两次 | `PASTE_REQUESTED` 出现两次（`canPaste` 为 false 才走这条路） |
+| 桥在真实宿主里可见 | 在演示页临时打一行 `typeof ZClipboard` / `hasImage()`，重编译 `ZmdUIDemo.exe` 后启动 | `ZCLIP typeof= object hasImage= true` |
+
+`ZClipboard::saveImage()` 本身单独验过：`moc` + `g++` 把 `src/zclipboard.cpp` 编成独立小程序，
+剪贴板里放 64x48 纯色 `(20,200,60)`，输出 `hasImage=1`、`url=file:///…/clip-1792233352030.png`、
+`exists=1 size=64x48`、`pixel=20,200,60` —— 跨进程位图读到了、落盘对了、像素无损。
+
+验证完的临时插桩已全部撤掉并重新构建，`ZmdUIDemo.exe` 启动无任何 stderr 输出。
+
+### 本轮踩到的可复用坑
+
+* **信号 ≠ 功能**。"发一个 `filesDropped(urls)` 让宿主自己处理"听起来很干净，
+  但如果组件在默认情况下什么都不做，用户的第一反应就是"坏的"。默认行为要给足，
+  信号只用来**补充**通知。
+* **`DropArea` 要压住 `TextArea`**。`TextEdit` 自带拖放（把文件路径当文本插入），
+  声明顺序反了就会出现"拖进去正文里多一行 `file:///…`"。
+* **粘贴要在 diff 上做判断，不要在整个 `text` 上做**。直接对全文跑正则，
+  用户正在打的一段正常文字（比如引用了一个 share 链接）也会被误吃掉。
+* **资源的 id 生成器要放 JS 对象里**（见 5p），这次粘贴改写走的是同一个
+  `addAttachment`，所以 `_idGen` 的修法在这里第二次救了场。
+* **GUI 子系统的 exe 看不到 `console.log`**。`qml.exe` 是控制台程序，输出直接进 stderr；
+  但 `qt_add_executable` 产出的 `ZmdUIDemo.exe` 是 `WIN32` 子系统，`qDebug` 走
+  `OutputDebugString`，重定向 stderr 是空的。加 `QT_ASSUME_STDERR_HAS_CONSOLE=1`
+  才会照样写 stderr —— 排查"演示程序里到底有没有东西"时很关键。
+
+### 文档同步（本轮）
+
+`README.md`（目录树加 `src/zclipboard.cpp/.h`、组件速查 `ZChatInput` 行补
+`pasteRequested()` 与四个新函数、验证命令 42 → 53 项、已知限制把"拖放 / 粘贴"三条
+分开写清楚）、`docs/verification.md` 本文，然后重新生成 `docs/ZmdUI_组件库文档.md`。
+
+## 5r. 第十八轮：「图片」/「文件」按钮点了没反应
+
+### 报障
+
+> 下面的按钮是干什么的，点击没有反应
+
+### 根因：按钮只发信号，宿主没接
+
+工具栏那两颗芯片 `onClicked: composer.imagePickRequested()` —— 组件发一个信号就完事，
+演示页那边只 `console.log("imagePickRequested")`。于是点下去：有焦点变化、有 hover，
+就是什么都不发生。
+
+上一轮修拖放时已经反思过一遍「信号 ≠ 功能」（见 5q），结果隔着两个小节又栽在同一个
+坑里：**默认行为缺位**。区别是这回缺的是"选择文件"这一步，而它恰恰是用户按下按钮的
+全部预期。
+
+### 修法：把选择框做进组件，默认就开
+
+1. `ZChatInput.qml` 加 `import QtQuick.Dialogs`，内置两个 `FileDialog`
+   （`imageDialog` 过滤图片后缀、`fileDialog` 收所有文件，都是 `OpenFiles` 多选），
+   `onAccepted` 直接 `addUrlsAsAttachments(urlsOf(selectedFiles))`。
+2. 新增 `property bool useSystemDialogs: true`。芯片改成调
+   `openImagePicker()` / `openFilePicker()`：先发原来的信号（宿主可能想记账 / 打点），
+   再按 `useSystemDialogs` 决定弹不弹内置对话框。宿主想换成自己的选择器（带预览、
+   最近使用、远程目录）时置 `false` 接信号即可，行为完全不变。
+3. 顺手把两个"打开选择框"抽成公开函数 `openImagePicker()` / `openFilePicker()`：
+   宿主从菜单、快捷键、右键菜单触发同一个动作时不用再抄一遍逻辑。
+4. 新增 `urlsOf(files)`：把 `FileDialog.selectedFiles`（`list<url>` 的类数组）
+   转成普通字符串数组再交给 `addUrlsAsAttachments`，避免某些 Qt 版本拿到包装对象。
+
+### 验证
+
+* `qmllint -I qml qml/ZmdUI/ZChatInput.qml` → `exit 0`，非 `[unqualified]` 诊断 **0 条**
+  （15 条 unqualified，全是委托里访问 `composer.xxx` 的老误报）。
+* `qmltestrunner -input tests/tst_chatinput.qml -import qml` → **`Totals: 57 passed`**
+  （+4 项：`useSystemDialogs` 默认为真、`urlsOf` 剔空项、`openImagePicker` /
+  `openFilePicker` 在关掉内置对话框时仍发信号）。单测里一律
+  `useSystemDialogs = false`，否则测试进程会卡在模态对话框上。
+* **真机验证（关键）**：`qml.exe` 起一个只放 `ZChatInput` 的窗口，600ms 后调
+  `openImagePicker()`，从外部用 P/Invoke `EnumWindows` 枚举该进程的顶层窗口：
+
+  ```
+  hwnd=0x11102 visible=True class=#32770 title=[选择图片]
+  ```
+
+  `#32770` 就是 Win32 的对话框窗口类，标题正是我们设的「选择图片」。
+* 再把选择框**用到底**：`SendKeys` 往对话框里敲一条完整路径 + 回车，日志输出
+  `ATTACH_ADDED image chat-input-demo.png 0` —— 选完真的变成了附件，不是"弹出来好看"。
+* 演示程序重编译后 `区块 08` 正常加载、启动无 stderr 输出：`FileDialog` 是在组件实例化时
+  就创建的，插件缺失会立刻炸，所以这也是对部署的一次体检。
+
+### 本轮踩到的可复用坑
+
+* **模态对话框不要进单测**。`FileDialog.open()` 在 offscreen 下会退化到 Qt Quick 自绘实现
+  （能开、能关，但会打出 style customization 警告）；在 windows 平台下则是原生模态框，
+  测试进程会直接挂在那里。所以凡是会在测试里被点到的路径，都要有"别弹框"的开关，
+  本次的开关就是 `useSystemDialogs`。
+* **`FileDialog` 用 `fileMode: OpenFiles` 时结果在 `selectedFiles`，不是 `selectedFile`**。
+  单数形式只给了第一个，多选会静默丢文件。
+* **验证"按钮有没有反应"不能只看信号**。信号 `count` 涨了、`console.log` 也打了，
+  用户那边依然是死的。得一路验到"窗口出现了 / 文件进了列表"这种可观察的结果。
+
+### 文档同步（本轮）
+
+`README.md`（组件速查 `ZChatInput` 行补 `useSystemDialogs` /
+`openImagePicker` / `openFilePicker` / `urlsOf`，已知限制把"不弹对话框"改写成
+"默认弹、可换"，验证命令 53 → 57 项）、`tools/gen_docs.py`（本章描述与测试条目同步）、
+本文，然后重新生成 `docs/ZmdUI_组件库文档.md`。
