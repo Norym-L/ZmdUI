@@ -1358,3 +1358,607 @@ Totals: 42 passed, 0 failed, 0 skipped, 0 blacklisted
 `openImagePicker` / `openFilePicker` / `urlsOf`，已知限制把"不弹对话框"改写成
 "默认弹、可换"，验证命令 53 → 57 项）、`tools/gen_docs.py`（本章描述与测试条目同步）、
 本文，然后重新生成 `docs/ZmdUI_组件库文档.md`。
+
+## 5s. 第十九轮：深色模式下聊天框配色错乱
+
+### 报障
+
+> 聊天框在深色模式下配色奇怪
+
+附的截图里能直接看出来：标题条（`MESSAGE / COMPOSER` 那条）变成浅灰白底，
+压在上面的白字几乎看不见；文件卡的 `JSON` 扩展名徽标变成一块白方块；
+缩略图底部的文件名压条也偏亮。
+
+### 根因：`Theme.ink` 是**前景色**，被拿去当**填充色**了
+
+`qml/ZmdUI/Theme.qml` 里 `ink` 是正文前景色：亮色 `#111111`、暗色 `#EEEEEE`。
+亮色下它恰好是近黑，所以拿它给"黑色块"当填充，看着毫无问题；一到暗色就翻成近白，
+而块上的文字用的是 `textOnSub`（恒为 `#FFFFFF`）—— 白底白字，文字凭空消失。
+
+`qml/ZmdUI/ZChatInput.qml` 有 4 处这样用：
+
+| 位置 | 亮色（修前=修后） | 暗色修前 | 暗色修后 |
+| --- | --- | --- | --- |
+| 标题条 `headerBar` | `#111111` | `#EEEEEE`（白底白字） | `#0F0F0F` |
+| 缩略图文件名压条 | `#111111` @0.82 | `#EEEEEE` @0.82 | `#0F0F0F` @0.82 |
+| 文件卡扩展名徽标 `extBadge` | `#111111` | `#EEEEEE`（白块） | `#0F0F0F` |
+| 删除角标 `RemoveBadge` | `#111111` @0.72 | `#EEEEEE` @0.72 | `#0F0F0F` @0.72 |
+
+难看的地方在于：**这条规则早就写在 `README.md` 的「暗色主题：三条硬规则」里了**
+（"反相块（黑底白字）必须恒为深色：用 `inkBlock` 而不是 `ink`"），
+库里其它所有反相块也都照做了 —— `qml/ZmdUI/ZPanel.qml:96`、
+`qml/ZmdUI/ZSectionTitle.qml:102`、`qml/ZmdUI/ZTable.qml:146`、
+`qml/ZmdUI/ZDialog.qml:113`、`qml/ZmdUI/ZRichTextEditor.qml:565` 全是 `inkBlock`。
+只有新写的 `ZChatInput` 是例外，而它偏偏是唯一一个"整块黑 + 白字"面积最大的控件。
+
+`ZRichTextEditor` 上一轮没踩到，是因为它的标题条直接抄了 `ZPanel` 的写法；
+这一轮是**从零写**，凭"我要一个黑色块 → 黑色是 `ink`"的语感就写错了。
+
+### 修法
+
+4 处 `color: Theme.ink` → `color: Theme.inkBlock`，每处配一行注释说明为什么。
+保留 3 处正确的 `Theme.ink`（都是**文字**色，不是填充色）：`TextArea` 正文、
+文件卡的 `fileNameLabel`、拖放覆盖层文案。
+
+### 验证
+
+* **双模式离屏探针**：`_probe_chat_modes.qml` 同一个实例先切 `Theme.Mode.Light`
+  抓一张、再切 `Theme.Mode.Dark` 抓一张（两级 `Timer` 错开，`grabToImage` 在
+  `Component.onCompleted` 里太早，会报 `item is not attached to a window`）。
+  暗色下实测 `ink= #eeeeee / inkBlock= #0f0f0f / surface= #232323`，
+  修前修后两张图对照即上述症状与修复。
+* **补了一条回归测试**（`tests/tst_chatinput.qml::test_blackBlocksUseInkBlock`）：
+  给四个黑块加 `objectName`（`chatHeader` / `chatThumbName` / `chatExtBadge` /
+  `chatRemoveBadge`），测试里切到暗色用 `findChild` 找出来，逐个断言
+  `color` 等于 `Theme.inkBlock`；再反向断言 `Theme.ink !== Theme.inkBlock`，
+  避免这条测试沦为同义反复。
+* **反向证明这条测试真的会失败**：把 `extBadge` 改回 `Theme.ink` 后重跑 →
+  `FAIL! : qmltestrunner::ZChatInputBehaviors::test_blackBlocksUseInkBlock() Compared values are not the same`，
+  `Totals: 57 passed, 1 failed`；改回 `inkBlock` → `Totals: 58 passed, 0 failed`。
+* `qmllint -I qml qml/ZmdUI/ZChatInput.qml` → `exit 0`，非 `[unqualified]` 诊断 **0 条**
+  （16 条 unqualified，仍是委托里访问 `composer.xxx` 的老误报）。
+* 三套测试：`tst_hover` 15 / `tst_richtext` 38 / `tst_chatinput` 58，全 passed。
+* **演示页暗色整页截图**：起 `qml/DemoContent.qml`（`Theme.mode = Theme.Mode.Dark`），
+  滚动容器取 `contentHeight` 最大者（4426）并滚到 `区块 08`：标题条、`JSON` 徽标、
+  删除角标全部是近黑色，与 `区块 07` 的富文本编辑器、面板标题带风格一致。
+
+### 本轮踩到的可复用坑
+
+* **"前景色"和"填充色"是两个语义，别共用一个令牌**。`ink` 会跟着模式翻转，
+  `inkBlock` 不会。凡是"黑底白字"的块，永远用 `inkBlock`。
+* **亮色下正好正确，是最坏的掩护**。这类 bug 只在切模式时出现，而组件单测默认在亮色下跑，
+  所以必须显式切一次模式再断言 —— 否则测出来的绿色是假的。
+* **纯视觉的 bug 也能进单测**：给关键子元素加 `objectName`，用 `TestCase.findChild`
+  把"填充色 == 某个令牌"钉成断言，比截图人眼比对可靠得多，也比截图好维护。
+* **写新组件时要先翻一遍 README 的「设计语言规范」**。这次不是不知道该怎么做，
+  是那条规则在 README 里躺了十几轮、而新组件没有对照过它。
+
+### 文档同步（本轮）
+
+`README.md`（「暗色主题：三条硬规则」里反相块那条补上 `ZChatInput` 的具体部位，
+验证命令 57 → 58 项）、`tools/gen_docs.py`（测试条目 57 → 58 项）、本文，
+然后重新生成 `docs/ZmdUI_组件库文档.md`。
+
+## 5t. 第二十轮：输入框超长后文字与光标跑到框外
+
+### 报障
+
+> bug：输入框在超过最大长度的情况下继续输入，文字和光标会跑到输入框下面并消失
+
+### 根因：封了高度，但只裁不滚
+
+`qml/ZmdUI/ZChatInput.qml` 的输入区高度是这么算的：
+
+```qml
+height: Math.min(area.contentHeight + topPadding + bottomPadding, composer.maxTextHeight)
+```
+
+`maxTextHeight` 默认 140，超过就封顶，而 `TextArea` 只有 `clip: true` —— **没有任何滚动容器**。
+于是第 9 行起被裁在可视区外，光标跟着文字一起跑到框外，用户在屏幕上什么都看不见，
+只能盲打。（和 `maxLength`(2000) 无关：16 行中文才 100 多字，远没到字数上限。）
+
+复现探针灌 16 行文本后实测：
+
+```
+AREA height= 140  contentHeight= 240  CARET y= 233  visibleWithin= false
+```
+
+### 修法：给输入区加一个"封顶视口"
+
+把 `TextArea` 包进 `Flickable`，让**视口**封顶、`TextArea` 自己长高：
+
+```qml
+Flickable {
+    id: textFlick
+    objectName: "chatTextScroller"
+    height: Math.max(composer.minTextHeight,
+                     Math.min(area.contentHeight + area.topPadding + area.bottomPadding,
+                              composer.maxTextHeight))
+    contentWidth: width
+    contentHeight: area.height
+    clip: true
+    boundsBehavior: Flickable.StopAtBounds
+    interactive: false          // 拖拽留给文字选择，滚动靠滚轮 + 光标跟随
+
+    TextArea {
+        id: area
+        objectName: "chatTextArea"
+        width: textFlick.width
+        height: Math.max(textFlick.height, contentHeight + topPadding + bottomPadding)
+        onCursorRectangleChanged: composer._keepCaretVisible()
+    }
+}
+```
+
+三个关键点：
+
+1. **`Flickable.height` 只看文字的固有高度**（`contentHeight + padding`），不去看
+   `area.height` —— 否则 `area.height` 依赖 `textFlick.height`、`textFlick.height` 又依赖
+   `area.height`，直接构成绑定循环。
+2. **`area.height` 取两者较大**：内容矮时等于视口高（保证点空白也能聚焦），
+   内容高时自己撑开、交给 `Flickable` 滚。
+3. **`interactive: false`**：`Flickable` 一旦接管拖拽，鼠标划选文字就会被当成滚动。
+   滚轮仍然可用（`WheelHandler` 不受影响），拖选也保住了。
+
+再加一个 `_keepCaretVisible()`：比较 `area.cursorRectangle` 和当前
+`[contentY, contentY + height]` 视口，上方超出就 `contentY = max(0, r.y - 2)`，
+下方超出就 `contentY = min(contentHeight - height, r.y + r.height - height + 2)`；
+内容不超一屏时把 `contentY` 归 0。由 `onCursorRectangleChanged` 触发，
+所以打字、方向键、点选、粘贴都能跟上。
+
+修复后同一份 16 行文本实测：
+
+```
+VIEWPORT h= 140  content= 256  contentY= 110  caretY= 233  caretVisible= true
+```
+
+视口里能看到第 8–16 行，光标停在「第 16 行」末尾。
+
+### 验证
+
+* **补两条测试**（`tests/tst_chatinput.qml` 第 11 组，共 60 项）：
+  `test_longTextScrollsAndKeepsTheCaretVisible` 灌 16 行，用 `findChild` 取
+  `chatTextScroller` / `chatTextArea`，断言 `scroll.height <= maxTextHeight`、
+  `contentHeight > height`、`tryVerify(contentY > 0)`，并断言光标矩形落在视口内；
+  `test_shortTextStaysAtTheTop` 断言短文本 `contentY === 0`（别为了修长文本把短文本也滚走）。
+* **反向证明**：在 `_keepCaretVisible()` 首行临时插 `if (true) return` →
+  `FAIL! : qmltestrunner::ZChatInputBehaviors::test_longTextScrollsAndKeepsTheCaretVisible()
+  'viewport must auto-scroll to keep the caret visible' returned FALSE.`（`59 passed, 1 failed`）；
+  删掉后 `Totals: 60 passed, 0 failed`。
+* **修前/修后对照图**：`chat-input-scroll-fix.png`。素材用 `_probe_overflow.qml`
+  （`height: implicitHeight` 让组件按自然高度摆放，再 `composer.grabToImage` 出 2 倍图），
+  修前那张是临时把 `_keepCaretVisible()` 短路掉的产物。
+* **演示页回归**：`qml/DemoContent.qml` 整页探针仍是 `contentHeight= 4426`、区块 08 正常、零 QML 警告。
+* `qmllint -I qml qml/ZmdUI/ZChatInput.qml` → `exit 0`，非 `[unqualified]` 诊断 0 条。
+* 三套测试：`tst_hover` 15 / `tst_richtext` 38 / `tst_chatinput` 60，全 passed。
+
+### 本轮踩到的可复用坑
+
+* **`clip: true` 不是"滚动"**。裁掉溢出内容在视觉上等同于"内容消失"，
+  有光标的控件尤其致命：光标走到裁剪区外，用户连自己在打什么都不知道。
+* **封顶高度要和"内容固有高度"绑，不要和控件自身高度绑**。前者是数据的函数，
+  后者会回环成绑定循环 —— 这类循环 Qt 只在运行期报一行 `Binding loop detected`，
+  单测不看你就会漏。
+* **`Flickable` 装在文本控件外面时，`interactive` 必须关**。否则鼠标拖选变成滚动，
+  文字选不中，是"修好一个坏掉另一个"的典型。
+* **验证超长输入要先想到"视口"这个词**：先问"谁是视口、谁在内容里"，
+  比逐行读代码快得多。
+
+### 文档同步（本轮）
+
+`README.md`（验证命令 58 → 60 项、`ZChatInput` 速查行补"超高内部滚动并跟随光标"、
+已知限制补输入区滚动那条）、`tools/gen_docs.py`（测试条目 58 → 60 项）、本文，
+然后重新生成 `docs/ZmdUI_组件库文档.md`。
+
+## 5u. 第二十一轮：把「输入区能否变高 / 内容能否溢出」做成配置
+
+### 需求
+
+> 把"允许输入框大小变化"和"允许输入超过输入框大小"做成配置，默认都关闭
+
+紧接着改成：
+
+> 把"允许输入框大小变化"，默认都关闭和"允许输入超过输入框大小"，默认开启，做成配置，
+> 然后在输入内容超过输入框大小时，输入框加上滚动条可以滚动
+
+也就是最终的默认形态：**定高 + 内容可超出 + 框内滚动 + 有滚动条**。
+
+### 两个开关
+
+| 属性 | 默认 | 含义 |
+| --- | --- | --- |
+| `allowResize` | `false` | 输入区是否跟着内容变高（`minTextHeight` → `maxTextHeight`） |
+| `allowOverflow` | `true` | 正文是否允许超出输入区高度（超出则框内滚动） |
+
+四种组合：
+
+| allowResize | allowOverflow | 行为 |
+| --- | --- | --- |
+| false | true（默认） | 定高，超出部分内部滚动 + 滚动条 |
+| true | true | 先长高到 `maxTextHeight`(140)，再内部滚动 |
+| false | false | 定高，写满就不再接受输入 |
+| true | false | 长高到 `maxTextHeight`，写满就不再接受输入 |
+
+视口高度收敛成一个只读属性，**永远只看文字的固有高度**：
+
+```qml
+readonly property int _viewportHeight: allowResize
+    ? Math.max(minTextHeight,
+               Math.min(area.contentHeight + area.topPadding + area.bottomPadding,
+                        maxTextHeight))
+    : minTextHeight
+```
+
+`allowResize` 关掉时它就是常数 `minTextHeight` —— 连绑定循环的可能性都被切断了。
+
+### 滚动条
+
+`Flickable` 上挂库里的 `ZScrollBar`（不是原生样式），只在"允许溢出 **且** 内容真的超出"时出现：
+
+```qml
+ScrollBar.vertical: ZScrollBar {
+    id: textScrollBar
+    objectName: "chatTextScrollBar"
+    policy: (composer.allowOverflow && textFlick.contentHeight > textFlick.height + 0.5)
+            ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+}
+```
+
+滚动条占的是 `TextArea` 右侧 `rightPadding`(12) 那条空当，**所以它出现 / 消失不会让文字重新折行**，
+也就不会和视口高度互相抖。`Flickable.interactive` 仍然是 `false`：拖拽留给划选文字，
+滚动交给滚动条、滚轮和光标跟随。
+
+### `allowOverflow: false` 时怎么"不接受"
+
+采用**整段退回**而不是"截到刚好放得下"：
+
+```qml
+if (!composer.allowOverflow
+        && contentHeight + topPadding + bottomPadding > composer._viewportHeight + 0.5) {
+    composer._rejectOverflow()   // 退回上一次的正文，边沿触发 limitReached("height")
+    return
+}
+```
+
+理由：截断需要拿候选文本反复量 `contentHeight`，而 `TextEdit` 的排版是异步的，
+量到的值不可靠；退回上一次的正文是确定性的，连按退格 / 连续打字都不会出现"字越打越少"的半截状态。
+`_revertingOverflow` 标志负责让退回本身不再触发一次退回。
+
+### 顺带改掉的一处：空态提示行只在"完全空"时出现
+
+默认输入区只有 74px，而 `attachHintText` 那行要吃掉 26px —— 写起字来只剩三行。
+所以提示行改成 `attachmentCount === 0 && text.length === 0` 才露出，一旦有字就收起。
+
+### 验证
+
+* 新增 5 条测试（`tests/tst_chatinput.qml` 第 12 组，共 **65 项**）：
+  `test_resizeAndOverflowDefaults`、`test_resizeDisabledKeepsTheBoxAtMinTextHeight`、
+  `test_resizeEnabledGrowsUpToMaxTextHeight`、`test_overflowDisabledRejectsTextBeyondTheBox`、
+  `test_scrollBarFollowsOverflow`；`test_heightStaysWithinBounds` 补了"关掉开关后高度纹丝不动"。
+* **反向证明**：临时把 `_viewportHeight` 的条件改成恒 `true`、并把溢出判定短路成 `false` →
+  `FAIL! ... test_resizeDisabledKeepsTheBoxAtMinTextHeight() 关掉 allowResize 后输入区高度应恒为 minTextHeight`
+  与 `FAIL! ... test_overflowDisabledRejectsTextBeyondTheBox() 溢出的输入必须整段退回`
+  （63 passed, 2 failed）；还原后 65 passed。
+* **三态离屏探针**（`_probe_flags.qml` → 交付图 `chat-input-resize-overflow.png`）：
+  ① 默认 `vp=74 content=256 y=176 bar=true`、② `allowResize:true` → `vp=140 content=256 y=110 bar=true`、
+  ③ `allowOverflow:false` → 灌 16 行后 `len=3`（整段退回）、`bar=false`。
+* `qmllint -I qml` 四个 qml 文件 → `exit 0`，非 `[unqualified]` 诊断 0 条（50 条仍是委托里访问
+  `composer.xxx` / `editor.xxx` 的老误报）。
+* 三套测试：`tst_hover` 15 / `tst_richtext` 38 / `tst_chatinput` 65，全 passed。
+* 演示页回归：`contentHeight` 仍是 4426，区块 08 正常，零 QML 警告。
+
+### 本轮踩到的可复用坑
+
+* **`ScrollBar.visible` 在单测里不刷新**：Controls 的滚动条是 attached 机制在 polish 时把
+  `policy` 翻译成 `visible` 的，`qmltestrunner` 里没有真实帧循环，`visible` 一直是旧值
+  （而且 `ScrollBar` 上根本没有 `isVisible`）。断言要打在**自己的那个绑定**上（`policy`），
+  "真的画出来了吗"交给离屏探针。
+* **"组件高度"≠"输入区高度"**：`implicitHeight` 里还包含提示行、附件区、工具栏，
+  提示行随内容出现 / 消失会让它变化。要断言输入区就用 `objectName` 找视口本身。
+* **默认值本身就是 API**。这一轮把"自动长高"从默认行为改成需要显式开启，
+  老测试立刻红了两条 —— 它们断言的正是旧默认。改默认值时要顺手把那些测试的意图写清楚
+  （想测"会长高"就显式开 `allowResize`），否则下一个人会以为是实现坏了。
+* **两个布尔开关要列组合表**，不然"false/false 时到底是谁在管高度"这种问题每次都要重新推。
+
+### 文档同步（本轮）
+
+`README.md`（组件速查补 `allowResize`(false) / `allowOverflow`(true)、验证命令 60 → 65 项、
+已知限制那条改写成"定高 + 框内滚动 + 两个开关"）、`tools/gen_docs.py`（测试条目 60 → 65 项）、
+本文，然后重新生成 `docs/ZmdUI_组件库文档.md`。
+
+## 5v. 第二十二轮：输入框里滚轮不生效（其实是滚到了外层页面）
+
+> 追记（m02950）：默认语义后来改成了**滚到边界不带动外层**（`wheelChainsToAncestor: false`）。
+> 本节下面的修法、数据表和测试都已按新默认更新。
+
+### 需求
+
+> 鼠标滚轮在这个输入框里不生效，或是被父窗口拦截了？
+
+### 根因：`interactive: false` 的 `Flickable` 不处理滚轮
+
+上一轮为了让鼠标拖拽去划选文字，把输入区的 `Flickable` 设成了 `interactive: false`。
+Qt 6 的 `QQuickFlickable::wheelEvent()` 一进门就检查 `interactive`，为 `false` 时直接返回 ——
+**它连 `accepted` 都不碰**，事件于是继续往上冒泡，被外层页面的 `Flickable` 吃掉。
+用户看到的"滚轮不生效"和"被父窗口拦截"其实是同一件事：页面在滚，输入框没动。
+
+### 修法：自己接管滚轮，滚到边界就停住（默认）
+
+```qml
+WheelHandler {
+    id: textWheel
+    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+    acceptedModifiers: Qt.NoModifier
+
+    onWheel: function (event) {
+        // 触控板给的是像素增量，鼠标给的是 1/8 度的角度增量（一格 120）
+        var dy = event.pixelDelta.y !== 0
+                ? event.pixelDelta.y
+                : event.angleDelta.y / 120 * composer.wheelStepSize
+        var maxY = Math.max(0, textFlick.contentHeight - textFlick.height)
+
+        // 内容放得下：输入区根本没有可滚区域，整个事件交给外层页面。
+        if (maxY <= 0) {
+            composer._chainWheelToAncestor(dy)
+            event.accepted = true
+            return
+        }
+
+        var next = Math.max(0, Math.min(maxY, textFlick.contentY - dy))
+        var used = textFlick.contentY - next
+        textFlick.contentY = next
+        // 默认到头就停住：剩下的距离直接丢掉，外层页面一动不动。
+        var left = dy - used
+        if (composer.wheelChainsToAncestor && Math.abs(left) > 0.5)
+            composer._chainWheelToAncestor(left)
+        event.accepted = true
+    }
+}
+```
+
+新增属性 `wheelStepSize`（默认 48，一格滚多少像素；触控板的像素增量不受它影响）与
+`wheelChainsToAncestor`（默认 `false`，滚到边界后要不要把剩余距离交给外层页面）。
+
+`_chainWheelToAncestor(dy)` 顺着 `parent` 往上找第一个"内容比视口高"的 `Flickable`
+（`ListView` / `GridView` 也是它的子类），把剩余距离扣掉并夹在 `[0, contentHeight - height]` 里。
+用 `instanceof Flickable` + `as Flickable` 收窄，否则静态检查会报 `contentY` 不存在于 `Item`
+（`qmllint disable missing-property` 也试过，但 `//` 注释里出现 `qmllint` 会被当成指令解析）。
+
+### 为什么要自己转：`WheelHandler` 会闷死事件
+
+挂上 `WheelHandler` 之后，滚轮事件就由它接管、**不再冒泡**。所以"内容不够长""已经滚到头"
+这两种情况如果只是 `return`，滚轮就彻底没反应了（页面也不动）——
+这正是第一版实现踩的坑：`maxY <= 0` 直接 `return` 时，短文本下滚轮完全失效。
+
+结论是这两个边界必须分开对待，不能一刀切：
+
+* **内容放得下（`maxY <= 0`）**：输入区没有可滚的东西，事件整个交给外层，
+  否则一行字的输入框会变成页面滚动的死区。
+* **有滚动范围但已经到顶 / 到底**：按 m02950 的要求**停住，不带动外层**。
+  想要浏览器那种"滚到头继续滚页面"，打开 `wheelChainsToAncestor`。
+
+### 怎么验证的：OS 级注入全废，最后用 C++ 投递事件
+
+`mouse_event` 滚轮、`PostMessage(WM_MOUSEWHEEL)`、`SetForegroundWindow` 全部无效
+（Windows 前台窗口锁；`PostMessage` 的滚轮对 QWindow 也不生效）。
+最终写了个一次性 C++ 工具（**不是交付物，已删除**）直接往 Qt 事件队列投递：
+
+```cpp
+QWindowSystemInterface::handleWheelEvent(win, local, global, QPoint(),
+                                         QPoint(0, -120), Qt::NoModifier, Qt::ScrollUpdate);
+QWindowSystemInterface::flushWindowSystemEvents();
+```
+
+配套探针 `_probe_wheel.qml`：一个 `Window 900x700`，外层 `Flickable { objectName: "pageFlick";
+contentHeight: 1800 }`，里面放 `ZChatInput { objectName: "chat" }` 灌 16 行。
+
+修好后逐格实测（每格都重新算鼠标坐标，否则页面一动坐标就脱靶，读数会莫名其妙多 24px）。
+下表是 m02950 改默认**之后**的最终数据（A / B / C 三组，各 8 格，`maxY` 恒为 230）：
+
+| 组 | 场景 | innerY | pageY |
+| --- | --- | --- | --- |
+| A | 默认（`wheelChainsToAncestor: false`），长文本滚 8 格 | 48 → 96 → 144 → 192 → 230 → 230 → 230 → 230 | 0（**一直不动**） |
+| B | 打开 `wheelChainsToAncestor`，同样 8 格 | 48 → 96 → 144 → 192 → 230 → 230 → 230 → 230 | 0 → 0 → 0 → 0 → 10 → 58 → 106 → 154（到顶后的剩余开始推页面） |
+| C | 短文本（内容放得下，`maxY 0`），默认 | 0 → 0 | 48 → 96（组件不拦，整个滚轮落到外层） |
+
+A 组就是 m02950 要的"滚到边界后不带动外层"：第 5 格到 230 之后，再滚 3 格页面一动不动。
+
+修复前同一套工具量到的是：在输入框上滚 3 格 → `innerY 0 / pageY 72`，
+也就是"滚的是页面"——和用户描述完全一致。
+
+### 测试
+
+`tests/tst_chatinput.qml` 第 11 组共 4 条（`qmltestrunner` 造不出 `QWheelEvent`，
+所以只钉不依赖事件投递的事）：
+
+* `test_wheelStepIsFortyEightPixels`：`wheelStepSize` 默认 48 且可写。
+* `test_wheelDoesNotChainToAncestorByDefault`：`wheelChainsToAncestor` 默认 `false`（m02950 的口径），
+  并且这个开关本身可写。
+* `test_chainWheelToAncestorMovesTheOuterFlickable`：造一个外层 `Flickable`（contentHeight 2000），
+  调 `chat._chainWheelToAncestor(-120)` 断言 `contentY` 变 120；反向 40 变成 80；再来 `-5000`
+  夹到 `contentHeight - height`。
+* `test_chainWheelToAncestorIsHarmlessWithoutOne`：没有可滚动祖先时返回 `false`、不崩。
+
+反向证明：把 `_chainWheelToAncestor` 首行改成 `if (true) return false` →
+`FAIL! ... test_chainWheelToAncestorMovesTheOuterFlickable() 滚轮距离应当转给外层 Flickable`
+（67 passed, 1 failed）；还原后 68 passed，补上默认值那条之后 69 passed。
+
+其余：`tst_hover` 15 / `tst_richtext` 38 全 passed；`qmllint -I qml` 四个文件 `exit 0`、
+非 `[unqualified]` 诊断 0 条；演示页回归无异常。
+
+### 本轮踩到的可复用坑
+
+* **`Flickable` 在 `interactive: false` 时不处理滚轮**，既不滚动也不 `accept`。想让
+  "拖拽划选 + 滚轮滚动"同时成立，只能自己挂 `WheelHandler`。
+* **`WheelHandler` 会吃掉事件**：它一旦存在，滚轮就不再冒泡，链式滚动必须手动接。
+* **给 `WheelHandler` 加 `enabled: <有内容可滚>` 并不能把滚轮还回去**：实测短文本下
+  handler 已经 `enabled: false`，外层页面 `contentY` 仍然是 0 —— 事件还是没人接。
+  想"内容放得下就让外层滚"，只能在 `onWheel` 里显式调 `_chainWheelToAncestor(dy)`。
+* **`//` 注释里不能以 `qmllint` 开头**：`// qmllint 会报…` 会被当成 lint 指令解析，
+  报 `qmllint directive on unknown category` 并让整行后面的中文变成乱码类别。
+* **注入滚动事件必须每格重算坐标**：页面一动，输入框的屏幕位置就变了，
+  拿同一个坐标连发几格，后半段会打在别的控件上 —— 读数会凭空多出 24px，
+  很容易被误判成"事件泄漏给了父级"。
+* **验证异步投递要分步读值**：`flushWindowSystemEvents()` 之后立刻读可能还是旧值，
+  用 `QTimer` 隔几十毫秒再读才稳。
+
+### 文档同步（本轮）
+
+`README.md`（组件速查补 `wheelStepSize`(48) 与 `wheelChainsToAncestor`(false)、
+验证命令 65 → 68 → 69 项、已知限制那条改写成"默认到头就停住，内容放得下时照常滚外层"）、
+`tools/gen_docs.py`（测试条目 65 → 69 项）、本文，然后重新生成
+`docs/ZmdUI_组件库文档.md`。
+
+## 5w. 第二十三轮：附件条改成"定高一行 + 横向滚动"
+
+### 需求
+
+> 是否能把输入框的高度固定死，插入图片、文件也不会是窗口变大
+
+（先给了三个方案：A 定高一行 + 横向滚、B 定高一行 + 裁剪、C 定高一行 + `+N` 收纳；
+用户选了 **A**。）
+
+### 根因：`Flow` 自动换行
+
+正文区早在第二十一轮就已经定高了（`allowResize: false` → 视口恒为 `minTextHeight` 74），
+所以"一插附件就变高"只可能来自附件区。原实现是：
+
+```qml
+Item {
+    id: attachZone
+    height: composer.attachmentCount > 0 ? attachFlow.height + Theme.spacingSm * 2
+         : (composer.attachHintText.length > 0 && composer.text.length === 0 ? 26 : 0)
+
+    Flow {
+        id: attachFlow
+        width: parent.width - Theme.spacingMd * 2
+        ...
+    }
+}
+```
+
+`Flow` 会把放不下的卡片折到下一行，`attachFlow.height` 于是随附件数量阶梯式上涨
+（一张卡 64 高，第二行就多 68），`implicitHeight: body.height` 把这个高度原样传出去，
+父面板跟着被顶高 —— 用户看到的就是"插图片窗口变大"。
+
+### 修法：一行 + 横向滚
+
+`Flow` 换成 `Row` 塞进一个只有一行高的 `Flickable`，视口高度与内容无关：
+
+```qml
+Item {
+    id: attachZone
+    objectName: "chatAttachZone"
+    height: composer.attachmentCount > 0 ? composer.thumbSize + Theme.spacingSm * 2
+         : (composer.attachHintText.length > 0 && composer.text.length === 0 ? 26 : 0)
+
+    Flickable {
+        id: attachFlick
+        objectName: "chatAttachScroller"
+        width: parent.width - Theme.spacingMd * 2
+        height: composer.thumbSize
+        contentWidth: attachRow.width
+        contentHeight: height
+        flickableDirection: Flickable.HorizontalFlick
+        boundsBehavior: Flickable.StopAtBounds
+
+        Row {
+            id: attachRow
+            width: childrenRect.width
+            height: composer.thumbSize
+            spacing: Theme.spacingSm
+            ...
+        }
+    }
+}
+```
+
+几个细节：
+
+* **`Row` 的 `width` 必须绑定 `childrenRect.width`**，否则 `contentWidth` 恒为 0，滚不动。
+* **文件卡（56）比缩略图（64）矮**，`Row` 不做垂直居中，所以每个委托加
+  `y: Math.round((composer.thumbSize - height) / 2)`，不然卡片会贴顶、下面空 8px。
+* **滚轮映射成横向**：附件条上竖向滚轮也把卡片推过去（`pixelDelta` 优先，其次 `angleDelta`），
+  一次一格还是 `wheelStepSize`(48)。没有横向溢出时 `event.accepted = false`，事件不吞。
+* **不加横向滚动条**：`ZScrollBar` 要占 8px，会把"一行高"又撑高；露半张卡本身就是"还能滚"的提示。
+
+### 验证
+
+尺寸探针（一次性，已删除）：同一窗口里放两个 `ZChatInput`，一个 1 个文件附件、一个 6 个
+（1 图 + 5 文件），宽度都给 1100：
+
+| | 1 个附件 | 6 个附件 |
+| --- | --- | --- |
+| `implicitHeight` | 226 | 226 |
+| 附件条 `contentWidth` / `width` | 1144 / 1076（没超出，滚不动） | 1144 / 1076（超出，可横滚） |
+
+也就是说附件从 1 个加到 6 个，组件高度**一模一样**，多出来的部分横向滚。
+
+### 测试
+
+`tests/tst_chatinput.qml` 新增第 13 组 2 条：
+
+* `test_attachStripHeightIgnoresAttachmentCount`：1 个附件时记下 `implicitHeight` 与
+  `chatAttachZone.height`，换成 6 个再比 —— 两者都必须完全相等，且附件区高度
+  `== thumbSize + spacingSm * 2`。
+* `test_attachStripScrollsHorizontallyInsteadOfGrowing`：6 个附件下
+  `contentWidth > width`、`contentY` 恒 0、`contentHeight == thumbSize`；
+  内容宽度必须是 `6 * fileCardWidth + 5 * spacingSm`（钉住 `Row` 的排布）；能滚到最右也能回最左。
+
+反向证明：临时给 `attachZone.height` 加一项"多于一个附件就 `+68`"（模拟原来 `Flow`
+换行带来的增长）→
+`FAIL! : qmltestrunner::ZChatInputBehaviors::test_attachStripHeightIgnoresAttachmentCount()
+附件从 1 个加到 6 个，组件高度不许变`（70 passed, 1 failed）；还原后 71 passed。
+
+其余：`tst_hover` 15 / `tst_richtext` 38 全 passed；`qmllint -I qml` 四文件 `exit 0`、
+非 `[unqualified]` 诊断 0 条。
+
+### 踩到的坑
+
+* **`Row` 的宽度不会自己算**：`Row` 的 `width` 默认是 0，`childrenRect.width` 才是内容宽度，
+  `contentWidth: attachRow.width` 直接写会得到 0，表现为"永远滚不动"。
+* **`Flickable.contentX` 的边界夹取不要写进断言**：直接赋 `10000` 后读回来在
+  `StopAtBounds` 下并不保证正好等于 `maxContentX`（实测差一点点），断言要留 0.5px 容差，
+  或者干脆只断言"能滚到 `maxX` / 能回到 0"。
+* **水平 `ZScrollBar` 会破坏定高**：任何可见横向滚动条都要吃掉高度，本轮的"恒为一行"是
+  用"没有滚动条"换来的。
+
+### 文档同步（本轮）
+
+`README.md`（组件速查补"附件条恒为一行高、排不下横向滚"，已知限制新增一条说明
+`allowResize` 只管正文、附件由附件条管，验证命令 69 → 71 项）、`tools/gen_docs.py`
+（测试条目 69 → 71 项）、本文，然后重新生成 `docs/ZmdUI_组件库文档.md`。
+
+### 追加（m03226）：两条提示文字一起删掉
+
+> 我认为提示行没有必要，删掉就行，"在此输入消息。。。"的提示也没有必要
+
+这一条把附件区的 26px 空态提示行彻底消掉了，顺手把输入区的占位文字也清了：
+
+* `property string attachHintText: ""`（原 `"可粘贴图片、拖动文件到此处"`）
+* `property string placeholderText: ""`（原 `"输入消息，Enter 发送，Shift+Enter 换行…"`）
+
+两个属性**保留**（宿主想要提示可以自己填回去），只是默认给空串；两个 `Text` 的 `visible`
+都加了 `length > 0` 的短路，空串时连一个空 Text 都不渲染。附件区的空态高度表达式不变，
+但 `attachHintText` 为空时那条分支恒取 0 —— 于是没有附件时附件区高度就是 **0**。
+
+重新量三个状态（宽度同样 1100）：
+
+| 状态 | `implicitHeight` | 附件区 |
+| --- | --- | --- |
+| 空 | 146 | 0（没有提示行，输入区直接接工具栏） |
+| 1 个附件 | 226 | 80（`thumbSize` 64 + 上下留白） |
+| 6 个附件 | 226 | 80（一行，横向滚） |
+
+所以"有附件之后"高度就再也不动了（226 ↔ 226）；只有"从空到有第一个附件"这一步会 +80，
+这 80px 是附件行本身，删掉提示行之后没有更好的去处。要连这一步也吃掉就得把空态也留一条
+80px 空带 —— 没有提示文字填空带，看起来反而更怪，先不做。
+
+测试不变（71 passed），因为第 13 组比的是"1 个 vs 6 个"，与空态无关；空态那条 `26` 分支
+没有测试直接钉，靠上表的探针量。
+
+### 文档同步（追加）
+
+`README.md` 速查行把 `placeholderText` / `attachHintText` 标成 `(空)`、本文追加本节，
+然后重新生成 `docs/ZmdUI_组件库文档.md`。
+

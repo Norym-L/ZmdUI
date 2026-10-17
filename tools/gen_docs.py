@@ -68,7 +68,7 @@ CHAPTERS = [
     ("七、自动化验证工具", [
         ("tests/tst_hover.qml", "qmltestrunner 行为测试：规则 / 属性 / 几何断言（9 项）", "qml"),
         ("tests/tst_richtext.qml", "qmltestrunner 行为测试：富文本块模型 / 序列化 / 结构操作（38 项）", "qml"),
-        ("tests/tst_chatinput.qml", "qmltestrunner 行为测试：附件模型 / 上限 / canSend / 发送快照 / 回车语义 / 拖放粘贴 / 选择框（57 项）", "qml"),
+        ("tests/tst_chatinput.qml", "qmltestrunner 行为测试：附件模型 / 上限 / canSend / 发送快照 / 回车语义 / 拖放粘贴 / 选择框 / 暗色填充 / 超高滚动 / 定高与溢出开关 / 滚轮接管 / 附件条定高（71 项）", "qml"),
         ("tools/smoke.qml", "无头冒烟：离屏渲染演示内容并抓图，零 QML 报错才算通过", "qml"),
         ("tools/smoke_scroll.qml", "分段滚动截图，逐屏核对各区块渲染结果", "qml"),
         ("tools/probe_popup.qml", "弹层探针：强制展开工具提示与对话框后抓图", "qml"),

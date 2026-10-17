@@ -36,10 +36,24 @@ import QtQuick.Dialogs
     \li \c Escape 发出 \l cancelRequested，宿主可用来收起 @ 候选、清空草稿等
     \endlist
 
-    \section1 为什么输入区会"长高"而不是一开始就带滚动条
+    \section1 输入区的高度与滚动
 
-    高度在 \l minTextHeight 与 \l maxTextHeight 之间跟着 \c contentHeight 走：
-    一两行时没有滚动条，写长消息超过上限后由 \c TextEdit 内部滚动，光标始终可见。
+    默认是**定高 + 内部滚动**（\l allowResize 为 \c false、\l allowOverflow 为 \c true）：
+    输入区高度恒为 \l minTextHeight，写长了就在框内滚，右侧出现滚动条，光标始终可见。
+    两个开关可以自由组合：
+
+    \list
+    \li \l allowResize：允许输入区跟着内容长高（\l minTextHeight → \l maxTextHeight）
+    \li \l allowOverflow：允许正文超出输入区高度；关掉后，会溢出的那次输入直接被退回
+    \endlist
+
+    | allowResize | allowOverflow | 行为 |
+    | --- | --- | --- |
+    | false（默认） | true（默认） | 定高，超出部分内部滚动 + 滚动条 |
+    | true | true | 先长高到 maxTextHeight，再内部滚动 |
+    | false | false | 定高，写满就不接受更多输入 |
+    | true | false | 长高到 maxTextHeight，写满就不接受更多输入 |
+
     这和 ZRichTextEditor 的"完全不滚动"不同 —— 聊天框固定在屏幕一角，
     不可能把整页撑高。
 */
@@ -84,20 +98,46 @@ Item {
     /*! 标题条上的等宽小字 */
     property string headerText: "MESSAGE / COMPOSER"
 
-    /*! 空输入时的占位提示 */
-    property string placeholderText: "输入消息，Enter 发送，Shift+Enter 换行…"
+    /*! 空输入时的占位提示。默认空 —— 框里不放任何提示文字，要就自己给 */
+    property string placeholderText: ""
 
     /*! 发送按钮文字 */
     property string sendText: "发送"
 
-    /*! 附件区留空时要显示的一行提示（空串则不显示） */
-    property string attachHintText: "可粘贴图片、拖动文件到此处"
+    /*! 附件区留空时要显示的一行提示。默认空 —— 没有附件时附件区高度就是 0，不占地方 */
+    property string attachHintText: ""
 
-    /*! 输入区最小高度（一行文字的呼吸感） */
+    /*! 输入区最小高度。关掉 \l allowResize 后，输入区高度就恒等于它 */
     property int minTextHeight: 74
 
-    /*! 输入区最大高度，超过后输入区内部滚动 */
+    /*! 输入区最大高度：开着 \l allowResize 时，输入区长到这个高度就不再长，改走内部滚动 */
     property int maxTextHeight: 140
+
+    /*!
+        允许输入区跟着内容变高（\l minTextHeight → \l maxTextHeight）。默认 \c false：
+        高度恒定，写长了在框内滚动。想要 QQ 那种"越写越高、到顶再滚"就置 \c true。
+    */
+    property bool allowResize: false
+
+    /*!
+        允许正文超出输入区高度（超出后在输入区内部滚动，右侧出现滚动条）。默认 \c true。
+
+        置 \c false 时，输入区高度就是可视上限：**会让内容溢出的那次输入会被整段退回**，
+        并发 \l limitReached("height")；程序化赋一个超长 \l text 也会被退回上一次的内容。
+    */
+    property bool allowOverflow: true
+
+    /*! 滚轮一格（120 角度增量）滚多少像素。触控板的像素增量不受它影响 */
+    property int wheelStepSize: 48
+
+    /*!
+        输入区滚到上 / 下边界后，继续滚是否把剩余距离交给外层页面（浏览器式链式滚动）。
+        默认 \c false：到头就停住，外层页面一动不动。
+
+        注意内容**放得下**（没有可滚区域）时不适用这条 —— 那时组件不参与滚轮，
+        事件照常落到外层，否则一行的输入框会变成页面滚动的死区。
+    */
+    property bool wheelChainsToAncestor: false
 
     /*! 图片缩略图边长 */
     property int thumbSize: 64
@@ -244,6 +284,25 @@ Item {
 
     /*! 内部：是否已经就"超长"报过警（用来做边沿触发，避免每敲一个字都发信号） */
     property bool _overLimitReported: false
+
+    /*! 内部：是否已经就"超出输入框高度"报过警（同样是边沿触发） */
+    property bool _overflowReported: false
+
+    /*! 内部：正在把溢出的输入退回去，别再让这次回退再走一遍溢出判定 */
+    property bool _revertingOverflow: false
+
+    /*!
+        内部：输入区（视口）的实际高度。
+
+        只看文字的**固有**高度（\c contentHeight + padding），绝不去看 \c area.height ——
+        否则 area.height 依赖视口、视口又依赖 contentHeight（contentHeight 反过来随宽高变），
+        很容易绕成绑定循环。\l allowResize 关掉时它就是个常数 \l minTextHeight。
+    */
+    readonly property int _viewportHeight: allowResize
+        ? Math.max(minTextHeight,
+                   Math.min(area.contentHeight + area.topPadding + area.bottomPadding,
+                            maxTextHeight))
+        : minTextHeight
 
     /*! 内部：上一次的正文，用来做 diff 找出"这次粘贴进来的是哪一段" */
     property string _lastText: ""
@@ -540,6 +599,7 @@ Item {
         area.text = ""
         clearAttachments()
         _overLimitReported = false
+        _overflowReported = false
     }
 
     /*!
@@ -566,6 +626,77 @@ Item {
         area.forceActiveFocus()
     }
 
+    /*! 输入区超过 maxTextHeight 后靠内部 Flickable 滚动，把光标拉回可视区。
+
+        不这么做的话：TextArea 高度封顶、只 clip 不滚，光标走到第 9 行以后就停在
+        可视区外面，用户看起来就是"文字和光标跑到输入框下面消失"。
+    */
+    function _keepCaretVisible() {
+        if (typeof textFlick === "undefined" || textFlick === null
+                || typeof area === "undefined" || area === null)
+            return
+        // 内容没超：永远回到顶部，别留着上一次的滚动位置
+        if (textFlick.contentHeight <= textFlick.height) {
+            if (textFlick.contentY !== 0)
+                textFlick.contentY = 0
+            return
+        }
+        var r = area.cursorRectangle
+        var viewTop = textFlick.contentY
+        var viewBottom = viewTop + textFlick.height
+        if (r.y < viewTop) {
+            textFlick.contentY = Math.max(0, r.y - 2)
+        } else if (r.y + r.height > viewBottom) {
+            textFlick.contentY = Math.min(textFlick.contentHeight - textFlick.height,
+                                          r.y + r.height - textFlick.height + 2)
+        }
+    }
+
+    /*! 内部：把输入区滚到头之后剩下的那段滚轮距离，转给最近的可滚动祖先。
+
+        只在 \l wheelChainsToAncestor 打开时才会被调用（默认关，到头就停住）。
+        为什么要自己转：`WheelHandler` 一旦挂在组件里，滚轮事件就由它接管、**不再冒泡**，
+        想"继续滚外层"就只能手动把剩余距离递过去
+        （`Flickable` / `ListView` / \c ScrollView 的 contentItem 都只看 contentY）。
+    */
+    function _chainWheelToAncestor(dy) {
+        // parent 的静态类型只是 Item，直接读 contentY 会被静态检查拦下，
+        // 所以先 instanceof 判断、再 as Flickable 收窄
+        var p = parent
+        while (p) {
+            if (p instanceof Flickable) {
+                var f = p as Flickable
+                if (f.contentHeight > f.height + 0.5) {
+                    var maxY = f.contentHeight - f.height
+                    f.contentY = Math.max(0, Math.min(maxY, f.contentY - dy))
+                    return true
+                }
+            }
+            p = p.parent
+        }
+        return false
+    }
+
+    /*! 内部：把这次会让内容溢出视口的输入整段退回（\l allowOverflow 为 false 时用）。
+
+        为什么整段退回、而不是截成"刚好放得下"：截断需要拿候选文本反复量 \c contentHeight，
+        而 TextEdit 的排版是异步的，量到的值不可靠；退回上一次的正文则是确定性的，
+        连按退格 / 连续打字都不会出现"字越打越少"的半截状态。
+    */
+    function _rejectOverflow() {
+        var previous = _lastText
+        if (area.text === previous)
+            return
+        var keepCursor = Math.min(area.cursorPosition, previous.length)
+        _revertingOverflow = true
+        area.text = previous
+        area.cursorPosition = keepCursor
+        if (!_overflowReported) {
+            _overflowReported = true
+            limitReached("height")
+        }
+    }
+
     // ════════════════════════════════════════════════════════════════
     //  6. 界面
     // ════════════════════════════════════════════════════════════════
@@ -590,10 +721,14 @@ Item {
         // ── 标题条 ────────────────────────────────────────────────
         ZCutRect {
             id: headerBar
+            objectName: "chatHeader"
             width: parent.width
             height: composer.showHeader ? 30 : 0
             visible: composer.showHeader
-            color: Theme.ink
+            // 用 inkBlock 而不是 ink：ink 是**前景色**，暗色模式下会翻成近白，
+            // 这条标题条就成了白底白字（文字用的是 textOnSub）。
+            // 库里其它"黑色块"（ZPanel / ZSectionTitle / ZTable / ZDialog）都用 inkBlock。
+            color: Theme.inkBlock
             cutTopRight: composer.framed ? Theme.cutMd : 0
 
             Text {
@@ -617,34 +752,76 @@ Item {
         }
 
         // ── 附件预览区 ────────────────────────────────────────────
+        // 高度**与附件数量无关**：永远只占一行（thumbSize + 上下留白），排不下就横向滚。
+        // 之前用 Flow 自动换行，第 4、5 个附件就会折到第二行，整个组件被顶高，
+        // 把下面的正文、工具栏一起推下去 —— 用户看到的就是"一插图片窗口就变高"。
         Item {
             id: attachZone
+            objectName: "chatAttachZone"
             width: parent.width
-            height: composer.attachmentCount > 0 ? attachFlow.height + Theme.spacingSm * 2
-                 : (composer.attachHintText.length > 0 ? 26 : 0)
+            // 没有附件时附件区高度为 0 —— 提示行默认是空的（attachHintText 默认 ""），
+            // 宿主自己填了提示、且输入区还空着，才给它 26px。
+            height: composer.attachmentCount > 0 ? composer.thumbSize + Theme.spacingSm * 2
+                 : (composer.attachHintText.length > 0 && composer.text.length === 0 ? 26 : 0)
             visible: height > 0
 
-            Flow {
-                id: attachFlow
+            Flickable {
+                id: attachFlick
+                objectName: "chatAttachScroller"
                 x: Theme.spacingMd
                 y: Theme.spacingSm
                 width: parent.width - Theme.spacingMd * 2
-                spacing: Theme.spacingSm
+                height: composer.thumbSize
+                contentWidth: attachRow.width
+                contentHeight: height
+                clip: true
                 visible: composer.attachmentCount > 0
+                flickableDirection: Flickable.HorizontalFlick
+                boundsBehavior: Flickable.StopAtBounds
 
-                Repeater {
-                    model: composer.attachments
+                // 竖向滚轮在附件条上映射成横向滚动（触控板的横向增量照用）
+                WheelHandler {
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    acceptedModifiers: Qt.NoModifier
 
-                    delegate: Loader {
-                        id: attachLoader
+                    onWheel: function (event) {
+                        var maxX = Math.max(0, attachFlick.contentWidth - attachFlick.width)
+                        if (maxX <= 0) {
+                            event.accepted = false
+                            return
+                        }
+                        var dx = event.pixelDelta.x !== 0 ? event.pixelDelta.x
+                               : event.pixelDelta.y !== 0 ? event.pixelDelta.y
+                               : (event.angleDelta.x !== 0 ? event.angleDelta.x : event.angleDelta.y)
+                                 / 120 * composer.wheelStepSize
+                        attachFlick.contentX = Math.max(0, Math.min(maxX, attachFlick.contentX - dx))
+                        event.accepted = true
+                    }
+                }
 
-                        required property int index
-                        required property var modelData
+                Row {
+                    id: attachRow
+                    width: childrenRect.width
+                    height: composer.thumbSize
+                    spacing: Theme.spacingSm
 
-                        // 委托里的两个 Component 声明在文件级作用域，看不到 attachLoader 这个 id，
-                        // 但它们靠上下文直接读 modelData / index —— 这两个是 Repeater 委托的上下文属性，
-                        // sourceComponent 造出来的项会继承它。
-                        sourceComponent: modelData && modelData.type === "image" ? imageThumb : fileCard
+                    Repeater {
+                        model: composer.attachments
+
+                        delegate: Loader {
+                            id: attachLoader
+
+                            // 文件卡比缩略图矮，Row 里要自己垂直居中
+                            y: Math.round((composer.thumbSize - height) / 2)
+
+                            required property int index
+                            required property var modelData
+
+                            // 委托里的两个 Component 声明在文件级作用域，看不到 attachLoader 这个 id，
+                            // 但它们靠上下文直接读 modelData / index —— 这两个是 Repeater 委托的上下文属性，
+                            // sourceComponent 造出来的项会继承它。
+                            sourceComponent: modelData && modelData.type === "image" ? imageThumb : fileCard
+                        }
                     }
                 }
             }
@@ -654,6 +831,8 @@ Item {
                 anchors.leftMargin: Theme.spacingMd
                 anchors.verticalCenter: parent.verticalCenter
                 visible: composer.attachmentCount === 0
+                         && composer.text.length === 0
+                         && composer.attachHintText.length > 0
                 text: composer.attachHintText
                 font: Theme.fontMonoSm
                 color: Theme.muted
@@ -664,7 +843,7 @@ Item {
         Item {
             id: textWrap
             width: parent.width
-            height: area.height
+            height: textFlick.height
 
             Text {
                 id: placeholderLabel
@@ -677,93 +856,187 @@ Item {
                 text: composer.placeholderText
                 font: Theme.fontBody
                 color: Theme.muted
-                visible: area.text.length === 0 && !composer.readOnly
+                visible: area.text.length === 0
+                         && !composer.readOnly
+                         && composer.placeholderText.length > 0
                 elide: Text.ElideRight
             }
 
-            TextArea {
-                id: area
-
+            // 输入区高度 = 视口高度（见 composer._viewportHeight）：
+            // 关掉 allowResize 就是个定高框，超出部分靠这个 Flickable 内部滚动。
+            // 不能只靠 TextArea 自己的 clip：那样第 9 行以后会被裁掉且**不会滚动**，
+            // 光标停在可视区外，用户看到的就是"文字和光标跑到框下面消失"。
+            Flickable {
+                id: textFlick
+                objectName: "chatTextScroller"
                 width: parent.width
-                height: Math.max(composer.minTextHeight,
-                                 Math.min(contentHeight + topPadding + bottomPadding,
-                                          composer.maxTextHeight))
-
-                leftPadding: Theme.spacingMd
-                rightPadding: Theme.spacingMd
-                topPadding: Theme.spacingSm
-                bottomPadding: Theme.spacingSm
-
-                readOnly: composer.readOnly
-                selectByMouse: true
-                wrapMode: TextEdit.Wrap
+                height: composer._viewportHeight
+                contentWidth: width
+                contentHeight: area.height
                 clip: true
-                background: null
+                // 拖拽留给文字选择，滚动靠滚轮 / 滚动条 / 光标跟随；
+                // 否则一拖鼠标就在"划选文字"和"滚动"之间打架
+                interactive: false
+                boundsBehavior: Flickable.StopAtBounds
 
-                color: Theme.ink
-                selectionColor: Theme.accent
-                selectedTextColor: Theme.textOnAccent
-                font: Theme.fontBody
-                textFormat: TextEdit.PlainText
+                // 滚轮必须自己接管：Flickable 在 interactive=false 时**不处理滚轮**
+                // （Qt 6 的 QQuickFlickable::wheelEvent 一进门就 return），
+                // 事件于是冒泡给外层页面 —— 用户看到的就是"在输入框里滚，页面在动"。
+                // 所以这里滚内部视口，并且默认**滚到边界就停住**，不带动外层。
+                WheelHandler {
+                    id: textWheel
+                    acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                    acceptedModifiers: Qt.NoModifier
 
-                cursorDelegate: Rectangle {
-                    width: Theme.border
-                    color: Theme.accent
-                    visible: area.cursorVisible
-                }
+                    onWheel: function (event) {
+                        // 触控板给的是像素增量，鼠标给的是 1/8 度的角度增量（一格 120）
+                        var dy = event.pixelDelta.y !== 0
+                                ? event.pixelDelta.y
+                                : event.angleDelta.y / 120 * composer.wheelStepSize
+                        var maxY = Math.max(0, textFlick.contentHeight - textFlick.height)
 
-                Keys.onPressed: function (event) {
-                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        if (composer.isSendCombo(event.modifiers)) {
+                        // 内容放得下：输入区根本没有可滚区域，整个事件交给外层页面。
+                        // （这不算"到边界"，否则一行字的输入框会变成页面滚动的死区。）
+                        if (maxY <= 0) {
+                            composer._chainWheelToAncestor(dy)
                             event.accepted = true
-                            composer.submit()
-                        }
-                        return
-                    }
-                    if (event.key === Qt.Key_Escape) {
-                        event.accepted = true
-                        composer.cancelRequested()
-                    }
-                    // Ctrl+V 而剪贴板里没有文本 = 多半是位图。QML 读不到位图，交给宿主。
-                    if (event.key === Qt.Key_V
-                            && (event.modifiers & Qt.ControlModifier) !== 0
-                            && (event.modifiers & Qt.ShiftModifier) === 0
-                            && !composer.readOnly
-                            && !area.canPaste) {
-                        event.accepted = true
-                        composer.pasteRequested()
-                    }
-                }
-
-                onTextChanged: {
-                    // 资源管理器里 Ctrl+C 复制文件，粘进来是一行一个 file:///…。
-                    // 拦下来转成附件，别把一串路径塞进正文。
-                    // 只在输入区有焦点时扫：程序化地设 text（恢复草稿、演示页的初始文案）
-                    // 不该被当成粘贴处理。
-                    if (composer._suppressPasteScan) {
-                        composer._suppressPasteScan = false
-                    } else if (area.activeFocus) {
-                        var inserted = composer.insertedText(composer._lastText, area.text)
-                        var pastedUrls = composer.fileUrlsIn(inserted)
-                        if (pastedUrls.length > 0) {
-                            // 先把正文还原回粘贴前（这次赋值会再进一次本函数，
-                            // 被 _suppressPasteScan 挡掉），再把 url 变成附件。
-                            composer._suppressPasteScan = true
-                            area.text = composer._lastText
-                            composer.addUrlsAsAttachments(pastedUrls)
                             return
                         }
-                    }
-                    composer._lastText = area.text
 
-                    // 只越过上限的那一刻报一次，否则每敲一个字都会甩一条信号出去。
-                    if (composer.overLimit && !composer._overLimitReported) {
-                        composer._overLimitReported = true
-                        composer.limitReached("length")
-                    } else if (!composer.overLimit) {
-                        composer._overLimitReported = false
+                        var next = Math.max(0, Math.min(maxY, textFlick.contentY - dy))
+                        var used = textFlick.contentY - next
+                        textFlick.contentY = next
+                        // 默认到头就停住：剩下的距离直接丢掉，外层页面一动不动。
+                        // 想要浏览器那种"滚到头继续滚页面"，把 wheelChainsToAncestor 打开。
+                        var left = dy - used
+                        if (composer.wheelChainsToAncestor && Math.abs(left) > 0.5)
+                            composer._chainWheelToAncestor(left)
+                        event.accepted = true
                     }
-                    composer.textEdited()
+                }
+
+                // 内容真的超出视口时才挂滚动条：allowOverflow 关掉时内容永远不超出，
+                // 所以那条分支里它恒为 AlwaysOff。
+                ScrollBar.vertical: ZScrollBar {
+                    id: textScrollBar
+                    objectName: "chatTextScrollBar"
+                    policy: (composer.allowOverflow && textFlick.contentHeight > textFlick.height + 0.5)
+                            ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                }
+
+                TextArea {
+                    id: area
+                    objectName: "chatTextArea"
+
+                    // 滚动条占的是右侧 12px 的内边距，正好压在 rightPadding 的空当里，
+                    // 所以它出现 / 消失不会让文字重新折行（不会和视口高度互相抖）
+                    width: textFlick.width
+                    // 允许超出时：内容高过视口就把自身撑高，交给外层 Flickable 滚；
+                    // 不允许超出时内容不会超过视口（溢出的输入已被退回），高度就锁在视口高
+                    height: composer.allowOverflow
+                            ? Math.max(textFlick.height, contentHeight + topPadding + bottomPadding)
+                            : textFlick.height
+
+                    leftPadding: Theme.spacingMd
+                    rightPadding: Theme.spacingMd
+                    topPadding: Theme.spacingSm
+                    bottomPadding: Theme.spacingSm
+
+                    readOnly: composer.readOnly
+                    selectByMouse: true
+                    wrapMode: TextEdit.Wrap
+                    clip: true
+                    background: null
+
+                    color: Theme.ink
+                    selectionColor: Theme.accent
+                    selectedTextColor: Theme.textOnAccent
+                    font: Theme.fontBody
+                    textFormat: TextEdit.PlainText
+
+                    cursorDelegate: Rectangle {
+                        width: Theme.border
+                        color: Theme.accent
+                        visible: area.cursorVisible
+                    }
+
+                    // 光标跑了就把它带回可视区（打字、回车、粘贴、方向键都会走到这里）
+                    onCursorRectangleChanged: composer._keepCaretVisible()
+
+                    Keys.onPressed: function (event) {
+                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
+                            if (composer.isSendCombo(event.modifiers)) {
+                                event.accepted = true
+                                composer.submit()
+                            }
+                            return
+                        }
+                        if (event.key === Qt.Key_Escape) {
+                            event.accepted = true
+                            composer.cancelRequested()
+                        }
+                        // Ctrl+V 而剪贴板里没有文本 = 多半是位图。QML 读不到位图，交给宿主。
+                        if (event.key === Qt.Key_V
+                                && (event.modifiers & Qt.ControlModifier) !== 0
+                                && (event.modifiers & Qt.ShiftModifier) === 0
+                                && !composer.readOnly
+                                && !area.canPaste) {
+                            event.accepted = true
+                            composer.pasteRequested()
+                        }
+                    }
+
+                    onTextChanged: {
+                        // 上一次是"溢出退回"造成的改动：收工，别再做溢出判定 / 粘贴扫描，
+                        // 否则退回自己又会触发一次退回。
+                        if (composer._revertingOverflow) {
+                            composer._revertingOverflow = false
+                            return
+                        }
+
+                        // allowOverflow 关掉时，输入区高度就是硬上限：
+                        // 这次输入如果让内容高过视口，整段退回（见 _rejectOverflow）。
+                        if (!composer.allowOverflow
+                                && contentHeight + topPadding + bottomPadding
+                                   > composer._viewportHeight + 0.5) {
+                            composer._rejectOverflow()
+                            return
+                        }
+
+                        // 资源管理器里 Ctrl+C 复制文件，粘进来是一行一个 file:///…。
+                        // 拦下来转成附件，别把一串路径塞进正文。
+                        // 只在输入区有焦点时扫：程序化地设 text（恢复草稿、演示页的初始文案）
+                        // 不该被当成粘贴处理。
+                        if (composer._suppressPasteScan) {
+                            composer._suppressPasteScan = false
+                        } else if (area.activeFocus) {
+                            var inserted = composer.insertedText(composer._lastText, area.text)
+                            var pastedUrls = composer.fileUrlsIn(inserted)
+                            if (pastedUrls.length > 0) {
+                                // 先把正文还原回粘贴前（这次赋值会再进一次本函数，
+                                // 被 _suppressPasteScan 挡掉），再把 url 变成附件。
+                                composer._suppressPasteScan = true
+                                area.text = composer._lastText
+                                composer.addUrlsAsAttachments(pastedUrls)
+                                return
+                            }
+                        }
+                        composer._lastText = area.text
+
+                        // 回到能放下的高度了，下次再溢出时要重新报一次
+                        if (contentHeight + topPadding + bottomPadding
+                                <= composer._viewportHeight + 0.5)
+                            composer._overflowReported = false
+
+                        // 只越过上限的那一刻报一次，否则每敲一个字都会甩一条信号出去。
+                        if (composer.overLimit && !composer._overLimitReported) {
+                            composer._overLimitReported = true
+                            composer.limitReached("length")
+                        } else if (!composer.overLimit) {
+                            composer._overLimitReported = false
+                        }
+                        composer.textEdited()
+                    }
                 }
             }
         }
@@ -922,7 +1195,9 @@ Item {
                 anchors.rightMargin: 2
                 anchors.bottomMargin: 2
                 height: 15
-                color: Theme.ink
+                objectName: "chatThumbName"
+                // 同标题条：黑底压条要用 inkBlock，ink 在暗色下是近白
+                color: Theme.inkBlock
                 opacity: 0.82
                 cutTopRight: Theme.cutSm
                 cutBottomLeft: Theme.cutSm
@@ -973,11 +1248,13 @@ Item {
 
             ZCutRect {
                 id: extBadge
+                objectName: "chatExtBadge"
                 width: 40
                 // 描边有宽度，徽标要收在描边内侧，否则黑块会盖过卡片边框
                 y: Theme.border
                 height: parent.height - Theme.border * 2
-                color: Theme.ink
+                // 扩展名徽标同理：黑块要 inkBlock，否则暗色下变成白块压白字
+                color: Theme.inkBlock
                 // 左下角也要切，不然黑块会把卡片左下角的切角顶出去
                 cutTopRight: Theme.cutSm
                 cutBottomLeft: Theme.cutSm
@@ -1077,7 +1354,9 @@ Item {
 
         ZCutRect {
             anchors.fill: parent
-            color: Theme.ink
+            objectName: "chatRemoveBadge"
+            // 黑色角标：同样必须是 inkBlock，用 ink 暗色下会变成浅灰块配白 ×
+            color: Theme.inkBlock
             cutBottomLeft: Theme.cutSm
             opacity: badgeHover.hovered ? 1.0 : 0.72
         }

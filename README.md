@@ -298,7 +298,7 @@ Theme.density = 0.9
 | `ZProgressBar` | 进度条 | `label` `showValue` `showTicks` `indeterminate` |
 | `ZToolTip` | 工具提示 | `text`（一般不用手写，给按钮设 `tooltip` 即可） |
 | `ZRichTextEditor` | 块级富文本编辑器 | `blocks` `revision` `currentIndex` `readOnly` `framed` `showToolbar` `showHeader` `headerText` `placeholderText` `maxImageHeight` `blockSpacing`；块分 `text` / `image` / `file` 三种，`signal contentsChanged()` `imageRequested()` `fileRequested()` `fileActivated(url, name)` `blockActivated(index)` |
-| `ZChatInput` | QQ 式消息输入框 | `text` `attachments` `revision`；外观 `framed` `showToolbar` `showHeader` `headerText` `placeholderText` `sendText` `attachHintText` `minTextHeight`(74) `maxTextHeight`(140) `thumbSize` `fileCardWidth/Height` `allowImage` `allowFile` `readOnly` `busy` `useSystemDialogs`；行为 `sendOnEnter` `clearOnSend` `maxLength` `maxAttachments`；派生 `attachmentCount` `imageCount` `fileCount` `hasContent` `overLimit` `canSend` `draftSummary` `counterText`；`signal sendRequested(text, files)` `attachmentAdded(a, i)` `attachmentRemoved(a, i)` `imagePickRequested()` `filePickRequested()` `cancelRequested()` `textEdited()` `filesDropped(urls)` `pasteRequested()` `limitReached(kind)`；`openImagePicker()` / `openFilePicker()` 自己开选择框；拖放 / 粘贴由组件自己转附件（`addUrlsAsAttachments(urls)`、`isImageUrl(url)`、`fileUrlsIn(block)`、`insertedText(before, after)`、`urlsOf(files)`） |
+| `ZChatInput` | QQ 式消息输入框 | `text` `attachments` `revision`；外观 `framed` `showToolbar` `showHeader` `headerText` `placeholderText`(空) `sendText` `attachHintText`(空) `minTextHeight`(74) `maxTextHeight`(140) `allowResize`(false) `allowOverflow`(true) `wheelStepSize`(48) `wheelChainsToAncestor`(false) `thumbSize` `fileCardWidth/Height` `allowImage` `allowFile` `readOnly` `busy` `useSystemDialogs`；行为 `sendOnEnter` `clearOnSend` `maxLength` `maxAttachments`；派生 `attachmentCount` `imageCount` `fileCount` `hasContent` `overLimit` `canSend` `draftSummary` `counterText`；`signal sendRequested(text, files)` `attachmentAdded(a, i)` `attachmentRemoved(a, i)` `imagePickRequested()` `filePickRequested()` `cancelRequested()` `textEdited()` `filesDropped(urls)` `pasteRequested()` `limitReached(kind)`；`openImagePicker()` / `openFilePicker()` 自己开选择框；拖放 / 粘贴由组件自己转附件（`addUrlsAsAttachments(urls)`、`isImageUrl(url)`、`fileUrlsIn(block)`、`insertedText(before, after)`、`urlsOf(files)`）；附件条恒为一行高、排不下横向滚（`chatAttachScroller`）；输入区超高时内部滚动并跟随光标（`_keepCaretVisible()`），滚轮由组件接管（`_chainWheelToAncestor()`，默认滚到边界就停住） |
 
 ### 容器与展示
 
@@ -360,7 +360,9 @@ Theme.density = 0.9
   压在压暗后的黄上等于看不见。受影响的：列表选中行文字、表格选中行、滑块把手描边、
   开关滑块、按钮左竖条。
 - **反相块（黑底白字）必须恒为深色**：用 `inkBlock` 而不是 `ink`，
-  否则暗色下表头会变成"浅底白字"，文字直接消失。
+  否则暗色下表头会变成"浅底白字"，文字直接消失。受影响的：面板标题带、章节编号块、
+  表头、对话框标题带，以及 `ZChatInput` 的标题条 / 附件扩展名徽标 / 文件名压条 / 删除角标
+  （第十九轮正是这条规则被漏在聊天输入框上，见 `docs/verification.md` 5s）。
 
 **几何**：能切角就不圆角（`cutTopRight` + `cutBottomLeft` 是最常用的组合）；
 副标题、标签、选中高亮用平行四边形；面板右上角恒有一块斜线纹理区。
@@ -386,7 +388,7 @@ python tools/check_inverse_blocks.py
 # 行为测试：规则 / 属性 / 几何断言（CI 友好，退出码即结论）
 qmltestrunner -input tests/tst_hover.qml -import qml
 qmltestrunner -input tests/tst_richtext.qml -import qml   # 富文本块的模型 / 序列化 / 结构操作 38 项
-qmltestrunner -input tests/tst_chatinput.qml -import qml  # 聊天输入框的附件模型 / 上限 / 发送 / 回车 / 拖放粘贴 / 选择框 57 项
+qmltestrunner -input tests/tst_chatinput.qml -import qml  # 聊天输入框的附件模型 / 上限 / 发送 / 回车 / 拖放粘贴 / 选择框 / 暗色填充 / 超高滚动 / 定高与溢出开关 / 滚轮接管 / 附件条定高 71 项
 
 # 静态检查（0 错误）
 qmllint -I qml qml/ZmdUI/*.qml qml/main.qml qml/DemoContent.qml
@@ -443,3 +445,18 @@ C++ 侧也已真编译真运行过（Qt 6.11.2 / MSVC 2022 x64 零警告，exe �
   * 剪贴板里是**位图**时纯 QML 读不到（`TextEdit.canPaste` 直接是 `false`），组件改为发
     `pasteRequested()`，由宿主用 C++ 取图存文件后回调 `addImage`。演示程序里就是
     `src/zclipboard.cpp` 注入的 `ZClipboard.saveImage()`（见 `docs/verification.md` 5q 节）。
+* `ZChatInput` 的**附件条恒为一行高**（`thumbSize` + 上下留白），附件再多也不会把组件顶高：
+  排不下就横向滚（滚轮上下滚、拖动都可以），第 4 个以后不再是"折到第二行"。
+  这一条是"输入框高度固定死"的另一半——`allowResize` 只管正文，附件由这条管。
+* `ZChatInput` 的输入区默认**定高**（`allowResize: false` → 高度恒为 `minTextHeight`(74)），
+  内容允许超出（`allowOverflow: true`）并在框内滚动、右侧出现滚动条、光标自动跟随。
+  想要 QQ 那种"越写越高"就开 `allowResize`（长到 `maxTextHeight`(140) 再滚）；
+  想要"写满就不许再写"就把 `allowOverflow` 关掉 —— 会让内容溢出的那次输入会被整段退回，
+  并发 `limitReached("height")`（见 `docs/verification.md` 5t / 5u 节）。
+* `ZChatInput` 的**滚轮由组件自己接管**（`WheelHandler`，一格 `wheelStepSize`=48px）：内部的
+  `Flickable` 是 `interactive: false`（拖拽留给划选文字），而 Qt 6 的 `Flickable` 在
+  `interactive: false` 时**根本不处理滚轮**，事件会冒泡到外层页面 —— 表现就是"在输入框里滚、
+  页面在动"。接管之后：内部还能滚就只滚内部；**滚到顶 / 到底再继续滚，页面一动不动**
+  （`wheelChainsToAncestor` 默认 `false`）—— 想要浏览器那种"滚到头继续滚页面"就把它打开。
+  例外是内容根本放不下时（一个字的输入框），此时组件不拦、整个滚轮照常落到外层，
+  否则输入框会变成页面滚动的死区（见 `docs/verification.md` 5v 节）。

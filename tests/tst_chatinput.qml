@@ -1,5 +1,6 @@
 import QtQuick
 import QtTest
+import QtQuick.Controls.Basic
 import ZmdUI 1.0
 
 /*!
@@ -36,8 +37,17 @@ TestCase {
         SignalSpy { }
     }
 
-    function makeChat() {
-        var chat = createTemporaryObject(chatComponent, root)
+    Component {
+        id: outerFlickableComponent
+        Flickable {
+            width: 600
+            height: 300
+            contentHeight: 2000
+        }
+    }
+
+    function makeChat(parentItem) {
+        var chat = createTemporaryObject(chatComponent, parentItem === undefined ? root : parentItem)
         verify(chat !== null, "chat input should instantiate")
         return chat
     }
@@ -448,6 +458,7 @@ TestCase {
 
     function test_heightStaysWithinBounds() {
         var chat = makeChat()
+        chat.allowResize = true          // 只有开了这个开关，输入区才会跟着内容长高
         chat.minTextHeight = 60
         chat.maxTextHeight = 90
         wait(50)
@@ -456,6 +467,15 @@ TestCase {
         wait(50)
         verify(chat.implicitHeight >= h0, "adding lines grows the composer")
         verify(chat.implicitHeight <= h0 + 400, "growth is bounded by maxTextHeight")
+
+        // 默认（allowResize = false）下同样塞长文本，输入区高度不许变
+        // （比的是输入区视口，不是整个组件 —— 整个组件里还有一行"空态提示"会消失）
+        var fixed = makeChat()
+        fixed.minTextHeight = 60
+        var fixedScroll = findChild(fixed, "chatTextScroller")
+        fixed.text = "很长的内容 ".repeat(200)
+        wait(50)
+        compare(fixedScroll.height, 60, "allowResize 关掉后输入区高度必须纹丝不动")
     }
 
     function test_toolbarAndHeaderCanBeHidden() {
@@ -592,5 +612,268 @@ TestCase {
         var spy = makeSpy(chat, "filePickRequested")
         chat.openFilePicker()
         compare(spy.count, 1)
+    }
+
+    // ── 11. 长文本不能在输入框里"沉下去" ────────────────────────
+    // 输入区高度封顶在 maxTextHeight，超出的部分必须内部滚动；
+    // 否则第 9 行以后被裁掉、光标停在可视区外，看起来就是"文字和光标跑到框下面消失"。
+    function test_longTextScrollsAndKeepsTheCaretVisible() {
+        var chat = makeChat()
+        var area = findChild(chat, "chatTextArea")
+        var scroll = findChild(chat, "chatTextScroller")
+        verify(area !== null, "text area should be findable")
+        verify(scroll !== null, "text scroller should be findable")
+
+        var lines = []
+        for (var i = 1; i <= 16; ++i)
+            lines.push("第 " + i + " 行")
+        chat.text = lines.join("\n")
+
+        area.forceActiveFocus()
+        area.cursorPosition = area.length
+
+        // 视口高度必须封顶在 maxTextHeight，整块输入框不能被撑高
+        verify(scroll.height <= chat.maxTextHeight,
+               "viewport must be capped at maxTextHeight, got " + scroll.height)
+        verify(scroll.contentHeight > scroll.height,
+               "16 lines must overflow the viewport")
+
+        tryVerify(function () { return scroll.contentY > 0 }, 1000,
+                  "viewport must auto-scroll to keep the caret visible")
+
+        var r = area.cursorRectangle
+        verify(r.y >= scroll.contentY,
+               "caret top " + r.y + " must be inside viewport starting at " + scroll.contentY)
+        verify(r.y + r.height <= scroll.contentY + scroll.height + 1,
+               "caret bottom " + (r.y + r.height) + " must be inside viewport ending at "
+               + (scroll.contentY + scroll.height))
+    }
+
+    function test_shortTextStaysAtTheTop() {
+        var chat = makeChat()
+        var scroll = findChild(chat, "chatTextScroller")
+        chat.text = "只有一行"
+        compare(scroll.contentY, 0)
+        verify(scroll.contentHeight <= scroll.height, "short text must not overflow")
+    }
+
+    // ── 12. 输入区大小 / 溢出：两个开关 ──────────────────────────
+    // 默认：高度固定（allowResize = false）、内容可以超出并在框内滚动（allowOverflow = true）。
+    function test_resizeAndOverflowDefaults() {
+        var chat = makeChat()
+        compare(chat.allowResize, false, "输入框默认不随内容变高")
+        compare(chat.allowOverflow, true, "内容默认允许超出输入框")
+    }
+
+    function test_resizeDisabledKeepsTheBoxAtMinTextHeight() {
+        var chat = makeChat()
+        var scroll = findChild(chat, "chatTextScroller")
+        var lines = []
+        for (var i = 1; i <= 16; ++i)
+            lines.push("第 " + i + " 行")
+        chat.text = lines.join("\n")
+        compare(scroll.height, chat.minTextHeight,
+                "关掉 allowResize 后输入区高度应恒为 minTextHeight")
+    }
+
+    function test_resizeEnabledGrowsUpToMaxTextHeight() {
+        var chat = makeChat()
+        chat.allowResize = true
+        var scroll = findChild(chat, "chatTextScroller")
+
+        chat.text = "两行\n文字"
+        compare(scroll.height, chat.minTextHeight,
+                "两行放得下 minTextHeight，不该撑高")
+
+        chat.text = "五行\n五行\n五行\n五行\n五行"
+        verify(scroll.height > chat.minTextHeight,
+               "开着 allowResize 时内容超高应把输入区撑高，实际 " + scroll.height)
+        verify(scroll.height <= chat.maxTextHeight, "但不能超过 maxTextHeight")
+
+        var lines = []
+        for (var i = 1; i <= 16; ++i)
+            lines.push("第 " + i + " 行")
+        chat.text = lines.join("\n")
+        compare(scroll.height, chat.maxTextHeight,
+                "长文本时长到 maxTextHeight 就停")
+    }
+
+    function test_overflowDisabledRejectsTextBeyondTheBox() {
+        var chat = makeChat()
+        chat.allowOverflow = false
+
+        var spy = makeSpy(chat, "limitReached")
+        var scroll = findChild(chat, "chatTextScroller")
+        var area = findChild(chat, "chatTextArea")
+
+        chat.text = "第一行"
+        compare(chat.text, "第一行", "短文本照常接受")
+
+        // 一次性灌 16 行：整段退回，正文停在上一版
+        var lines = []
+        for (var i = 1; i <= 16; ++i)
+            lines.push("第 " + i + " 行")
+        chat.text = lines.join("\n")
+
+        compare(chat.text, "第一行", "溢出的输入必须整段退回")
+        compare(area.contentHeight + area.topPadding + area.bottomPadding
+                <= scroll.height + 1, true,
+                "退回后内容必须放得下，不能留在框外")
+        compare(spy.count, 1, "退回时要发 limitReached")
+        if (spy.count > 0)
+            compare(spy.signalArguments[0][0], "height")
+
+        // 回到放得下的长度后，再次溢出要能重新报一次
+        chat.text = "短"
+        chat.text = lines.join("\n")
+        compare(spy.count, 2, "重新溢出应再报一次")
+        spy.destroy()
+    }
+
+    function test_scrollBarFollowsOverflow() {
+        var chat = makeChat()
+        var bar = findChild(chat, "chatTextScrollBar")
+        verify(bar !== null, "scroll bar should be findable")
+
+        // 断言的是 policy（组件自己的绑定）：Controls 的 ScrollBar 还要在 polish 时
+        // 才把 policy 翻译成 visible，单测里没有真实帧循环，visible 不可靠；
+        // "真的显示出来了"由离屏探针 _probe_flags.qml 与整页截图负责。
+        chat.text = "一行"
+        compare(bar.policy, ScrollBar.AlwaysOff, "内容放得下时不该要滚动条")
+
+        var lines = []
+        for (var i = 1; i <= 16; ++i)
+            lines.push("第 " + i + " 行")
+        chat.text = lines.join("\n")
+        compare(bar.policy, ScrollBar.AlwaysOn, "内容超出时必须挂上滚动条")
+
+        // 关掉 allowOverflow 就没有"超出"这回事，滚动条也不该出现
+        var chat2 = makeChat()
+        chat2.allowOverflow = false
+        var bar2 = findChild(chat2, "chatTextScrollBar")
+        chat2.text = lines.join("\n")
+        compare(bar2.policy, ScrollBar.AlwaysOff, "allowOverflow 关掉时不该有滚动条")
+    }
+
+    // ── 10. 深色模式：黑块只能用 inkBlock ────────────────────────
+    // 这类 bug（Theme.ink 当填充色）行为断言抓不到，只有切到暗色才看得见，
+    // 所以直接按 objectName 找出那几个黑块，断言填充色就是 inkBlock。
+    function test_blackBlocksUseInkBlock() {
+        var chat = makeChat()
+        chat.attachments = [
+            chat.makeImageAttachment("u1"),
+            chat.makeFileAttachment("u2", "a.json", 100)
+        ]
+
+        try {
+            Theme.mode = Theme.Mode.Dark
+
+            var header = findChild(chat, "chatHeader")
+            var strip = findChild(chat, "chatThumbName")
+            var badge = findChild(chat, "chatExtBadge")
+            var remove = findChild(chat, "chatRemoveBadge")
+
+            verify(header !== null, "header bar should be findable")
+            verify(strip !== null, "thumbnail name strip should be findable")
+            verify(badge !== null, "extension badge should be findable")
+            verify(remove !== null, "remove badge should be findable")
+
+            compare(String(header.color), String(Theme.inkBlock))
+            compare(String(strip.color), String(Theme.inkBlock))
+            compare(String(badge.color), String(Theme.inkBlock))
+            compare(String(remove.color), String(Theme.inkBlock))
+
+            // 反向证明：暗色下 ink 确实不是黑的，否则上面四条就是同义反复
+            verify(String(Theme.ink) !== String(Theme.inkBlock),
+                   "dark ink must differ from inkBlock")
+        } finally {
+            Theme.mode = Theme.Mode.Light
+        }
+    }
+
+    // ── 11. 滚轮：内部先滚，滚到头就停住（默认），可选用 wheelChainsToAncestor 交回外层 ──
+    // qmltestrunner 造不出 QWheelEvent，所以这里只钉不依赖事件投递的事：
+    // 一格滚多少像素的默认值、"到边界后要不要带动外层"的默认值，以及那条链式通道本身。
+    function test_wheelStepIsFortyEightPixels() {
+        var chat = makeChat()
+        compare(chat.wheelStepSize, 48, "默认一格滚 48 像素")
+        chat.wheelStepSize = 30
+        compare(chat.wheelStepSize, 30, "这个值应当可写")
+    }
+
+    function test_wheelDoesNotChainToAncestorByDefault() {
+        var chat = makeChat()
+        compare(chat.wheelChainsToAncestor, false,
+                "默认滚到边界就停住，不带动外层页面（用户明确要求）")
+        chat.wheelChainsToAncestor = true
+        compare(chat.wheelChainsToAncestor, true, "这个开关本身要可写")
+    }
+
+    function test_chainWheelToAncestorMovesTheOuterFlickable() {
+        var outer = createTemporaryObject(outerFlickableComponent, root)
+        verify(outer !== null, "outer flickable should instantiate")
+        var chat = makeChat(outer)
+
+        chat._chainWheelToAncestor(-120)
+        compare(outer.contentY, 120, "滚轮距离应当转给外层 Flickable")
+        chat._chainWheelToAncestor(40)
+        compare(outer.contentY, 80, "反方向也要能用")
+        chat._chainWheelToAncestor(-5000)
+        compare(outer.contentY, outer.contentHeight - outer.height, "不能越过外层的下边界")
+    }
+
+    function test_chainWheelToAncestorIsHarmlessWithoutOne() {
+        var chat = makeChat()
+        compare(chat._chainWheelToAncestor(-120), false, "没有可滚动祖先时要安静地返回 false")
+    }
+
+    // ── 13. 附件条：永远一行高，多了横向滚（不会把组件顶高）──────
+    function test_attachStripHeightIgnoresAttachmentCount() {
+        var chat = makeChat()
+        var zone = findChild(chat, "chatAttachZone")
+        verify(zone !== null, "应当能定位到附件区")
+
+        chat.attachments = [chat.makeFileAttachment("", "a.json", 1024)]
+        wait(50)
+        var oneHeight = chat.implicitHeight
+        var oneZone = zone.height
+
+        var many = []
+        for (var i = 0; i < 6; ++i)
+            many.push(chat.makeFileAttachment("", "f" + i + ".json", 1024))
+        chat.attachments = many
+        wait(50)
+
+        compare(chat.implicitHeight, oneHeight, "附件从 1 个加到 6 个，组件高度不许变")
+        compare(zone.height, oneZone, "附件区高度不许变")
+        compare(zone.height, chat.thumbSize + Theme.spacingSm * 2, "附件区就是一行（缩略图 + 上下留白）")
+    }
+
+    function test_attachStripScrollsHorizontallyInsteadOfGrowing() {
+        var chat = makeChat()
+        chat.width = 420
+        var flick = findChild(chat, "chatAttachScroller")
+        verify(flick !== null, "附件条应当是个 Flickable")
+
+        var many = []
+        for (var i = 0; i < 6; ++i)
+            many.push(chat.makeFileAttachment("", "f" + i + ".json", 1024))
+        chat.attachments = many
+
+        tryVerify(function () { return flick.contentWidth > flick.width }, 2000,
+                  "6 个附件必须超出可视宽度，否则没得滚")
+
+        compare(flick.contentY, 0, "附件条不许竖向滚动")
+        compare(flick.height, chat.thumbSize, "附件条高度恒为一行")
+
+        var maxX = flick.contentWidth - flick.width
+        verify(maxX > 0, "内容比视口宽，maxContentX 必须为正")
+        // 内容宽度 = 6 张卡的宽度 + 5 个间距（钉住 Row 的排布）
+        var expected = 6 * chat.fileCardWidth + 5 * Theme.spacingSm
+        verify(Math.abs(flick.contentWidth - expected) < 1, "附件条内容宽度应当是 6 张卡横排")
+        flick.contentX = maxX
+        verify(Math.abs(flick.contentX - maxX) < 0.5, "要能滚到最右")
+        flick.contentX = 0
+        verify(Math.abs(flick.contentX) < 0.5, "要能滚回最左")
     }
 }
